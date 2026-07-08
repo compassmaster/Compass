@@ -7,4 +7,5 @@ Compass learns from your daily life, understands your unique patterns, and helps
 ### North Star
 
 > **We don't decide your future. We help you choose it.**
-> **言葉そのものではなく、その背景を学ぶAI**
+> 
+> **言葉そのものではなく、その背景を学ぶAIにしたい**
