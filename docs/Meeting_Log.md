@@ -4,11 +4,24 @@
 
 ### Day 1
 
-- Project Compass started.
-- Project name decided: Compass
-- Theme decided: AI Navigator
-- North Star defined.
-- Personality fixed, speaking style customizable.
-- Users are never compared to other users.
-- AI should estimate rather than ask for exact numerical ratings.
-- AI learns from user feedback.
+#### 決定事項
+
+- プロジェクト名を「Compass」に決定。
+- 世界観を「人生を共に歩むAI航海士」と定義。
+- North Starを決定。
+- 「人格は一つ、話し方は無限」を採用。
+- AIは命令ではなく提案を行う。
+- AIは必ず根拠を説明する。
+- AIは他人ではなく過去の自分と比較する。
+- AIはユーザーに採点させながら学習する。
+- Compassの本質は「予測AI」ではなく「理解AI」である。
+- 予測は目的ではなく、理解の結果として生まれる機能と定義。
+- Compassの価値は、体調・行動・環境の関係性を学ぶことにある。
+- 理解した情報を基に、予測だけでなく相談や意思決定支援にも活用する方針を採用。
+- Compassの最終目標は「一番の理解者」になること。
+
+#### 次回設計テーマ
+
+Understanding Model
+
+「Compassはユーザーをどう理解するのか」を設計する。
