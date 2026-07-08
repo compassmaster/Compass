@@ -8,4 +8,4 @@ Compass learns from your daily life, understands your unique patterns, and helps
 
 > **We don't decide your future. We help you choose it.**
 > 
-> **言葉そのものではなく、その背景を学ぶAIにしたい**
+> **I want to create an AI that learns the context behind words, not just the words themselves.**
