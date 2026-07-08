@@ -4,8 +4,11 @@
 
 ### Day 1
 
-- Project Compassを開始
-- 北極星を決定
-- Compassの世界観を「AI航海士」に決定
-- 「人格は一つ、話し方は無限」を設計原則として採用
-- GitHubリポジトリを作成
+- Project Compass started.
+- Project name decided: Compass
+- Theme decided: AI Navigator
+- North Star defined.
+- Personality fixed, speaking style customizable.
+- Users are never compared to other users.
+- AI should estimate rather than ask for exact numerical ratings.
+- AI learns from user feedback.
