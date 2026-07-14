@@ -1,56 +1,77 @@
-# 🧭 Project Compass
+# React + TypeScript + Vite
 
-> **日常を理解し、未来の選択を支えるAI航海士。**
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-Compassは、ユーザーの日々の記録から生活や体調のパターンを学習し、一人ひとりに寄り添った予測と意思決定支援を行うAIです。
+Currently, two official plugins are available:
 
-未来を決めるのではなく、過去と現在を理解し、より良い未来を選ぶための「羅針盤」となることを目指します。
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
 
----
+## React Compiler
 
-## ⭐ North Star
+The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
 
-> **ユーザーに未来を決めるのではなく、未来を選びやすくする。**
+Note: This will impact Vite dev & build performances.
 
----
+## Expanding the ESLint configuration
 
-## 🎯 Mission
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
 
-Compassは、ユーザーの日常を記録・学習し、一人ひとりに合わせた未来予測と意思決定支援を行います。
+```js
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
 
-体調・気分・生活習慣・環境などのデータを総合的に理解し、ユーザー自身が自分をより深く理解できるよう支援します。
+      // Remove tseslint.configs.recommended and replace with this
+      tseslint.configs.recommendedTypeChecked,
+      // Alternatively, use this for stricter rules
+      tseslint.configs.strictTypeChecked,
+      // Optionally, add this for stylistic rules
+      tseslint.configs.stylisticTypeChecked,
 
----
+      // Other configs...
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
 
-## 🌊 Compassとは
+```
 
-Compassは人生を管理するAIではありません。
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
 
-人生という航海を共に歩む**AI航海士**です。
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
 
-過去を記録し、
-現在を理解し、
-未来を予測する。
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+      // Enable lint rules for React
+      reactX.configs['recommended-typescript'],
+      // Enable lint rules for React DOM
+      reactDom.configs.recommended,
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
 
-そして、その予測を根拠とともに提示し、ユーザー自身がより良い選択を行えるよう支援します。
-
----
-
-## 📖 現在の設計状況
-
-- ✅ Vision
-- 🟡 Design
-- ⚪ Prototype
-- ⚪ MVP
-- ⚪ Beta
-- ⚪ Release
-
----
-
-## 📚 ドキュメント
-
-
-- [Vision](docs/01_Vision.md)
-- [Design Principles](docs/02_Principles.md)
-- [Requirements](docs/03_Requirements.md)
-- [Meeting Log](docs/Meeting_Log.md)
+```
