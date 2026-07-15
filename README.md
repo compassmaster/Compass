@@ -1,77 +1,51 @@
-# React + TypeScript + Vite
+# Compass
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Compassは、単なる記録アプリやチャットAIではなく、「人を理解し、その理解を育て、現在を支え、未来を一緒に考える」ための新しいAIアーキテクチャの研究開発プロジェクトです。
+コードよりも設計思想を優先する「設計主導のAIプロジェクト」として、複数のAI（ChatGPT, Gemini, Antigravity IDE）が人間（Founder）と協調して開発を進めています。
 
-Currently, two official plugins are available:
+## プロジェクトの目的
+記録（Memory）ではなく「人物理解（User Model）」を中心に据え、AIが継続的にユーザーを理解し、その理解をもとに支援やプランニングを行うための基盤と仕組みを構築すること。
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Vision
+Compassが目指す未来と目的については、[Vision (01_ビジョン.md)](docs/01_ビジョン.md) をご参照ください。
 
-## React Compiler
+## 現在の開発フェーズ
+現在、プロジェクトは「開発環境を整えるフェーズ」を完了し、「Compassそのものを設計・実装するフェーズ」へ移行しています。
+直近の最優先タスクは「Compass Core Philosophy v1.0」の策定です。詳細は [現在の開発状況](docs/CURRENT_STATE.md) を確認してください。
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
-
-Note: This will impact Vite dev & build performances.
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+## ディレクトリ構成
+```text
+Compass/
+├── docs/                   # プロジェクトの中核ドキュメント群（Single Source of Truth）
+│   ├── algorithms/         # アルゴリズム設計
+│   ├── architecture/       # システム設計・アーキテクチャ
+│   ├── philosophy/         # 思想・哲学（Compass Core Philosophyなど）
+│   ├── research/           # AI研究・調査ログ
+│   └── roadmap/            # 今後の計画・マイルストーン
+├── src/                    # アプリケーションソースコード（Implementation）
+├── public/                 # 静的アセット
+└── ...
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## ドキュメントの読み方
+Compassはドキュメントを最重要視しています。初めての方は、以下の順番でドキュメントを読むことをお勧めします。
+1. [README.md](README.md) (本ファイル)
+2. [docs/README.md](docs/README.md) (ドキュメントインデックス)
+3. [docs/01_ビジョン.md](docs/01_ビジョン.md)
+4. [docs/philosophy/Compass_Core_Philosophy.md](docs/philosophy/Compass_Core_Philosophy.md)
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+全体のドキュメントの相互関係については [docs/README.md](docs/README.md) や、各ドキュメントに記載された YAML Front Matter（Depends on / Used by）を確認してください。
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## 開発環境
+- React + TypeScript + Vite
+- ESLint (Type-aware rules enabled)
 
-```
+## 今後のロードマップ
+以下の順番で設計・実装を進めます。
+1. Compass Core Philosophy
+2. User Model
+3. Understanding
+4. Reasoning
+5. Conversation
+6. Memory
+7. Planning

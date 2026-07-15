@@ -1,3 +1,9 @@
+---
+status: Active
+dependsOn: []
+usedBy: []
+lastUpdated: "2026-07-15"
+---
 # Current State
 
 Compassの現在地を管理します。
