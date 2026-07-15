@@ -1,37 +1,82 @@
 # AI Context
 
-現在のCompassの状況を要約した引き継ぎ資料です。
-AI間で共通認識を持つための基準資料として扱います。
+現在のCompassの状況を要約したAI間の引き継ぎ・連携用資料です。
+この資料は、プロジェクトに参加するすべてのAI（ChatGPT, Antigravity IDE, Geminiなど）が共通認識を持つための「Single Source of Truth（唯一の正しい情報源）」の起点として機能します。
 
-## Goal
-「人を理解し、その理解を育て、現在を支え、未来を一緒に考えるAIパートナー」の実現
-Compassは単に記録するAI（Memoryを持つAI）ではなく、「User Modelを育てるAI」として機能します。
+## 現在のプロジェクト概要
+Compassは、単なるAIアプリや記録アプリ（Memoryを持つAI）ではありません。
+最終目標は「人を理解し続け、理解を育て、現在を支え、未来を一緒に考える新しいAIアーキテクチャの構築」です。
+現在、プロジェクトは初期の「Memory中心の設計」から「User Model（人物理解）中心の設計」へのパラダイムシフトを決定し、その思想に基づいた設計の再構築フェーズにあります。
 
-## Current State
-Compassの設計思想において「User Modelを育てるAI」へのパラダイムシフトが決定。各種ドキュメントをこの新思想に基づき再構築中。
+## Compassの思想（要約）
+Compassは記録するAIではなく、「人を理解するAI」です。
+すべての設計・実装において、**「この変更はユーザー理解を深めるか？」**を判断基準とします。
+- データの概念フロー:
+  `Conversation` → `Information Extraction` → `Memory（事実）` → `Hypothesis（仮説）` → `User Model（Understanding, Prediction, その他人物モデル）` → `Reasoning` → `Conversation / Support / Planning`
+- 「Understanding」は記憶の集合ではなく、「現在その人をどう理解しているか」を表現する人物モデルとして扱います。
+- 「Prediction」はPlanning専用ではなく、ConversationやSupportにも利用されます。
 
-## Work Done
-- 新規開発体制の策定（Implementation Lead: Antigravity IDE, Architecture Lead: ChatGPT, Reviewer: Gemini）
-- 共有ドキュメント（`AI_CONTEXT.md`, `CURRENT_STATE.md`, `CHANGELOG.md`）の作成と更新
-- 思想変更に伴うドキュメントディレクトリ（`docs/philosophy`）の整備
-- Compass AI Collaboration Protocol v1.0の制定と`docs/`ディレクトリ構造（`architecture/`, `research/`, `algorithms/`, `roadmap/`）の追加
+## AI Collaboration Protocolの概要
+実装速度よりも設計品質を優先し、「なぜその設計なのか」を重視するため、AI同士の協調ルール（[AI_COLLABORATION_PROTOCOL.md](./AI_COLLABORATION_PROTOCOL.md)）を制定しました。
+- **ChatGPT (Chief Architect):** 思想設計、中核ドキュメント作成、プロジェクト全体の整合性管理
+- **Antigravity IDE (Lead Engineer):** GitHubリポジトリ管理、実装、リファクタリング、アーキテクチャに沿ったコード設計
+- **Gemini (Research Reviewer):** 設計レビュー、論理矛盾の指摘、AI研究観点からのレビュー・提案
+- **Decision Rule:** (1) Compass Core Philosophy > (2) User Model > (3) Documentation > (4) Architecture > (5) Implementation の順で優先します。
 
-## Important Decisions
-- **AI Collaboration Protocol:** ドキュメントを「唯一の正しい情報源（Single Source of Truth）」とし、すべての設計判断は「Compass Core Philosophy」を基準とすること
-- **Core Philosophyの変更:** 「Memoryを持つAI」から「User Modelを育てるAI」への転換
-- **概念フロー:** 
-  Conversation 
-  → Information Extraction 
-  → Memory（事実） 
-  → Hypothesis（仮説） 
-  → User Model（Understanding, Prediction, その他人物モデル） 
-  → Reasoning 
-  → Conversation / Support / Planning
-- UnderstandingはMemoryの単なる集合ではなく、現在その人をどう理解しているかを表現する人物モデルとして扱う
-- PredictionはPlanning専用ではなく、ConversationやSupportにも利用される
+## 今回更新した内容
+- Compassコア思想を「User Modelを育てるAI」へ変更
+- `AI_COLLABORATION_PROTOCOL.md` の制定とAI間役割分担の明確化
+- リポジトリに設計・ドキュメント管理用のディレクトリ（`philosophy/`, `architecture/`, `research/`, `algorithms/`, `roadmap/`）を新設
 
-## Open Questions
-- 新思想に基づいたUser Model, Memory, Understanding, Predictionの具体的なアーキテクチャ設計・データ構造
+## 現在のディレクトリ構成（主要部分）
+```text
+Compass/
+├── src/                # 実装コード（現在は初期モジュールのみ）
+│   ├── types/          # 型定義
+│   └── utils/          # ユーティリティ（リポジトリ層など）
+└── docs/               # プロジェクトの中核ドキュメント（Single Source of Truth）
+    ├── philosophy/     # 思想・哲学に関するドキュメント
+    ├── architecture/   # システム設計・アーキテクチャに関するドキュメント
+    ├── research/       # AI研究・調査に関するドキュメント
+    ├── algorithms/     # アルゴリズム設計に関するドキュメント
+    ├── roadmap/        # 今後の計画に関するドキュメント
+    ├── AI_COLLABORATION_PROTOCOL.md # AIチームの開発・協調ルール
+    ├── AI_CONTEXT.md   # [本ファイル] AI引き継ぎ用コンテキスト
+    ├── CURRENT_STATE.md # 現在のバージョン、完了項目、進行中のマイルストーン
+    └── CHANGELOG.md    # 単なる変更履歴ではなく「なぜ変更したか」を記録するログ
+```
 
-## Next Task
-- 中核設計ドキュメント（特にCompass Core Philosophy）の本文作成および各モジュールの設計詳細化
+## 現在存在する主要ドキュメント
+- `docs/AI_COLLABORATION_PROTOCOL.md` (AIチームの役割と開発原則)
+- `docs/CURRENT_STATE.md` (現在のマイルストーンや実装状況)
+- `docs/CHANGELOG.md` (設計・実装の変更履歴と背景)
+- `docs/philosophy/Compass_Core_Philosophy.md` (※枠組みのみ作成済み、本文未定義)
+
+## 現在決定している重要事項
+- 会話ログではなく、Documentationを「唯一の正しい情報源」とすること
+- AI開発体制における各自のRole（Architect, Engineer, Reviewer）
+- 実装の前に設計思想を最優先とし、コードより思想を優先すること
+
+## 未決定事項（Open Questions）
+- 新思想に基づいた「User Model」「Memory」「Understanding」「Prediction」の具体的なアーキテクチャ設計・データ構造
+- Core Philosophyの具体的テキスト化
+- 現在の `src/` 配下の既存コードを、新しいアーキテクチャにどう統合するか
+
+## 次に設計すべき内容 (Next Tasks)
+1. `Compass Core Philosophy` の本文作成
+2. `User Model` の概念定義およびデータ構造の設計
+3. `Memory`（事実）から `Hypothesis`（仮説）を生成し、`User Model` に統合するプロセス（Understanding, Reasoning）の設計
+
+## AI役割分担の現状
+### ChatGPT（Chief Architect）が現在担当している内容
+- 「Compass Core Philosophy」のドラフト作成
+- 新思想（User Model中心）に基づいた各コンポーネント（Memory, Understanding, Prediction）の概念設計とフローの再定義
+
+### Antigravity IDE（Lead Engineer）が現在担当している内容
+- GitHubリポジトリへのドキュメント反映、ディレクトリ構造の整備
+- 決定した新思想や設計に基づく既存コードベースの棚卸しと、今後のアーキテクチャ実装に向けた準備
+
+### Gemini（Research Reviewer）にレビューしてほしいポイント
+- 「User Modelを育てるAI」という概念フロー（Information Extraction -> Memory -> Hypothesis -> User Model -> Reasoning）における、AI研究的観点からの妥当性やボトルネックの指摘
+- 上記概念を実現するための最適なアーキテクチャや最新技術（LLM連携、ベクトルDB、グラフ構造など）の導入に関する代替案・提案
+- ChatGPTが今後策定する `Compass Core Philosophy` および `User Model` 設計の論理矛盾や拡張性に対する第三者評価
