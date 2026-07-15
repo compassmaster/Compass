@@ -10,6 +10,7 @@ v0.1.0-alpha
 - 共有ドキュメントの枠組み作成
 - コア思想の再定義（User Model中心の設計への転換）
 - AI Collaboration Protocol v1.0の制定
+- ドキュメントの日本語化とDecision管理（ADR）の導入
 
 ## 設計済み項目
 - [ ] Compass Core Philosophy (ファイル準備のみ)

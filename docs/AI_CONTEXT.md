@@ -27,6 +27,7 @@ Compassは記録するAIではなく、「人を理解するAI」です。
 - Compassコア思想を「User Modelを育てるAI」へ変更
 - `AI_COLLABORATION_PROTOCOL.md` の制定とAI間役割分担の明確化
 - リポジトリに設計・ドキュメント管理用のディレクトリ（`philosophy/`, `architecture/`, `research/`, `algorithms/`, `roadmap/`）を新設
+- ドキュメントの日本語化とDecision管理（ADR: `設計決定.md`）の導入、開発フローの更新
 
 ## 現在のディレクトリ構成（主要部分）
 ```text
@@ -43,13 +44,16 @@ Compass/
     ├── AI_COLLABORATION_PROTOCOL.md # AIチームの開発・協調ルール
     ├── AI_CONTEXT.md   # [本ファイル] AI引き継ぎ用コンテキスト
     ├── CURRENT_STATE.md # 現在のバージョン、完了項目、進行中のマイルストーン
-    └── CHANGELOG.md    # 単なる変更履歴ではなく「なぜ変更したか」を記録するログ
+    ├── 変更履歴.md     # 単なる変更履歴ではなく「なぜ変更したか」を記録するログ
+    ├── 設計決定.md     # 設計上の重要な意思決定を記録するADR
+    └── リポジトリガイド.md # プロジェクトの地図となるドキュメント
 ```
 
 ## 現在存在する主要ドキュメント
 - `docs/AI_COLLABORATION_PROTOCOL.md` (AIチームの役割と開発原則)
 - `docs/CURRENT_STATE.md` (現在のマイルストーンや実装状況)
-- `docs/CHANGELOG.md` (設計・実装の変更履歴と背景)
+- `docs/設計決定.md` (設計上の重要な意思決定)
+- `docs/変更履歴.md` (設計・実装の変更履歴と背景)
 - `docs/philosophy/Compass_Core_Philosophy.md` (※枠組みのみ作成済み、本文未定義)
 
 ## 現在決定している重要事項

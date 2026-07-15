@@ -104,6 +104,22 @@ Compass Core Philosophy
 
 ---
 
+# Development Flow
+
+現在の開発フローは以下の通りです。
+
+1. アイデア
+2. 議論
+3. レビュー
+4. Decision（正式採用）
+5. ドキュメント更新
+6. 実装
+7. 変更履歴
+
+この流れを順守し、ドキュメントに記録を残してから実装に進みます。
+
+---
+
 # Single Source of Truth
 
 Compassで最も重要なのは
@@ -155,7 +171,9 @@ docs/
 
 * AI_CONTEXT.md
 * CURRENT_STATE.md
-* CHANGELOG.md
+* 変更履歴.md
+* 設計決定.md
+* リポジトリガイド.md
 
 ---
 
@@ -194,9 +212,9 @@ CURRENT_STATE.mdには
 
 ---
 
-# Changelog
+# 変更履歴
 
-CHANGELOG.mdには
+変更履歴.md には
 
 単なる変更履歴ではなく
 
@@ -329,11 +347,13 @@ Compassは
 
 1. Compass Core Philosophy
 2. User Model
-3. Documentation
+3. Documentation (設計決定.mdを含む)
 4. Architecture
 5. Implementation
 
 コードより思想を優先してください。
+
+重要な決定事項は必ず `docs/設計決定.md` にADRとして記録してください。
 
 ---
 
