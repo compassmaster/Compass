@@ -1,0 +1,100 @@
+# Compass Repository Guide
+
+このガイドは、開発者（Founder）、ChatGPT（Chief Architect）、Gemini（Research Reviewer）、今後参加するAIを含めた全員が「このリポジトリのどこに何があり、何のために存在するのか」をすぐ理解できることを目的としています。
+
+## 1. リポジトリ全体構成
+
+現在のディレクトリ構成です。
+
+```text
+Compass/
+├── .git/
+├── dist/                   # ビルド出力
+├── docs/                   # プロジェクトドキュメント
+│   ├── algorithms/         # アルゴリズム設計
+│   ├── architecture/       # システムアーキテクチャ設計
+│   ├── philosophy/         # コア思想・哲学
+│   ├── research/           # AI研究・調査ログ
+│   └── roadmap/            # 今後の計画・マイルストーン
+├── node_modules/           # npmパッケージ
+├── public/                 # 静的アセット（アイコンなど）
+└── src/                    # アプリケーションソースコード
+```
+
+## 2. フォルダ一覧
+
+| フォルダ | 役割 | 主担当AI | 現在の状態 |
+| --- | --- | --- | --- |
+| `src/` | アプリケーションのUI/ロジック実装 | Antigravity IDE | 初期モジュールのみ |
+| `docs/` | プロジェクト全体の中核ドキュメント、共有のSingle Source of Truth | ChatGPT (Chief Architect) | 構成・中核ドキュメント整備中 |
+| `docs/philosophy/` | Compassの哲学、User ModelやMemoryの概念設計 | ChatGPT (Chief Architect) | 枠組み作成中 |
+| `docs/architecture/`| アーキテクチャの仕様書やデータフロー設計 | ChatGPT (Chief Architect) | 準備中 |
+| `docs/research/` | AI研究観点での検証・代替案などの調査記録 | Gemini (Research Reviewer) | 準備中 |
+| `docs/algorithms/` | 予測や推論に関するアルゴリズム設計 | ChatGPT / Gemini | 準備中 |
+| `docs/roadmap/` | 次のマイルストーンなどの計画管理 | ChatGPT (Chief Architect) | 準備中 |
+| `public/` | 画像、アイコンなどの静的ファイル置き場 | Antigravity IDE | 初期状態 |
+
+## 3. ドキュメント一覧
+
+`docs/` 配下のファイルについてまとめます。
+
+| ファイル | 日本語 | 役割 | 主担当 | 現在の状態 | 今後書かれる予定の内容 |
+| --- | --- | --- | --- | --- | --- |
+| `01_Vision.md` | ビジョン | Compassが目指す未来と目的 | ChatGPT | 作成済 | （必要に応じて更新） |
+| `02_Principles.md` | 設計原則 | Compassの行動・判断基準 | ChatGPT | 作成済 | （必要に応じて更新） |
+| `03_Requirements.md` | 要件定義 | Compassが満たすべき機能要件 | ChatGPT / Antigravity | 準備中 | 具体的なシステム要件・ユーザーストーリー |
+| `AI_COLLABORATION_PROTOCOL.md`| AI協調ルール | 各AIの役割と開発原則・ルール定義 | ChatGPT | 運用中 | AIの追加や役割変更時のルール更新 |
+| `AI_CONTEXT.md` | AI間共有コンテキスト | AI間の引き継ぎ・現在の全体像の共有 | 全員 | 運用中 | 現在の目標、決定事項、未決定事項、次のタスク |
+| `CHANGELOG.md` | 変更履歴 | 「なぜ変更したか」を含む設計・実装履歴 | 全員 | 運用中 | 実装や設計の変更とその背景・影響 |
+| `CURRENT_STATE.md` | 現在地 | 現在のバージョンと実装・設計の進捗状況 | Antigravity IDE | 運用中 | 次のマイルストーン、完了項目の更新 |
+| `Meeting_Log.md` | 会議録 | 人間とAIの対話・議論の記録 | ChatGPT | 運用中 | 定例会議や重要な議論の決定事項 |
+| `REPOSITORY_GUIDE.md` | リポジトリガイド| 本ファイル（プロジェクトの地図） | Antigravity IDE | 運用中 | ディレクトリ・ファイル構成の変更時に更新 |
+
+## 4. 開発フロー
+
+Compassは以下の体制で開発を進めます。
+
+```text
+Founder（私）
+      │  要件・ビジョン・指示
+      ▼
+ChatGPT
+（Chief Architect）
+      │  思想設計・アーキテクチャ・中核ドキュメント作成
+      ▼
+Gemini
+（Research Reviewer）
+      │  設計レビュー・AI研究観点での妥当性検証・代替案提案
+      ▼
+Antigravity IDE
+（Lead Engineer）
+      │  コード実装・ドキュメント管理・GitHubリポジトリ保守
+      ▼
+GitHub
+（Single Source of Truth）
+```
+
+## 5. 開発フェーズ
+
+現在、Compassは「Memoryを持つAI」から「User Modelを育てるAI」へ思想を転換し、それに伴う設計を再構築するフェーズにあります。
+
+* **Phase 0** 基盤構築（完了）
+  * 初期リポジトリセットアップ、AI Collaboration Protocolの策定
+* **Phase 1** Core Philosophy & ドキュメント整備（📍現在地）
+  * 新思想に基づくドキュメント構造への移行、Core Philosophyの執筆
+* **Phase 2** User Model & Memory Design
+  * User Modelの概念設計、データ構造、Understanding/Predictionのフロー定義
+* **Phase 3** Architecture & Proof of Concept
+  * 決定した設計に基づくシステムアーキテクチャ定義、初期実装開始
+
+## 6. 更新ルール
+
+本ガイドは**継続的に更新する生きたドキュメント**です。
+以下の場合は、Antigravity IDE（または担当AI）が責任を持ってこのガイドを更新してください。
+
+1. 新しいディレクトリを追加した場合
+2. `docs/` 配下に新しいドキュメントを追加した場合
+3. AIの役割（Role）や開発フローに変更があった場合
+4. 開発フェーズが次の段階（Phase）へ移行した場合
+
+常に人間とAIの全員が「現在Compassがどのような構造で動いているか」を迷わず理解できるように保つことが最優先です。
