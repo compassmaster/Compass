@@ -1,0 +1,42 @@
+# Changelog
+
+設計・実装の変更履歴を管理します。
+
+## 2026-07-15 - Compass設計思想の更新（「User Modelを育てるAI」への転換）
+
+### 何を変更したか
+- Compassのコア思想を「Memoryを持つAI」から「User Modelを育てるAI」へと大きく変更
+- データの概念フローを再定義（Conversation -> Info Extraction -> Memory -> Hypothesis -> User Model -> Reasoning -> Conversation/Support/Planning）
+- `docs/philosophy`ディレクトリを新設し、`Compass_Core_Philosophy.md` の枠組みを用意
+- `AI_CONTEXT.md`, `CURRENT_STATE.md` を新思想に合わせて更新
+
+### なぜ変更したか
+- 議論の結果、Compassの本質は単なる記録（Memory）ではなく、「人を理解し、その理解を使って未来をより良くすること」であると結論付けられたため
+- Understandingを単なる記憶の集合ではなく「人物モデル」として、PredictionをPlanning以外にも広く活用する設計にするため
+
+### 他への影響
+- 実装上のデータ構造（User Model, Memory, Understanding）の持ち方が根本から変わる可能性が高い
+- 今後の全ドキュメント・実装は、この「User Modelを中心とした人物理解」のパラダイムを前提として行われる
+
+### 今後必要になる作業
+- Compass Core Philosophy の本文執筆
+- 新しい概念フローに基づくアーキテクチャ設計・詳細仕様の策定
+
+---
+
+## 2026-07-15 - AI開発体制の変更とドキュメント整備
+
+### 何を変更したか
+- AI（Antigravity IDE, ChatGPT, Gemini）ごとの役割分担を明確化
+- 情報共有のためのドキュメント（`AI_CONTEXT.md`, `CURRENT_STATE.md`, `CHANGELOG.md`）を新設
+
+### なぜ変更したか
+- 会話履歴による情報共有の限界を克服し、ドキュメントベースでAI同士が共通認識を持てるようにするため
+- コードだけではなく、設計思想をCompassの中核資産として管理するため
+
+### 他への影響
+- 今後の開発プロセスにおいて、実装前に必ず思想・設計との整合性を確認するフローが追加される
+- 各種設計ドキュメント（User Model, Memoryなど）の整備が必要になる
+
+### 今後必要になる作業
+- Compass Core Philosophy を始めとする中核設計ドキュメントの作成
