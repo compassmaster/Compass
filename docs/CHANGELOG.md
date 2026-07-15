@@ -2,6 +2,28 @@
 
 設計・実装の変更履歴を管理します。
 
+## 2026-07-15 - Compass AI Collaboration Protocol v1.0の制定
+
+### 何を変更したか
+- CompassにおけるAI同士の協調ルールを定めた `AI_COLLABORATION_PROTOCOL.md` を作成
+- GitHubリポジトリ内に `architecture/`, `research/`, `algorithms/`, `roadmap/` のディレクトリ構造を追加
+- ドキュメントを「唯一の正しい情報源（Single Source of Truth）」とする原則を明文化
+- Commit Conventionの制定（`docs:`, `design:`, `feat:`, `fix:`, `refactor:`, `research:`, `test:`, `chore:`）
+
+### なぜ変更したか
+- 複数のAIが協調し、一つの設計思想を共有しながら開発を進めるためのルールを確立するため
+- 実装速度よりも設計品質を優先し、「なぜその設計なのか」を重視するため
+- 最終目標である「人を理解し続け、理解を育て、現在を支え、未来を一緒に考える新しいAIアーキテクチャの構築」に向けた研究開発プロジェクトとしての基盤を固めるため
+
+### 他への影響
+- 今後の全開発において、このProtocolとCore Philosophyが最優先で参照される
+- 会話ログではなく、常にDocumentationの参照と更新が求められる
+
+### 今後必要になる作業
+- プロトコルに則った、各中核ドキュメント（User Model, Memory, Architectureなど）の詳細化
+
+---
+
 ## 2026-07-15 - Compass設計思想の更新（「User Modelを育てるAI」への転換）
 
 ### 何を変更したか
