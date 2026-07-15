@@ -6,7 +6,7 @@
 ## 現在のプロジェクト概要
 Compassは、単なるAIアプリや記録アプリ（Memoryを持つAI）ではありません。
 最終目標は「人を理解し続け、理解を育て、現在を支え、未来を一緒に考える新しいAIアーキテクチャの構築」です。
-現在、プロジェクトは初期の「Memory中心の設計」から「User Model（人物理解）中心の設計」へのパラダイムシフトを決定し、その思想に基づいた設計の再構築フェーズにあります。
+現在、プロジェクトは「開発環境を整えるフェーズ」を完了し、「Compassそのものを設計・実装するフェーズ」へ移行しました。
 
 ## Compassの思想（要約）
 Compassは記録するAIではなく、「人を理解するAI」です。
@@ -62,14 +62,21 @@ Compass/
 - 実装の前に設計思想を最優先とし、コードより思想を優先すること
 
 ## 未決定事項（Open Questions）
-- 新思想に基づいた「User Model」「Memory」「Understanding」「Prediction」の具体的なアーキテクチャ設計・データ構造
-- Core Philosophyの具体的テキスト化
+- 新思想に基づいた各アーキテクチャ要素（User Model, Understanding, Reasoningなど）の具体的なデータ構造
 - 現在の `src/` 配下の既存コードを、新しいアーキテクチャにどう統合するか
+- 既に合意済みの内容（記録するAIではなく理解するAI、MemoryはUnderstandingを育てる手段、Reflectionの非同期化、User Modelの静的/動的要素の分離）を正式なADR（設計決定.md）へ登録する作業（Core Philosophy策定後で可）
 
 ## 次に設計すべき内容 (Next Tasks)
-1. `Compass Core Philosophy` の本文作成
-2. `User Model` の概念定義およびデータ構造の設計
-3. `Memory`（事実）から `Hypothesis`（仮説）を生成し、`User Model` に統合するプロセス（Understanding, Reasoning）の設計
+現在の最優先タスクは「Compass Core Philosophy v1.0」の策定（Compassの憲法となるドキュメント）です。
+これが完了した後、以下の正式なロードマップに従って順次設計を進めます。
+
+1. Compass Core Philosophy
+2. User Model
+3. Understanding
+4. Reasoning
+5. Conversation
+6. Memory
+7. Planning
 
 ## AI役割分担の現状
 ### ChatGPT（Chief Architect）が現在担当している内容
@@ -77,8 +84,10 @@ Compass/
 - 新思想（User Model中心）に基づいた各コンポーネント（Memory, Understanding, Prediction）の概念設計とフローの再定義
 
 ### Antigravity IDE（Lead Engineer）が現在担当している内容
-- GitHubリポジトリへのドキュメント反映、ディレクトリ構造の整備
-- 決定した新思想や設計に基づく既存コードベースの棚卸しと、今後のアーキテクチャ実装に向けた準備
+- GitHubの保守・管理、ドキュメント構成の維持
+- 必要に応じたリファクタリング、設計変更に伴うドキュメント更新
+- ChatGPT・Geminiとの設計内容の同期
+- ※Core Philosophy策定完了まで、大きな実装や設計と衝突する可能性のある新機能の追加は行わない
 
 ### Gemini（Research Reviewer）にレビューしてほしいポイント
 - 「User Modelを育てるAI」という概念フロー（Information Extraction -> Memory -> Hypothesis -> User Model -> Reasoning）における、AI研究的観点からの妥当性やボトルネックの指摘
