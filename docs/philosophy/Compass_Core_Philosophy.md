@@ -9,6 +9,7 @@ lastUpdated: "2026-07-15"
 # Compass Core Philosophy
 
 📜 Compass Core Philosophy v1.0 (ドラフト)
+
 🌌 イントロダクション：Compassの存在意義
 Compassは、単なる「便利な道具（AIチャットや記録ツール）」ではありません。
 私たちの目指す最終目的地は、以下の一文に集約されます。
