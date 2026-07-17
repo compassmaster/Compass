@@ -1,50 +1,44 @@
-
----
-
-# Working Memory
+# Identity Memory
 
 ## Purpose
 
-現在の状況や短期間のみ必要な情報を保持する。
+ユーザーの価値観や性格、長期的な目標など、その人らしさを理解する。
+
+## Role
+
+「その人は何を大切にしているのか」を表現するMemory。
+
+Compassが長期間かけて形成する、最も安定した理解である。
 
 ## Examples
 
-- 今日の予定
-- 最近の会話内容
-- 一時的な目標
-- 現在抱えている問題
+- 人の役に立つ仕事をしたい
+- 新しい知識を学ぶことが好き
+- 家族との時間を大切にしている
+- 自然の中で過ごすとリフレッシュできる
+
+## Stored Information
+
+- Values
+- Goals
+- Preferences
+- Personality
+- Important Relationships
+
+### Example
+
+```json
+{
+  "value": "人の役に立つ仕事をしたい",
+  "confidence": 0.91,
+  "source": "複数の会話・行動"
+}
+```
 
 ## Lifetime
 
-短期間。
+非常に長期間。
 
-不要になった情報は削除または更新される。
-
----
-
-# Episodic Memory
-
-## Purpose
-
-過去の具体的な出来事や経験を保持する。
-
-## Examples
-
-- 初めて挑戦したこと
-- 大切なイベント
-- 過去の成功体験
-- 強い感情を伴った出来事
-
-## Lifetime
-
-長期間保持されるが、重要度によって変化する。
+ただし、ユーザー自身の変化に合わせて更新される。
 
 ---
-
-# Pattern Memory
-
-## Purpose
-
-繰り返し現れる行動や状態のパターンを保持する。
-
-## Examples
