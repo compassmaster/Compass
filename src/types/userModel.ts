@@ -1,4 +1,4 @@
-import { EntryId, Scale } from './log';
+import type { EntryId, Scale } from './log';
 
 /**
  * AIによる人物理解の最小単位：仮説（Hypothesis）
