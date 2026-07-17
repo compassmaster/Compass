@@ -1,5 +1,45 @@
-# Memory
+# Episodic Memory
 
 ## Purpose
 
-...
+ユーザーが経験した出来事を保存する。
+
+## Role
+
+「何が起きたのか」を記録するMemory。
+
+Patternを発見するための材料となる。
+
+## Examples
+
+- 試験前日は睡眠時間が5時間だった
+- 雨の日は家で勉強した
+- 友人と会った日は気分が良かった
+- カフェで4時間作業した
+
+## Stored Information
+
+- 日時
+- 出来事
+- 状態
+- 感情
+- Context
+
+### Example
+
+```json
+{
+  "date": "2026-07-17",
+  "event": "試験勉強",
+  "mood": 3,
+  "fatigue": 4,
+  "sleepHours": 5.5,
+  "note": "集中できなかった"
+}
+```
+
+## Lifetime
+
+中〜長期間。
+
+重要度の低い出来事は整理・削除される。
