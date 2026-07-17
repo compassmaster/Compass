@@ -82,3 +82,11 @@ Understanding Objectは以下の要素で構成される。
 - Understanding Status（理解の成熟度）
 - Importance（Compassにとっての重要度）
 - History（理解がどのように変化したか）
+  
+## Design Principle
+
+Understanding Objectは「プロフィール」ではない。
+
+Compassはユーザーを固定的な性格として扱わず、常に変化し続ける存在として理解する。
+
+そのため、Understanding Objectは更新・統合・分岐・消滅することを前提として設計される。
