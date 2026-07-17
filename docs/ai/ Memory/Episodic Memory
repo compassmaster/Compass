@@ -1,50 +1,25 @@
-
----
-
-# Working Memory
-
-## Purpose
-
-現在の状況や短期間のみ必要な情報を保持する。
-
-## Examples
-
-- 今日の予定
-- 最近の会話内容
-- 一時的な目標
-- 現在抱えている問題
-
-## Lifetime
-
-短期間。
-
-不要になった情報は削除または更新される。
-
----
-
 # Episodic Memory
 
 ## Purpose
 
-過去の具体的な出来事や経験を保持する。
+Episodic Memoryは、ユーザーが経験した具体的な出来事や、その時の状況・感情を保存するMemoryである。
 
-## Examples
-
-- 初めて挑戦したこと
-- 大切なイベント
-- 過去の成功体験
-- 強い感情を伴った出来事
-
-## Lifetime
-
-長期間保持されるが、重要度によって変化する。
+過去の経験を保持することで、Compassがユーザーの人生の流れを理解し、現在の状況と関連付けるために利用する。
 
 ---
 
-# Pattern Memory
+## Responsibilities
 
-## Purpose
+Episodic Memoryは以下を管理する。
 
-繰り返し現れる行動や状態のパターンを保持する。
+- 過去の出来事
+- 出来事が発生した時期
+- 関係する人物や環境
+- その時の感情
+- ユーザーにとっての重要度
 
-## Examples
+---
+
+# Stored Information
+
+Episodic Memoryでは以下の情報を保持する。
