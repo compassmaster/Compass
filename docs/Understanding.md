@@ -1,3 +1,23 @@
+# Understanding
+
+## Purpose
+
+Understandingは、Compassがユーザーをどのように理解するかを定義するドキュメントである。
+
+ここで扱うのはAIの内部状態であり、ユーザーとの対話方法は扱わない。
+
+Conversation Layerは別ドキュメントで管理する。
+
+---
+
+Responsibilities
+
+- Understanding Object
+- Understanding Status
+- Memoryとの関係
+- 学習方法
+- パターン抽出
+- 長期理解の更新
 # Compass Analysis Persona（推論エンジンの基本思想）
 
 ## 1. コア定義
