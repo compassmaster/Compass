@@ -1,25 +1,39 @@
-# Episodic Memory
+Episodic Memory
+Purpose
 
-## Purpose
+ユーザーの具体的な経験や出来事を保存する。
 
-Episodic Memoryは、ユーザーが経験した具体的な出来事や、その時の状況・感情を保存するMemoryである。
+Role
 
-過去の経験を保持することで、Compassがユーザーの人生の流れを理解し、現在の状況と関連付けるために利用する。
+「何が起きたか」を記録するMemory。
 
----
+Examples
+2026年7月17日に疲れていた
+試験前日に睡眠時間が短かった
+友人と会った日は気分が良かった
+雨の日に外出が減った
+Stored Information
+日付
+出来事
+状態
+感情
+結果
+Context
 
-## Responsibilities
+Example:
 
-Episodic Memoryは以下を管理する。
+{
+  "date": "2026-07-17",
+  "event": "試験勉強",
+  "mood": 3,
+  "fatigue": 4,
+  "sleepHours": 5.5,
+  "note": "集中できなかった"
+}
+Lifetime
 
-- 過去の出来事
-- 出来事が発生した時期
-- 関係する人物や環境
-- その時の感情
-- ユーザーにとっての重要度
+中〜長期間。
 
----
+ただし、すべての出来事を永続保存する必要はない。
 
-# Stored Information
-
-Episodic Memoryでは以下の情報を保持する。
+重要度や再利用可能性によって整理される。
