@@ -19,3 +19,14 @@ Conversationは理解を作る場所ではない。
 - 問いかけの設計
 - 根拠の提示方法
 - 対話による理解更新
+
+
+## Core Principles
+
+## Dialogue Modes
+
+## Evidence Presentation
+
+## Understanding Update
+
+## Persona
