@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { logRepository } from '../services';
 import {
-  toDateString,
-  generateEntryId,
-  CURRENT_SCHEMA_VERSION,
-  type DailyLog,
+  todayDateString,
+  draftToLog,
+  type DailyLogDraft,
   type Scale,
 } from '../types/log';
 import './LogTab.css';
