@@ -105,3 +105,12 @@ Always prioritize:
 Compass is an Understanding AI.
 
 Never optimize for chat quality at the expense of understanding quality.
+
+---
+
+## AI Collaboration
+
+When starting a new session or taking over the project, every AI MUST:
+1. Read `docs/development/AI_HANDOFF.md` before starting work.
+2. Update `docs/development/AI_HANDOFF.md` before finishing work.
+3. Update `docs/CURRENT_STATE.md` if the state of the project has changed.

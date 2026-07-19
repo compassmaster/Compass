@@ -36,20 +36,21 @@ lastUpdated: "2026-07-15"
 ---
 
 ## 💻 実装済み項目 (Implementation Status)
-* `src/types/` および `src/utils/` に初期の型定義とリポジトリ層が存在（古い「Memory中心」の設計ベース）。
-* 新しい「User Model中心（D-0002）」のアーキテクチャへの移行・リファクタリング準備中。
+* `src/` 配下を Feature-First アーキテクチャにリファクタリング完了 (Phase 1 完了)。
+* `daily-log`, `home`, `compass-map` などのドメインごとにコンポーネント、型定義、サービスを分離。
+* UI、データ永続化（localStorage）、モデル定義が統合され正常に機能。
+* 新しい「User Model中心（D-0002）」のアーキテクチャ基盤が整理された。
 
 ---
 
 ## 🔄 進行中 (Active Tasks)
-* **既存コードの棚卸しとリファクタリング準備:** `src/` 配下の既存コードを、D-0002（UserModel / Hypothesis）に適合させるための分析。
-* **概念フローの次の設計:** 会話（Conversation）から情報抽出（IE）を行い、仮説（Hypothesis）を生成してUser Modelに統合する具体的なプロセスの設計。
+* **Milestone 2 (Phase 2): Understanding & Reasoning 設計への着手準備**
+* 日々のログから仮説（Hypothesis）を生成・更新する具体的な推論ロジックの設計。
+* 概念フローの具体化: 会話（Conversation）から情報抽出（IE）を行い、User Modelを更新するプロセスの詳細設計。
 
 ---
 
 ## 🎯 次のマイルストーン (Next Milestone)
-* **Milestone 1: 基盤リファクタリングの完了**
-  * `src/types/` の型定義を新しい `UserModel` スキーマに書き換える。
-  * `src/utils/` の保存・読み込み処理を新構造に対応させる。
-* **Milestone 2: Understanding & Reasoning 設計の着手**
-  * Memory（事実）からHypothesis（仮説）を生成・更新するロジック設計。
+* **Milestone 2: Analysis (Phase 5) と Understanding (Phase 6)**
+  * 統計分析コンポーネント（Stats/Analysis）の組み込み
+  * Memory（事実）からHypothesis（仮説）を生成・更新するLLM/推論ロジック設計。
