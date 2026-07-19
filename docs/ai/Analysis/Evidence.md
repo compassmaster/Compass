@@ -31,3 +31,22 @@ Evidenceは観測された情報のみを保持する。
 - カフェで勉強した日は集中時間が長い。
 
 ※これらは「事実・傾向」であり、性格や価値観を断定するものではない。
+
+## Sources
+
+Evidence always originates from one or more observations.
+
+Possible sources include:
+
+- Daily Log
+- Conversation
+- Sensor data (future)
+- External context (future)
+
+- ## Lifecycle
+
+Evidence may change over time as new observations are collected.
+
+Older Evidence may become weaker, stronger, or obsolete.
+
+Evidence should always reflect the latest available observations.
