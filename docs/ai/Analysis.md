@@ -25,3 +25,25 @@ Hypothesis（仮説）の生成は別の役割が担当する。
 ## Output
 
 - Evidence
+
+## Responsibility
+
+Analysis does not update the UserModel.
+
+Analysis does not generate Hypotheses.
+
+Analysis only analyzes input data and produces Evidence.
+
+## Relationship
+
+Daily Log
+      ↓
+Analysis
+      ↓
+Evidence
+      ↓
+Understanding
+      ↓
+Hypothesis
+      ↓
+User Model
