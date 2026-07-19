@@ -30,7 +30,17 @@ Memoryの保存方法はMemoryで管理する。
 # Relationship
 
 ```text
-Memory
+Daily Log
+Conversation
+      │
+      ▼
+Analysis
+      │
+      ▼
+Evidence
+      │
+      ▼
+Understanding
       │
       ▼
 Understanding Object
