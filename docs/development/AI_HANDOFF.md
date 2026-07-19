@@ -8,8 +8,9 @@ Every AI MUST read this document before starting work, and update it before fini
 ## Current Project Status
 - **Status:** Active Development
 - **Version:** v0.1.0-alpha
-- **Current MVP Phase:** Phase 1 (Completed), transitioning to Phase 2/5 (Analysis/Understanding logic).
-
+- Current MVP Phase:
+- ✅ Phase 1: Completed
+- ⏳ Next: Phase 2 (Analysis & Understanding)
 ## Completed Work
 - Replaced the monolithic architecture with a **Feature-First Architecture**.
 - Successfully decomposed `App.tsx` into modular components (`HomeTab`, `LogTab`, `MapTab`, `ReflectionCard`).
