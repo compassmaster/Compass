@@ -83,21 +83,21 @@ Confirmed
 
 Confidenceはデータ量・一貫性・再現性などから算出される。
 
+ConfidenceはUnderstandingが正しいことを保証するものではない。
+
+Confidenceは現在のEvidenceがどの程度Understandingを支持しているかを表す。
+
 ---
 
-## Evidence
+## Evidence Count
 
-理解の根拠となったデータ量を表す。
+理解の根拠となったEvidenceの数を表す。
 
 例
 
-```
-Evidence = 84
-```
+Evidence Count = 84
 
-これは84件の記録や観測を根拠として理解していることを意味する。
-
----
+これは84件のEvidenceを根拠として理解していることを意味する。
 
 ## Last Updated
 
