@@ -1,0 +1,63 @@
+/* ============================================================
+ * ReflectionCard — Reflection カードのスタイル
+ * ============================================================ */
+
+.reflection-card {
+  background-color: #ebf8ff;
+  border-left: 5px solid #3182ce;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 30px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.reflection-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.ai-badge {
+  background-color: #3182ce;
+  color: #fff;
+  font-size: 0.8rem;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-weight: bold;
+}
+
+.reflection-title {
+  font-weight: bold;
+  color: #2b6cb0;
+}
+
+.reflection-body {
+  font-size: 1.05rem;
+  line-height: 1.6;
+  margin: 0 0 15px 0;
+}
+
+.reflection-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.agree-button {
+  padding: 8px 16px;
+  background-color: #2b6cb0;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.disagree-button {
+  padding: 8px 16px;
+  background-color: #edf2f7;
+  color: #4a5568;
+  border: 1px solid #cbd5e0;
+  border-radius: 4px;
+  cursor: pointer;
+}
