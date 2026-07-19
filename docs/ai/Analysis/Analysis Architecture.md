@@ -43,21 +43,18 @@ Understanding
 ---
 
 ### Analyzer
-
 各Analyzerは1つの分析だけを担当する。
 
-例
-
-- AverageMoodAnalyzer
-- SleepAnalyzer
-- FatigueAnalyzer
-- EventAnalyzer
+各AnalyzerはDaily Logを入力として受け取り、
+0件以上のEvidenceを生成する。
 
 Analyzer同士は互いを知らない。
 
 ---
 
 ## Output
+
+AnalysisはHypothesisを生成しない。
 
 Analysisの出力はEvidenceのみである。
 
