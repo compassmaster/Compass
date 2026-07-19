@@ -3,6 +3,7 @@ import { logRepository } from '../services';
 import {
   todayDateString,
   draftToLog,
+  isDraftValid,
   type DailyLogDraft,
   type Scale,
 } from '../types/log';
@@ -15,31 +16,40 @@ import './LogTab.css';
  * 保存成功時に onSaveSuccess コールバックで親に通知する。
  */
 export function LogTab({ onSaveSuccess }: { onSaveSuccess: () => void }) {
-  const [mood, setMood] = useState<Scale>(3);
-  const [fatigue, setFatigue] = useState<Scale>(3);
-  const [sleepHours, setSleepHours] = useState<string>('7');
-  const [note, setNote] = useState<string>('');
-  const [events, setEvents] = useState<string>('');
+  const [mood, setMood] = useState<Scale | null>(3);
+  const [fatigue, setFatigue] = useState<Scale | null>(3);
+  const [sleepHours, setSleepHours] = useState('7');
+  const [note, setNote] = useState('');
+  const [events, setEvents] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const now = new Date().toISOString();
-    const newLog: DailyLog = {
-      id: generateEntryId(),
-      date: toDateString(new Date()),
-      createdAt: now,
-      updatedAt: now,
-      schemaVersion: CURRENT_SCHEMA_VERSION,
+
+    const draft: DailyLogDraft = {
       mood,
       fatigue,
       sleepHours: sleepHours ? parseFloat(sleepHours) : null,
       note,
-      events: events.split(',').map(e => e.trim()).filter(Boolean),
+      events: events
+        .split(',')
+        .map((e) => e.trim())
+        .filter(Boolean),
     };
+
+    // 必須項目チェック
+    if (!isDraftValid(draft)) {
+      alert('気分と疲労度を入力してください');
+      return;
+    }
+
+    const newLog = draftToLog(
+      draft,
+      todayDateString()
+    );
 
     logRepository.save(newLog);
 
-    // フォームの完全なリセット
+    // フォームリセット
     setMood(3);
     setFatigue(3);
     setSleepHours('7');
@@ -47,47 +57,79 @@ export function LogTab({ onSaveSuccess }: { onSaveSuccess: () => void }) {
     setEvents('');
 
     alert('今日の記録を保存しました！');
+
     onSaveSuccess();
   };
 
   return (
     <form onSubmit={handleSubmit} className="log-form">
-      <h2 className="section-title">今日を記録する</h2>
+      <h2>今日を記録する</h2>
 
       <div className="form-group">
-        <label className="form-label">今の気分は？ (1: とても悪い 〜 5: とても良い)</label>
+        <label className="form-label">
+          今の気分は？
+          <br />
+          (1: とても悪い 〜 5: とても良い)
+        </label>
+
         <div className="scale-container">
-          {([1, 2, 3, 4, 5] as Scale[]).map(val => (
+          {([1, 2, 3, 4, 5] as Scale[]).map((val) => (
             <button
               key={`mood-${val}`}
               type="button"
-              className={`scale-button ${mood === val ? 'scale-active' : ''}`}
+              className={`scale-button ${
+                mood === val ? 'scale-active' : ''
+              }`}
               onClick={() => setMood(val)}
             >
-              {val === 1 ? '😢 1' : val === 3 ? '😐 3' : val === 5 ? '😊 5' : val}
+              {val === 1
+                ? '😢 1'
+                : val === 3
+                ? '😐 3'
+                : val === 5
+                ? '😊 5'
+                : val}
             </button>
           ))}
         </div>
       </div>
 
+
       <div className="form-group">
-        <label className="form-label">今の疲労度は？ (1: 元気 〜 5: とても疲れている)</label>
+        <label className="form-label">
+          今の疲労度は？
+          <br />
+          (1: 元気 〜 5: とても疲れている)
+        </label>
+
         <div className="scale-container">
-          {([1, 2, 3, 4, 5] as Scale[]).map(val => (
+          {([1, 2, 3, 4, 5] as Scale[]).map((val) => (
             <button
               key={`fatigue-${val}`}
               type="button"
-              className={`scale-button ${fatigue === val ? 'scale-active' : ''}`}
+              className={`scale-button ${
+                fatigue === val ? 'scale-active' : ''
+              }`}
               onClick={() => setFatigue(val)}
             >
-              {val === 1 ? '⚡ 1' : val === 3 ? '🔋 3' : val === 5 ? '🥵 5' : val}
+              {val === 1
+                ? '⚡ 1'
+                : val === 3
+                ? '🔋 3'
+                : val === 5
+                ? '🥵 5'
+                : val}
             </button>
           ))}
         </div>
       </div>
 
+
       <div className="form-group">
-        <label className="form-label">睡眠時間 (時間)</label>
+        <label className="form-label">
+          睡眠時間 (時間)
+        </label>
+
         <input
           type="number"
           step="0.1"
@@ -97,8 +139,14 @@ export function LogTab({ onSaveSuccess }: { onSaveSuccess: () => void }) {
         />
       </div>
 
+
       <div className="form-group">
-        <label className="form-label">自由メモ（今日の出来事や、心に浮かんできたことなど）</label>
+        <label className="form-label">
+          自由メモ
+          <br />
+          （今日の出来事や、心に浮かんできたことなど）
+        </label>
+
         <textarea
           value={note}
           onChange={(e) => setNote(e.target.value)}
@@ -107,8 +155,14 @@ export function LogTab({ onSaveSuccess }: { onSaveSuccess: () => void }) {
         />
       </div>
 
+
       <div className="form-group">
-        <label className="form-label">イベントタグ (カンマ区切り。例: 在宅勤務, カフェ, 開発)</label>
+        <label className="form-label">
+          イベントタグ
+          <br />
+          （カンマ区切り。例: 在宅勤務, カフェ, 開発）
+        </label>
+
         <input
           type="text"
           value={events}
@@ -118,7 +172,14 @@ export function LogTab({ onSaveSuccess }: { onSaveSuccess: () => void }) {
         />
       </div>
 
-      <button type="submit" className="submit-button">保存して航海図に反映させる</button>
+
+      <button
+        type="submit"
+        className="submit-button"
+      >
+        保存して航海図に反映させる
+      </button>
+
     </form>
   );
 }
