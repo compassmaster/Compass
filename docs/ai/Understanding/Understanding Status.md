@@ -4,6 +4,8 @@
 
 Understanding Statusは、Compassが各Understanding Objectをどの程度理解しているかを管理する内部状態である。
 
+Understanding Statusは、Evidenceに基づいて形成された現在の理解の状態を表す。
+
 Understanding Objectが「何を理解するか」を表すのに対し、Understanding Statusは「どこまで理解できているか」を表す。
 
 ConversationやUIとは独立したAI内部の情報であり、推論・分析・Memory更新の基盤として利用される。
