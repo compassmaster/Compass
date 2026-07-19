@@ -1,62 +1,280 @@
 # AI Handoff Document
 
-This document is the permanent handoff file for all future AI assistants (Claude, ChatGPT, Gemini, etc.) working on the Compass project.
-Every AI MUST read this document before starting work, and update it before finishing work.
+This document is the permanent handoff file for all future AI assistants (ChatGPT, Claude, Gemini, Antigravity, etc.) working on the Compass project.
+
+Every AI assistant **must** read this document before starting work and update it before finishing work.
+
+---
 
 **Last Updated:** 2026-07-20
 
-## Current Project Status
+# Current Project Status
+
 - **Status:** Active Development
 - **Version:** v0.1.0-alpha
-- Current MVP Phase:
+
+## Current MVP Phase
+
 - ✅ Phase 1: Completed
 - ⏳ Next: Phase 2 (Analysis & Understanding)
-## Completed Work
-- Replaced the monolithic architecture with a **Feature-First Architecture**.
-- Successfully decomposed `App.tsx` into modular components (`HomeTab`, `LogTab`, `MapTab`, `ReflectionCard`).
-- Re-organized files into domain-driven features (`daily-log`, `compass-map`, `home`) and shared types (`stats.ts`).
-- Migrated CSS into per-component CSS files.
-- Purged outdated `types/` and `utils/` folders from the root `src/` directory.
-- Maintained 100% of the existing behavior (LocalStorage, User Model instantiation, UI rendering).
-- Implemented and verified TypeScript compilation and Vite build processes.
 
-## Current Work
-- We have just completed Phase 1 (Project setup, routing architecture, shared types, and feature-first refactoring).
-- The codebase is clean, well-typed, and ready for further feature development without architectural debt.
+---
 
-## Next Recommended Tasks
-1. **Analysis Implementation (Phase 5):**
-   - Incorporate statistical analysis logic using the definitions in `src/shared/types/stats.ts`.
-   - Calculate average mood, fatigue, sleep hours, and simple event correlations.
-2. **Understanding Logic (Phase 6):**
-   - Implement the logic to generate `Understanding Status` from stored data.
-   - Design the exact process by which Conversation/Daily Logs extract `Hypothesis` items into the `UserModel`.
-3. **History Feature (Phase 4):**
-   - Improve the display of previous records (currently just a slice of the last 3 logs on the Home tab).
+# Completed Work
 
-## Architectural Decisions
-- **D-0001:** Documentation in Japanese and ADR management.
-- **D-0002:** User Model has a dual-layer structure (Long-term core vs Short-term state) powered by `Hypothesis` & `Evidence`.
-- **D-0003:** UI strategy uses a 3-layer approach: Invisible Understanding, Reflection (Shared verification), and Compass Map (Visual profile).
-- **D-0004:** AI acts as a quiet observer, prioritizing understanding over judging, and focusing on user strengths and patterns rather than isolated flaws.
-- **D-0005:** The processing happens in two steps: Immediate Response (fast, no deep analysis) and Reflection (asynchronous deep batch analysis).
-- **Feature-First Architecture:** Code is organized by domain (`src/features/*`), minimizing monolithic files and preventing tightly coupled code.
+## Architecture
 
-## Known Issues
-- The `App.tsx` still handles the overall application state (`activeTab`, `logs`, `userModel`) and delegates it to child components. While acceptable for the MVP, as the app scales, a state management solution (e.g., Context API or a store) might be needed.
-- `Compass Map`'s static initial `user-default` model is still hardcoded in `App.tsx`'s `useEffect`.
+- Replaced the previous monolithic structure with a Feature-First Architecture.
+- Introduced domain-oriented feature modules.
+- Removed the old flat `types/` and `utils/` architecture.
+- Organized shared definitions into `src/shared/`.
 
-## Documentation Inconsistencies
-- No remaining major inconsistencies between documentation and code. The code now perfectly reflects the Feature-First architecture required in Phase 1.
+## Components
 
-## Files Modified in Last Session
-- `src/app/App.tsx` (Created)
-- `src/app/App.css` (Created)
-- `src/features/daily-log/*` (Created)
-- `src/features/compass-map/*` (Created)
-- `src/features/home/*` (Created)
-- `src/shared/types/stats.ts` (Created)
-- `src/main.tsx` (Modified)
-- `CLAUDE.md` (Modified)
-- `docs/CURRENT_STATE.md` (Modified)
-- `src/App.tsx`, `src/App.css`, `src/types/`, `src/utils/` (Deleted)
+Successfully decomposed the original monolithic `App.tsx` into modular components.
+
+Created:
+
+- HomeTab
+- LogTab
+- MapTab
+- ReflectionCard
+
+## Services
+
+Separated repositories into feature-owned services.
+
+- Daily Log Repository
+- User Model Repository
+
+## Styling
+
+- Migrated inline styles into dedicated CSS files.
+- Added feature-specific stylesheets.
+
+## Build
+
+Verified that:
+
+- TypeScript compilation succeeds.
+- Vite production build succeeds.
+- Existing LocalStorage behavior is preserved.
+
+## Documentation
+
+- Created `AI_HANDOFF.md`.
+- Updated `CURRENT_STATE.md`.
+- Updated `CLAUDE.md`.
+
+---
+
+# Current Work
+
+Phase 1 has been completed.
+
+The project now has a clean Feature-First architecture and is ready for implementation of the Analysis and Understanding systems.
+
+---
+
+# Next Recommended Tasks
+
+## Before Implementation
+
+Before implementing any new functionality:
+
+1. Read:
+   - `CLAUDE.md`
+   - `AI_HANDOFF.md`
+   - `CURRENT_STATE.md`
+
+2. Verify that the implementation matches the documentation.
+
+3. If the code and documentation disagree:
+   - Treat the **source code** as the source of truth.
+   - Report the discrepancy.
+   - Update the documentation before finishing.
+
+4. Review all open architectural Issues before starting implementation.
+
+---
+
+## Phase 2 — Analysis & Understanding
+
+Primary goals:
+
+- Design the Analysis Engine.
+- Analyze Daily Logs statistically.
+- Generate Evidence objects.
+- Generate Hypotheses from accumulated Evidence.
+- Implement the first Understanding pipeline.
+- Remove the temporary hardcoded demo UserModel.
+- Ensure every Understanding has supporting Evidence.
+- Follow ADR D-0002 through D-0005.
+
+---
+
+## Phase 4 — History
+
+Planned improvements:
+
+- Improve Daily Log history browsing.
+- Support viewing older records.
+- Add filtering and searching.
+- Improve navigation between historical entries.
+
+---
+
+# Architectural Decisions
+
+The implementation currently follows the accepted ADRs.
+
+- **D-0001** — Documentation strategy
+- **D-0002** — User Model structure
+- **D-0003** — Three-layer UI strategy
+- **D-0004** — Understanding-first AI philosophy
+- **D-0005** — Immediate Response + Reflection architecture
+
+Additional architectural decisions:
+
+- Feature-First Architecture
+- Repository Pattern
+- Strong TypeScript typing
+- Domain-oriented folder organization
+
+---
+
+# Known Issues
+
+## Application State
+
+`App.tsx` currently owns:
+
+- activeTab
+- logs
+- userModel
+
+This is acceptable for the MVP.
+
+As the application grows, consider introducing:
+
+- Context API
+- Zustand
+- or another state management solution.
+
+---
+
+## Demo UserModel
+
+The application currently injects a hardcoded demo UserModel during first launch.
+
+This exists only for demonstration purposes.
+
+This conflicts with:
+
+- D-0002
+- D-0004
+
+Future versions should never fabricate Understanding.
+
+Unknown information should remain unknown until supported by Evidence.
+
+Priority:
+
+- Phase 2
+
+---
+
+# Documentation Consistency
+
+At the time of this handoff:
+
+- Documentation matches the implementation.
+- No major inconsistencies are known.
+
+If future inconsistencies appear:
+
+- Treat the implementation as the source of truth.
+- Update the documentation before completing the task.
+
+---
+
+# Files Modified During the Previous Session
+
+Created
+
+- `src/app/App.tsx`
+- `src/app/App.css`
+- `src/features/daily-log/*`
+- `src/features/compass-map/*`
+- `src/features/home/*`
+- `src/shared/types/stats.ts`
+- `docs/development/AI_HANDOFF.md`
+
+Modified
+
+- `src/main.tsx`
+- `CLAUDE.md`
+- `docs/CURRENT_STATE.md`
+
+Deleted
+
+- `src/App.tsx`
+- `src/App.css`
+- `src/types/*`
+- `src/utils/*`
+
+---
+
+# Working Rules for Future AI Assistants
+
+Before starting work:
+
+1. Read:
+   - `CLAUDE.md`
+   - `AI_HANDOFF.md`
+   - `CURRENT_STATE.md`
+
+2. Understand the current implementation before making changes.
+
+3. Never assume previous chat summaries are correct.
+
+4. If documentation and implementation disagree:
+   - Trust the implementation.
+   - Report the inconsistency.
+   - Synchronize the documentation.
+
+5. Follow the Feature-First Architecture.
+
+6. Follow the accepted ADRs.
+
+7. Preserve existing behavior unless explicitly instructed otherwise.
+
+8. Do not fabricate AI Understanding.
+
+9. Every Hypothesis must be supported by Evidence.
+
+Before finishing work:
+
+- Update `AI_HANDOFF.md`.
+- Update `CURRENT_STATE.md` if necessary.
+- Record architectural decisions.
+- Record new technical debt.
+- Record new Known Issues.
+- Summarize completed work.
+- Verify the project builds successfully before considering the task complete.
+
+---
+
+# Long-Term Vision
+
+Compass is designed as an AI companion that gradually understands the user through accumulated evidence rather than assumptions.
+
+Every implementation should support this philosophy.
+
+When making architectural decisions, prioritize:
+
+1. User Understanding over prediction.
+2. Evidence over assumptions.
+3. Transparency over hidden inference.
+4. Long-term maintainability.
+5. Small, modular, feature-owned implementations.
