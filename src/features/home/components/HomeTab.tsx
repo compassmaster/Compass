@@ -1,6 +1,10 @@
+import { useState, useEffect } from 'react';
 import { type DailyLog } from '../../daily-log/types/log';
 import { analyzeLogs } from '../../../analysis/services/analysisService';
 import { ReflectionCard } from './ReflectionCard';
+import { InsightCard } from '../../analysis/components/InsightCard';
+import { insightRepository } from '../../analysis/services';
+import type { Insight } from '../../analysis/types/analysis';
 import './HomeTab.css';
 
 
@@ -10,6 +14,34 @@ interface HomeTabProps {
   onReflectionFeedback: (agreed: boolean) => void;
 }
 
+<<<<<<< HEAD
+=======
+export function HomeTab({ logs, onNavigateToLog, onReflectionFeedback }: HomeTabProps) {
+  const [insights, setInsights] = useState<Insight[]>([]);
+
+  useEffect(() => {
+    loadInsights();
+  }, []);
+
+  const loadInsights = () => {
+    const newInsights = insightRepository.getByStatus('NEW');
+    setInsights(newInsights);
+  };
+
+  const handleInsightFeedback = (insightId: string, isConfirmed: boolean) => {
+    const insight = insightRepository.getById(insightId);
+    if (insight) {
+      insight.status = isConfirmed ? 'CONFIRMED' : 'DISMISSED';
+      insight.updatedAt = new Date().toISOString();
+      insightRepository.update(insight);
+      loadInsights();
+    }
+  };
+
+  return (
+    <div>
+      <ReflectionCard onFeedback={onReflectionFeedback} />
+>>>>>>> 0b5198f (feat: add insight display and feedback flow)
 
 export function HomeTab({
   logs,
@@ -40,10 +72,28 @@ export function HomeTab({
 
       </div>
 
+<<<<<<< HEAD
 
 
 
       {/* Compassからの気づき */}
+=======
+      {insights.length > 0 && (
+        <section className="home-section">
+          <h2 className="section-title">Compassからの発見</h2>
+          <div className="insight-list">
+            {insights.map(insight => (
+              <InsightCard 
+                key={insight.id} 
+                insight={insight} 
+                onFeedback={handleInsightFeedback} 
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+>>>>>>> 0b5198f (feat: add insight display and feedback flow)
       <section className="home-section">
 
 

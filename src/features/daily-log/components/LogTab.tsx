@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { logRepository } from '../services';
+import { insightGeneratorService } from '../../analysis/services';
 import {
   todayDateString,
   draftToLog,
@@ -47,7 +48,19 @@ export function LogTab({ onSaveSuccess }: { onSaveSuccess: () => void }) {
       todayDateString()
     );
 
+    // 1. DailyLogの保存
     logRepository.save(newLog);
+
+    // 2. 分析とInsight生成
+    // ※現在は同期処理だが、将来的な非同期AI連携を見据え、
+    // ログ保存プロセスを阻害しないよう try-catch で保護する。
+    // （将来的に setTimeout 等でバックグラウンド実行に移行する可能性を考慮）
+    try {
+      insightGeneratorService.generateAndSaveInsights([newLog]);
+    } catch (err) {
+      console.error('[Compass] Failed to generate insight:', err);
+      // 分析が失敗しても、DailyLog自体は保存されているためユーザーにはエラーを見せず処理を続行する
+    }
 
     // フォームリセット
     setMood(3);
