@@ -1,5 +1,4 @@
 import { type DailyLog } from '../../daily-log/types/log';
-import { ReflectionCard } from './ReflectionCard';
 import './HomeTab.css';
 
 interface HomeTabProps {
