@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-
-=======
 export type AnalysisType = 'PATTERN' | 'TREND' | 'INSIGHT';
 
 export interface AnalysisResult {
@@ -41,4 +38,3 @@ export interface Insight extends AnalysisResult {
   /** インサイトの現在のステータス */
   status: InsightStatus;
 }
->>>>>>> 0b5198f (feat: add insight display and feedback flow)

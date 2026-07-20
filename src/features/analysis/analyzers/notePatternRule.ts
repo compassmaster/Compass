@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-
-=======
 import type { DailyLog } from '../../daily-log/types/log';
 import type { AnalysisResult, Analyzer } from '../types/analysis';
 
@@ -26,7 +23,7 @@ export const notePatternRule: Analyzer = (logs: DailyLog[]): AnalysisResult[] =>
         // 複合的な状態変化から動的に算出する予定。
         confidence: 0.8,
         relatedLogIds: [log.id],
-        metadata: { 
+        metadata: {
           category: 'activity_pattern',
           matchedKeywords: matchedActivity,
           memoryCandidate: true,
@@ -46,7 +43,7 @@ export const notePatternRule: Analyzer = (logs: DailyLog[]): AnalysisResult[] =>
         // 複合的な状態変化から動的に算出する予定。
         confidence: 0.8,
         relatedLogIds: [log.id],
-        metadata: { 
+        metadata: {
           category: 'load_pattern',
           matchedKeywords: matchedLoad,
           memoryCandidate: true,
@@ -59,4 +56,3 @@ export const notePatternRule: Analyzer = (logs: DailyLog[]): AnalysisResult[] =>
 
   return results;
 };
->>>>>>> 0b5198f (feat: add insight display and feedback flow)
