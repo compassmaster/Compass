@@ -1,9 +1,9 @@
-import type { Insight } from '../../../analysis/types/analysis';
+import type { AnalysisResult } from '../../analysis/types/analysis';
 import './ReflectionCard.css';
 
 
 interface ReflectionCardProps {
-  insight: Insight;
+  insight: AnalysisResult;
   onFeedback: (agreed: boolean) => void;
 }
 
