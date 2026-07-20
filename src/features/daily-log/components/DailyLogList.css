@@ -1,0 +1,43 @@
+.log-list {
+  margin-top: 32px;
+}
+
+.log-card {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 16px;
+  border: 1px solid #ddd;
+}
+
+.log-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.log-status {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.log-note {
+  margin-top: 16px;
+  padding: 12px;
+  background: #f7f7f7;
+  border-radius: 8px;
+}
+
+.log-events {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.event-tag {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #eee;
+}
