@@ -1,31 +1,96 @@
+import type { Insight } from '../../../analysis/types/analysis';
 import './ReflectionCard.css';
 
-/**
- * Reflection カード。
- *
- * D-0003 の「Reflection（時々見せる / 共同検証の儀式）」に対応。
- * AIの理解をユーザーに提示し、フィードバックを受けて確信度を調整する。
- *
- * D-0004 の原則 ⑤：仮説として扱い、断定しない。
- */
-export function ReflectionCard({
-  onFeedback,
-}: {
+
+interface ReflectionCardProps {
+  insight: Insight;
   onFeedback: (agreed: boolean) => void;
-}) {
+}
+
+
+export function ReflectionCard({
+  insight,
+  onFeedback,
+}: ReflectionCardProps) {
+
+
+  const confidenceLabel = {
+    low: '🟢 参考程度',
+    medium: '🟡 傾向あり',
+    high: '🔴 強い傾向',
+  };
+
+
   return (
+
     <div className="reflection-card">
-      <div className="reflection-header">
-        <span className="ai-badge">🤖 Compassのささやき</span>
-        <span className="reflection-title">〜 Reflection（振り返り）〜</span>
-      </div>
-      <p className="reflection-body">
-        「最近の記録を見ていると、あなたは <strong>『目標に向かって努力できる人』</strong> ですが、頑張りすぎた後にドッと疲れが出る傾向があるように見えます。この理解は合っていますか？」
+
+      <h3>
+        🌱 Compassからの気づき
+      </h3>
+
+
+      <p className="reflection-message">
+        {insight.message}
       </p>
+
+
+      <p className="reflection-confidence">
+        確信度:
+        {' '}
+        {confidenceLabel[insight.confidence]}
+      </p>
+
+
+      <details>
+
+        <summary>
+          根拠を見る
+        </summary>
+
+
+        <ul>
+
+          {insight.evidence.map(
+            (item, index) => (
+              <li key={index}>
+                {item}
+              </li>
+            )
+          )}
+
+        </ul>
+
+      </details>
+
+
+
       <div className="reflection-actions">
-        <button className="agree-button" onClick={() => onFeedback(true)}>👍 そう思う</button>
-        <button className="disagree-button" onClick={() => onFeedback(false)}>👎 違うかも</button>
+
+        <p>
+          この気づきはあなたの感覚に近いですか？
+        </p>
+
+
+        <button
+          onClick={() => onFeedback(true)}
+        >
+          👍 近い
+        </button>
+
+
+        <button
+          onClick={() => onFeedback(false)}
+        >
+          👎 違う
+        </button>
+
+
       </div>
+
+
     </div>
+
   );
+
 }
