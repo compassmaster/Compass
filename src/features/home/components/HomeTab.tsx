@@ -14,8 +14,7 @@ interface HomeTabProps {
   onReflectionFeedback: (agreed: boolean) => void;
 }
 
-<<<<<<< HEAD
-=======
+
 export function HomeTab({ logs, onNavigateToLog, onReflectionFeedback }: HomeTabProps) {
   const [insights, setInsights] = useState<Insight[]>([]);
 
@@ -41,7 +40,7 @@ export function HomeTab({ logs, onNavigateToLog, onReflectionFeedback }: HomeTab
   return (
     <div>
       <ReflectionCard onFeedback={onReflectionFeedback} />
->>>>>>> 0b5198f (feat: add insight display and feedback flow)
+
 
 export function HomeTab({
   logs,
@@ -72,12 +71,12 @@ export function HomeTab({
 
       </div>
 
-<<<<<<< HEAD
+
 
 
 
       {/* Compassからの気づき */}
-=======
+
       {insights.length > 0 && (
         <section className="home-section">
           <h2 className="section-title">Compassからの発見</h2>
@@ -93,7 +92,7 @@ export function HomeTab({
         </section>
       )}
 
->>>>>>> 0b5198f (feat: add insight display and feedback flow)
+
       <section className="home-section">
 
 
