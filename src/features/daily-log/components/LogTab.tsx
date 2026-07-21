@@ -1,10 +1,7 @@
-import React, { useState } from 'react';
-import { logRepository } from '../services';
-import { insightGeneratorService } from '../../analysis/services';
+import { useState, type FormEvent } from 'react';
+import { reflectionService } from '../../analysis/services';
+import { dailyLogApplicationService, immediateResponseService } from '../services';
 import {
-  todayDateString,
-  draftToLog,
-  isDraftValid,
   type DailyLogDraft,
   type Scale,
 } from '../types/log';
@@ -23,7 +20,7 @@ export function LogTab({ onSaveSuccess }: { onSaveSuccess: () => void }) {
   const [note, setNote] = useState('');
   const [events, setEvents] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
 
     const draft: DailyLogDraft = {
@@ -37,30 +34,18 @@ export function LogTab({ onSaveSuccess }: { onSaveSuccess: () => void }) {
         .filter(Boolean),
     };
 
-    // 必須項目チェック
-    if (!isDraftValid(draft)) {
+    const result = dailyLogApplicationService.saveDailyLog(draft);
+
+    if (!result.ok) {
       alert('気分と疲労度を入力してください');
       return;
     }
 
-    const newLog = draftToLog(
-      draft,
-      todayDateString()
-    );
+    const immediateResponse = immediateResponseService.createSavedResponse();
 
-    // 1. DailyLogの保存
-    logRepository.save(newLog);
-
-    // 2. 分析とInsight生成
-    // ※現在は同期処理だが、将来的な非同期AI連携を見据え、
-    // ログ保存プロセスを阻害しないよう try-catch で保護する。
-    // （将来的に setTimeout 等でバックグラウンド実行に移行する可能性を考慮）
-    try {
-      insightGeneratorService.generateAndSaveInsights([newLog]);
-    } catch (err) {
-      console.error('[Compass] Failed to generate insight:', err);
-      // 分析が失敗しても、DailyLog自体は保存されているためユーザーにはエラーを見せず処理を続行する
-    }
+    void reflectionService.reflectAfterDailyLogSaved([result.log]).catch((error: unknown) => {
+      console.error('[Compass] Reflection failed after Daily Log save:', error);
+    });
 
     // フォームリセット
     setMood(3);
@@ -69,7 +54,7 @@ export function LogTab({ onSaveSuccess }: { onSaveSuccess: () => void }) {
     setNote('');
     setEvents('');
 
-    alert('今日の記録を保存しました！');
+    alert(immediateResponse.message);
 
     onSaveSuccess();
   };

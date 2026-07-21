@@ -26,19 +26,19 @@ export function InsightCard({ insight, onFeedback }: InsightCardProps) {
       </div>
       
       <div className="insight-footer">
-        <p className="insight-question">これはあなたに当てはまりますか？</p>
+        <p className="insight-question">この観察は妥当に感じますか？確認してもUser Modelにはまだ反映されません。</p>
         <div className="insight-actions">
           <button 
             className="insight-button confirm"
             onClick={() => onFeedback(insight.id, true)}
           >
-            そう思う
+            観察を確認
           </button>
           <button 
             className="insight-button dismiss"
             onClick={() => onFeedback(insight.id, false)}
           >
-            違う
+            今回は見送る
           </button>
         </div>
       </div>

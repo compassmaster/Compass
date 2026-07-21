@@ -1,20 +1,10 @@
-import { useEffect, useState } from 'react';
 import { logRepository } from '../services';
 import type { DailyLog } from '../types/log';
 import './DailyLogList.css';
 
 
 export function DailyLogList() {
-  const [logs, setLogs] = useState<DailyLog[]>([]);
-
-  const loadLogs = () => {
-    const savedLogs = logRepository.getAll();
-    setLogs(savedLogs);
-  };
-
-  useEffect(() => {
-    loadLogs();
-  }, []);
+  const logs: DailyLog[] = logRepository.getAll();
 
 
   if (logs.length === 0) {

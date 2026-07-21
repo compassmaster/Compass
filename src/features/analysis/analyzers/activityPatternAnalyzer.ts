@@ -43,6 +43,7 @@ export const activityPatternAnalyzer: Analyzer = (logs: DailyLog[]): AnalysisRes
         results.push({
           id: crypto.randomUUID(),
           type: 'PATTERN',
+          analyzerId: 'activity-pattern-analyzer',
           message: `【Observation】状態が良い時の記録（${logIds.length}件）に共通して「${event}」が含まれています。\n【Hypothesis】「${event}」の条件下では、ご自身が力を発揮しやすい環境が整っている可能性があります。`,
           confidence: Number(confidence.toFixed(2)),
           relatedLogIds: logIds,
@@ -53,7 +54,8 @@ export const activityPatternAnalyzer: Analyzer = (logs: DailyLog[]): AnalysisRes
             occurrenceCount: logIds.length,
             totalOccurrences: totalEventOccurrences,
             memoryCandidate: true,
-            observationType: 'performance_condition'
+            observationType: 'performance_condition',
+            rationale: '状態が良いログに同じイベントタグが複数回出現したため'
           }
         });
       }

@@ -1,44 +1,98 @@
 .reflection-card {
-
   padding: 16px;
-  margin-bottom: 20px;
-
+  border: 1px solid #c6f6d5;
+  border-left: 4px solid #38a169;
   border-radius: 12px;
-
-  background: #f7f8fa;
-
+  background: #f7fff9;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
+.reflection-card-header {
+  margin-bottom: 10px;
+}
+
+.reflection-card-kicker,
+.reflection-label {
+  margin: 0 0 4px;
+  color: #2f855a;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.reflection-card h3 {
+  margin: 0;
+  color: #22543d;
+}
 
 .reflection-message {
-
   font-size: 16px;
-
   line-height: 1.6;
-
+  color: #2d3748;
 }
 
-
-.reflection-confidence {
-
-  font-size: 14px;
-
+.reflection-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 12px 0;
+  color: #4a5568;
+  font-size: 0.9rem;
 }
 
+.reflection-note {
+  margin: 0;
+  color: #718096;
+  font-size: 0.9rem;
+}
 
 .reflection-actions {
-
   margin-top: 16px;
-
 }
 
+.reflection-actions p {
+  margin-bottom: 10px;
+}
 
 .reflection-actions button {
-
   margin-right: 10px;
-
   padding: 8px 14px;
-
+  border: 1px solid #cbd5e0;
+  border-radius: 8px;
+  background: #fff;
   cursor: pointer;
+}
 
+.understanding-detail {
+  margin-top: 12px;
+  color: #4a5568;
+}
+
+.understanding-detail summary {
+  cursor: pointer;
+  color: #2f855a;
+  font-weight: 700;
+}
+
+.understanding-detail-body {
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 8px;
+  background: #ffffff;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.evidence-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-left: 18px;
+}
+
+.evidence-list li {
+  overflow-wrap: anywhere;
+}
+
+.evidence-list span {
+  display: block;
 }
