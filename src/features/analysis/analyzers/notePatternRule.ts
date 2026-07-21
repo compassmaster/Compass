@@ -17,6 +17,7 @@ export const notePatternRule: Analyzer = (logs: DailyLog[]): AnalysisResult[] =>
       results.push({
         id: crypto.randomUUID(),
         type: 'PATTERN',
+        analyzerId: 'note-pattern-rule',
         message: `「${matchedActivity.join('、')}」に関連する記述が見られます。特定の環境やタスクにおいて、高い集中力を発揮しやすい傾向があるかもしれません。過去の記録と照らし合わせ、どのような条件がパフォーマンスを高めるのか振り返ってみると良さそうです。`,
         // TODO: MVP段階では信頼度(confidence)を0.8に固定。
         // 将来的には、キーワードの出現頻度、関連するDailyLogの数、気分の変化(mood/fatigue)などの
@@ -28,7 +29,8 @@ export const notePatternRule: Analyzer = (logs: DailyLog[]): AnalysisResult[] =>
           matchedKeywords: matchedActivity,
           memoryCandidate: true,
           observationType: 'behavior_trend',
-          context: 'Extracting potential high-focus conditions from notes'
+          context: 'Extracting potential high-focus conditions from notes',
+          rationale: '自由メモ内に集中・活動に関連するキーワードが含まれていたため'
         }
       });
     }
@@ -37,6 +39,7 @@ export const notePatternRule: Analyzer = (logs: DailyLog[]): AnalysisResult[] =>
       results.push({
         id: crypto.randomUUID(),
         type: 'PATTERN',
+        analyzerId: 'note-pattern-rule',
         message: `「${matchedLoad.join('、')}」に関連する記述が見られます。現在、心身に高い負荷がかかっている可能性があります。この傾向が続く場合、中長期的なパフォーマンス低下を防ぐため、いまのうちに意図的な回復を計画に組み込むことを検討してみてください。`,
         // TODO: MVP段階では信頼度(confidence)を0.8に固定。
         // 将来的には、キーワードの出現頻度、関連するDailyLogの数、気分の変化(mood/fatigue)などの
@@ -48,7 +51,8 @@ export const notePatternRule: Analyzer = (logs: DailyLog[]): AnalysisResult[] =>
           matchedKeywords: matchedLoad,
           memoryCandidate: true,
           observationType: 'load_indication',
-          context: 'Detecting signs of increased physical or mental load'
+          context: 'Detecting signs of increased physical or mental load',
+          rationale: '自由メモ内に負荷・疲労に関連するキーワードが含まれていたため'
         }
       });
     }

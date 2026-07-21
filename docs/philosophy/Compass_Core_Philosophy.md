@@ -1,13 +1,11 @@
 ---
-status: Draft
+status: Active
 dependsOn:
   - docs/01_ビジョン.md
 usedBy:
   - docs/02_設計原則.md
 lastUpdated: "2026-07-15"
 ---
-# Compass Core Philosophy
-
 # 📜 Compass Core Philosophy v1.0
 
 ## 🌌 イントロダクション：Compassの存在意義

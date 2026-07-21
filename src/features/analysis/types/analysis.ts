@@ -1,4 +1,20 @@
 export type AnalysisType = 'PATTERN' | 'TREND' | 'INSIGHT';
+export type ConfidenceLevel = 'low' | 'medium' | 'high';
+
+export interface EvidenceRef {
+  /** Evidenceの由来。MVPではDaily Logのみを扱う。 */
+  sourceType: 'daily_log';
+  /** Evidenceの元になったDailyLog ID。 */
+  logId: import('../../daily-log/types/log').EntryId;
+  /** Evidenceを採用したAnalyzer。 */
+  analyzerId: string;
+  /** なぜこのログをEvidenceとして扱ったか。 */
+  rationale: string;
+  /** 監査時に確認できる短い抜粋または要約。 */
+  excerpt: string;
+  /** 元ログが作成された日時。 */
+  sourceCreatedAt: string;
+}
 
 export interface AnalysisResult {
   /** 分析の一意なID */
@@ -9,6 +25,14 @@ export interface AnalysisResult {
   message: string;
   /** 結果の信頼度 (0.0 〜 1.0) */
   confidence: number;
+  /** この分析を生成したAnalyzer ID */
+  analyzerId: string;
+  /** ユーザーに提示する根拠テキスト。 */
+  evidenceSummaries?: string[];
+  /** @deprecated evidenceSummaries を使用する。旧データ互換のためMVP中は残す。 */
+  evidence?: string[];
+  /** 監査可能な構造化Evidence参照。 */
+  evidenceRefs?: EvidenceRef[];
   /** この分析結果の根拠となった DailyLog の ID リスト */
   relatedLogIds: string[];
   /** 付加情報（検出されたキーワード等） */
@@ -31,6 +55,12 @@ export type InsightStatus = 'NEW' | 'CONFIRMED' | 'DISMISSED';
  * ユーザーの評価を経て、将来のMemory生成の候補となる。
  */
 export interface Insight extends AnalysisResult {
+  /** Insightの意味的重複判定に使う安定キー。 */
+  dedupeKey: string;
+  /** ユーザーに提示する根拠テキスト。 */
+  evidenceSummaries: string[];
+  /** User Model更新候補が参照する監査可能なEvidence。 */
+  evidenceRefs: EvidenceRef[];
   /** 生成日時 (ISO 8601) */
   createdAt: string;
   /** 最終更新日時 (ISO 8601) */

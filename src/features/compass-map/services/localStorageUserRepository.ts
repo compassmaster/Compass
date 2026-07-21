@@ -1,5 +1,5 @@
-import type { UserModel, Hypothesis } from '../types/userModel';
-import type { IUserRepository } from './userRepository';
+import type { UserModel, Hypothesis } from '../types/userModel.ts';
+import type { IUserRepository } from './userRepository.ts';
 
 const STORAGE_KEY = 'compass_user_model';
 
