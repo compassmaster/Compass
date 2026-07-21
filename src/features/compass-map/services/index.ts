@@ -23,3 +23,5 @@ export const userModelUpdateApplicationService = new UserModelUpdateApplicationS
 export * from './userModelUpdateCandidateService.ts';
 export * from './candidateMappingPolicyRegistry';
 export * from './userModelUpdateApplicationService.ts';
+export * from './legacyUserModelMigration';
+export * from './userModelEvidenceGuards';
