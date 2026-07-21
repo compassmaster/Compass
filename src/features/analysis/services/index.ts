@@ -1,6 +1,9 @@
 import { LocalStorageInsightRepository } from './localStorageInsightRepository';
 import { InsightGeneratorService } from './insightGeneratorService';
 import { ReflectionService } from './reflectionService';
+import { SleepDailyLogJoinService } from './sleepDailyLogJoinService';
+import { logRepository } from '../../daily-log/services';
+import { sleepRecordRepository } from '../../sleep/services';
 
 export * from './analysisService';
 export * from './insightRepository';
@@ -9,8 +12,11 @@ export * from './insightGeneratorService';
 export * from './insightFeedbackService';
 export * from './reflectionEvidenceService';
 export * from './reflectionService';
+export * from './sleepDailyLogJoinService';
 
 // ── MVP: サービスとリポジトリのインスタンス生成（シングルトン） ──
 export const insightRepository = new LocalStorageInsightRepository();
 export const insightGeneratorService = new InsightGeneratorService(insightRepository);
 export const reflectionService = new ReflectionService(insightGeneratorService);
+
+export const sleepDailyLogJoinService = new SleepDailyLogJoinService(sleepRecordRepository, logRepository);

@@ -1,7 +1,13 @@
 import { useState, type FormEvent } from 'react';
 import { reflectionService } from '../../analysis/services';
+import {
+  calculateSleepDurationMinutes,
+  formatDurationMinutes,
+  sleepRecordApplicationService,
+} from '../../sleep/services';
 import { dailyLogApplicationService, immediateResponseService } from '../services';
 import {
+  todayDateString,
   type DailyLogDraft,
   type Scale,
 } from '../types/log';
@@ -16,7 +22,11 @@ import './LogTab.css';
 export function LogTab({ onSaveSuccess }: { onSaveSuccess: () => void }) {
   const [mood, setMood] = useState<Scale | null>(3);
   const [fatigue, setFatigue] = useState<Scale | null>(3);
-  const [sleepHours, setSleepHours] = useState('7');
+  const today = todayDateString();
+  const existingSleepRecord = sleepRecordApplicationService.getByDate(today);
+  const [bedtime, setBedtime] = useState(existingSleepRecord?.bedtime.slice(0, 16) ?? '');
+  const [wakeTime, setWakeTime] = useState(existingSleepRecord?.wakeTime.slice(0, 16) ?? '');
+  const [sleepMessage, setSleepMessage] = useState(existingSleepRecord ? 'その日の睡眠は保存済みです。必要なら修正できます。' : '');
   const [note, setNote] = useState('');
   const [events, setEvents] = useState('');
 
@@ -26,13 +36,35 @@ export function LogTab({ onSaveSuccess }: { onSaveSuccess: () => void }) {
     const draft: DailyLogDraft = {
       mood,
       fatigue,
-      sleepHours: sleepHours ? parseFloat(sleepHours) : null,
+      // sleepHours は旧DailyLog互換フィールド。新規入力ではSleepRecordを正とするため null 固定。
+      sleepHours: null,
       note,
       events: events
         .split(',')
         .map((e) => e.trim())
         .filter(Boolean),
     };
+
+    const shouldSaveSleep = bedtime.trim() || wakeTime.trim();
+    if (shouldSaveSleep) {
+      const sleepResult = existingSleepRecord
+        ? sleepRecordApplicationService.update(existingSleepRecord.id, { sleepDate: today, bedtime, wakeTime, source: 'MANUAL' })
+        : sleepRecordApplicationService.create({ sleepDate: today, bedtime, wakeTime, source: 'MANUAL' });
+
+      if (!sleepResult.ok) {
+        const message = sleepResult.reason === 'WAKE_TIME_NOT_AFTER_BEDTIME'
+          ? '起床日時は就寝日時より後にしてください'
+          : sleepResult.reason === 'INVALID_DATETIME'
+          ? '就寝日時と起床日時を正しく入力してください'
+          : sleepResult.reason === 'DUPLICATE_SLEEP_DATE'
+          ? 'その日の睡眠はすでに保存されています。画面を更新して編集してください'
+          : '睡眠記録が見つかりませんでした';
+        setSleepMessage(message);
+        alert(message);
+        return;
+      }
+      setSleepMessage(`睡眠を保存しました（${formatDurationMinutes(sleepResult.record.durationMinutes)}）`);
+    }
 
     const result = dailyLogApplicationService.saveDailyLog(draft);
 
@@ -50,7 +82,6 @@ export function LogTab({ onSaveSuccess }: { onSaveSuccess: () => void }) {
     // フォームリセット
     setMood(3);
     setFatigue(3);
-    setSleepHours('7');
     setNote('');
     setEvents('');
 
@@ -123,19 +154,42 @@ export function LogTab({ onSaveSuccess }: { onSaveSuccess: () => void }) {
       </div>
 
 
-      <div className="form-group">
-        <label className="form-label">
-          睡眠時間 (時間)
-        </label>
+      <section className="sleep-record-panel">
+        <h3>その日の睡眠</h3>
+        <p className="sleep-record-help">
+          睡眠はDaily Logとは別に、起床日単位で1件だけ保存します。Daily Logを追加しても再入力は不要です。
+        </p>
 
-        <input
-          type="number"
-          step="0.1"
-          value={sleepHours}
-          onChange={(e) => setSleepHours(e.target.value)}
-          className="form-input"
-        />
-      </div>
+        <div className="form-group">
+          <label className="form-label">就寝日時</label>
+          <input
+            type="datetime-local"
+            value={bedtime}
+            onChange={(e) => setBedtime(e.target.value)}
+            className="form-input"
+          />
+        </div>
+
+        <div className="form-group">
+          <label className="form-label">起床日時</label>
+          <input
+            type="datetime-local"
+            value={wakeTime}
+            onChange={(e) => setWakeTime(e.target.value)}
+            className="form-input"
+          />
+        </div>
+
+        <div className="sleep-record-summary">
+          計算された睡眠時間:{' '}
+          {(() => {
+            if (!bedtime || !wakeTime) return '未計算';
+            const result = calculateSleepDurationMinutes(bedtime, wakeTime);
+            return result.ok ? formatDurationMinutes(result.durationMinutes) : '未計算';
+          })()}
+        </div>
+        {sleepMessage && <p className="sleep-record-message">{sleepMessage}</p>}
+      </section>
 
 
       <div className="form-group">

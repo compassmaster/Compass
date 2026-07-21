@@ -36,3 +36,14 @@ DailyLogから直接UserModelを確定しない。
 - 変更した機能の実行経路を確認する
 - 変更ファイル一覧を報告する
 - 未接続の関数や未使用コードがないか確認する
+
+## 2026-07-21 SleepRecord基盤
+
+- D-0006方針として、睡眠は今後DailyLogの `sleepHours` ではなく、起床日単位の `SleepRecord` を正とする。
+- `SleepRecord` は `id`, `sleepDate`, `bedtime`, `wakeTime`, `durationMinutes`, `source`, `createdAt`, `updatedAt` を持つ。
+- `source` は `MANUAL` と `SMARTWATCH` を型として許可するが、スマートウォッチ連携自体は未実装。
+- 睡眠時間計算は `calculateSleepDurationMinutes` に分離し、日付またぎ、分単位、起床日時が就寝日時以前、不正な日時文字列をテスト対象にしている。
+- 永続化は `compass_sleep_records` localStorageキーを使う `LocalStorageSleepRecordRepository` で行い、同一 `sleepDate` は重複保存しない。
+- UIは `SleepRecordApplicationService` 経由で保存・更新し、UIからlocalStorageを直接操作しない。
+- DailyLogの旧 `sleepHours` は既存データ破壊を避けるため非推奨フィールドとして一時的に残す。新規DailyLog入力では `sleepHours: null` を保存し、睡眠データはSleepRecordを正とする。
+- Analysis接続準備として、指定日の `SleepRecord` と同日の `DailyLog[]` を結合して取得できる `SleepDailyLogJoinService` を追加した。本格的なSleepAnalyzer・相関分析は未実装。
