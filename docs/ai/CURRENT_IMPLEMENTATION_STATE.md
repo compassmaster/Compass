@@ -47,3 +47,16 @@ DailyLogから直接UserModelを確定しない。
 - UIは `SleepRecordApplicationService` 経由で保存・更新し、UIからlocalStorageを直接操作しない。
 - DailyLogの旧 `sleepHours` は既存データ破壊を避けるため非推奨フィールドとして一時的に残す。新規DailyLog入力では `sleepHours: null` を保存し、睡眠データはSleepRecordを正とする。
 - Analysis接続準備として、指定日の `SleepRecord` と同日の `DailyLog[]` を結合して取得できる `SleepDailyLogJoinService` を追加した。本格的なSleepAnalyzer・相関分析は未実装。
+
+## 2026-07-21 Analysis Framework基盤
+
+- Formal Analysis Frameworkとして、`AnalysisContext` → `EvidenceAnalyzer` → `AnalysisService` → `Evidence` → `AnalysisApplicationService` の最小パイプラインを追加した。
+- Analysisの正式出力は `Evidence` とし、観測事実のみを保持する。人格仮説、価値観の断定、UserModel更新内容は含めない。
+- Evidenceは `id`, `type`, `analyzerId`, `title`, `message`, `observation`, `confidence`, `sampleSize`, `sourceReferences`, `period`, `createdAt`, `dedupeKey` を持つ。
+- `confidence` はEvidence自体の信頼性であり、UserModel / Understandingの確信度とは分離する。
+- `LocalStorageEvidenceRepository` は `compass_analysis_evidence` に保存し、UIは `AnalysisApplicationService` 経由で操作する。
+- `AnalysisService` はAnalyzer失敗時に部分継続し、失敗Analyzerを `failures` として返す。独立したAnalyzerの観測結果を失わないためである。
+- 最初の正式Analyzerとして `SleepFatigueAnalyzer` を追加した。`SleepRecord.durationMinutes` と同じ `sleepDate` の `DailyLog.fatigue` を日付単位で結合する。
+- `SleepFatigueAnalyzer` は睡眠6時間未満/以上を比較し、各グループ最低2日、平均疲労差0.5以上の場合のみEvidenceを生成する。同日に複数DailyLogがある場合はfatigueの算術平均を使う。
+- ホームに開発用の最小Evidence確認UIと明示的な「分析を実行」操作を追加した。DailyLog保存直後にUserModelを更新する経路は追加していない。
+- 旧 `AnalysisResult` / `notePatternRule` / `activityPatternAnalyzer` / Reflection / Insight は互換のため残し、正式Evidence Frameworkとは分離した。全面削除は行わず、段階移行する。

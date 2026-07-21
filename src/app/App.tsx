@@ -13,6 +13,10 @@ import type { UserModelUpdateCandidate } from '../features/compass-map/services/
 import type { UserModelUpdateHistoryEntry } from '../features/compass-map/services/userModelUpdateApplicationService.ts';
 
 import { HomeTab } from '../features/home/components/HomeTab';
+import { analysisApplicationService } from '../features/analysis/services';
+import { sleepRecordApplicationService } from '../features/sleep/services';
+import type { Evidence } from '../features/analysis/types/evidence.ts';
+import type { AnalyzerFailure } from '../features/analysis/services/analysisService.ts';
 import { LogTab } from '../features/daily-log/components/LogTab';
 import { MapTab } from '../features/compass-map/components/MapTab';
 
@@ -43,6 +47,10 @@ export function App() {
   const [userModelUpdateHistory, setUserModelUpdateHistory] = useState<UserModelUpdateHistoryEntry[]>(() =>
     userModelUpdateHistoryRepository.getAll()
   );
+  const [analysisEvidence, setAnalysisEvidence] = useState<Evidence[]>(() =>
+    analysisApplicationService.listEvidence()
+  );
+  const [analysisFailures, setAnalysisFailures] = useState<AnalyzerFailure[]>([]);
 
   const refreshLogs = () => {
     setLogs(logRepository.getAll());
@@ -69,6 +77,24 @@ export function App() {
   const handleRejectUserModelUpdateCandidate = (candidateId: string) => {
     userModelUpdateApplicationService.rejectCandidate(candidateId);
     refreshUserModelUpdateCandidates();
+  };
+
+  const handleRunAnalysis = () => {
+    const allLogs = logRepository.getAll();
+    const sleepRecords = sleepRecordApplicationService.list();
+    const dates = [...allLogs.map((log) => log.date), ...sleepRecords.map((record) => record.sleepDate)].sort();
+    if (dates.length === 0) {
+      setAnalysisEvidence(analysisApplicationService.listEvidence());
+      setAnalysisFailures([]);
+      return;
+    }
+    const result = analysisApplicationService.runAndSave({
+      dailyLogs: allLogs,
+      sleepRecords,
+      period: { from: dates[0], to: dates[dates.length - 1] },
+    });
+    setAnalysisEvidence(analysisApplicationService.listEvidence());
+    setAnalysisFailures(result.failures);
   };
 
   const handleReflectionFeedback = (agreed: boolean) => {
@@ -119,6 +145,9 @@ export function App() {
             onReflectionFeedback={handleReflectionFeedback}
             onApplyCandidate={handleApplyUserModelUpdateCandidate}
             onRejectCandidate={handleRejectUserModelUpdateCandidate}
+            analysisEvidence={analysisEvidence}
+            analysisFailures={analysisFailures}
+            onRunAnalysis={handleRunAnalysis}
           />
         )}
         {activeTab === 'log' && <LogTab onSaveSuccess={refreshLogs} />}
