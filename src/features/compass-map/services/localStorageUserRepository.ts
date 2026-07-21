@@ -1,5 +1,6 @@
 import type { UserModel, Hypothesis } from '../types/userModel.ts';
 import type { IUserRepository } from './userRepository.ts';
+import { migrateLegacyDemoUserModel } from './legacyUserModelMigration.ts';
 
 const STORAGE_KEY = 'compass_user_model';
 
@@ -27,7 +28,7 @@ export function createInitialUserModel(userId: string): UserModel {
     shortTerm: {
       currentMood: {
         status: '未登録',
-        intensity: 3, // 1〜5の中間値
+        intensity: 3,
         lastUpdated: now,
       },
       immediateConcerns: createEmptyHypothesis<string[]>([]),
@@ -42,10 +43,15 @@ export function createInitialUserModel(userId: string): UserModel {
 export class LocalStorageUserRepository implements IUserRepository {
   get(): UserModel | null {
     try {
+      // UserModelを読み込む前に、一度限りの旧デモデータmigrationを実行する。
+      migrateLegacyDemoUserModel();
+
       const raw = localStorage.getItem(STORAGE_KEY);
+
       if (!raw) {
         return null;
       }
+
       return JSON.parse(raw) as UserModel;
     } catch (e) {
       console.error('[Compass] Failed to load UserModel from localStorage:', e);
