@@ -110,7 +110,10 @@ export interface DailyLog {
 
   // ── 行動 (Actions) ────────────────────────────
 
-  /** 睡眠時間（時間単位、小数可。例: 7.5）。未入力は null */
+  /**
+   * @deprecated 睡眠は新規入力では SleepRecord を正とし、DailyLogには null を設定する。
+   * 既存DailyLogを破壊しないため、旧データの互換読み取り用として一時的に残す。
+   */
   sleepHours: number | null;
 
   // ── 自由記録 ──────────────────────────────────
