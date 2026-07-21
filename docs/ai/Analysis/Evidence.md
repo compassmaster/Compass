@@ -50,3 +50,37 @@ Evidence may change over time as new observations are collected.
 Older Evidence may become weaker, stronger, or obsolete.
 
 Evidence should always reflect the latest available observations.
+
+
+## MVP EvidenceRef
+
+MVPでは、Evidenceを表示用文言だけでなく、監査可能な `EvidenceRef` として保持する。
+
+`EvidenceRef` は最低限、以下を追跡する。
+
+- `sourceType`: どの種類の観測から得られたか（MVPでは `daily_log`）
+- `logId`: どのDaily Logから得られたか
+- `analyzerId`: どのAnalyzerがEvidenceとして採用したか
+- `rationale`: なぜこのEvidenceになったか
+- `excerpt`: 監査時に確認できる抜粋または要約
+- `sourceCreatedAt`: 元ログの作成日時
+
+表示用の根拠文は `evidenceSummaries`、User Model更新候補が参照する根拠は `evidenceRefs` として分ける。
+
+
+## MVP Insight Deduplication
+
+Insightの重複判定は、生成IDや表示メッセージではなく、意味的に安定した情報から作る `dedupeKey` で行う。
+
+MVPの `dedupeKey` は以下を正規化して構成する。
+
+- `analyzerId`
+- `type`
+- `metadata.category`
+- `relatedLogIds` と `evidenceRefs[].logId` を統合したログID集合
+
+`relatedLogIds` や `evidenceRefs` の順序は比較前にソート・重複排除するため、順序差だけでは別Insightにならない。
+
+根拠ログ集合が変化した場合は、同じAnalyzer・同じtype・同じcategoryでも新しいInsightとして保存する。これは「観測対象が変わったなら別の観察」とみなすためである。
+
+既存Insightが `CONFIRMED` または `DISMISSED` の場合、同じ `dedupeKey` の再分析結果で上書きされてもstatusは維持する。表示メッセージの変更は重複判定に使わない。

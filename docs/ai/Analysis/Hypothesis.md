@@ -141,3 +141,60 @@ HypothesisはCompassがユーザーを理解するための途中結果である
 CompassはHypothesisを「答え」として扱わない。
 
 Understandingは継続的なプロセスであり、Hypothesisはその過程で更新され続ける。
+
+
+## MVP Update Candidate Boundary
+
+MVPでは、`CONFIRMED` InsightはUser Modelへ即時反映された状態ではない。
+
+`CONFIRMED` は「ユーザーがその観察を妥当と認めた状態」であり、そこから `UserModelUpdateCandidate` を作ることができる。
+
+`UserModelUpdateCandidate` は以下を保持する。
+
+- `sourceInsightId`
+- `dedupeKey`
+- `targetField`
+- `proposedValue`
+- `evidenceRefs`
+- `createdAt`
+- `status`
+
+状態遷移は `NEW -> CONFIRMED` または `NEW -> DISMISSED` のみとする。`CONFIRMED` / `DISMISSED` から別状態へ戻す操作はMVPでは扱わない。
+
+`NEW` または `DISMISSED` Insightから候補は作らない。
+対象フィールド、提案値、根拠が不足しているInsightからも候補は作らない。
+
+User Modelへの実際の反映は#MVP-07以降で扱う。
+
+### Candidate Mapping Policy
+
+User Model更新候補の対象fieldと提案値は、`UserModelUpdateCandidateService` 本体でAnalyzer metadataを直接推定しない。
+
+MVPでは `CandidateMappingPolicyRegistry` に、以下を明示する。
+
+- 対象Analyzer ID
+- Insight type
+- category
+- User Model更新候補の `targetField`
+- `proposedValue` の抽出方法
+
+Registryに一致するPolicyがないInsight、または提案値を抽出できないInsightからは候補を作らない。これにより、Analyzerの自由な `metadata` とUser Model更新境界の結合を弱める。
+
+
+
+## MVP User Model Candidate Application Boundary
+
+`CONFIRMED` Insightから作られた `UserModelUpdateCandidate` は、User Modelへの反映許可ではない。
+
+MVPでは、Candidateに対してユーザーが別途「User Modelへ反映する」または「今回は反映しない」を選ぶ。
+
+Candidate状態遷移は以下のみに限定する。
+
+- `PENDING -> APPLIED`
+- `PENDING -> REJECTED`
+
+`APPLIED` / `REJECTED` から別状態へ戻す操作はMVPでは扱わない。
+
+UserModelへの適用は、Candidateが `PENDING` であり、許可された `targetField`、空でない `proposedValue`、監査可能な `evidenceRefs` を持つ場合だけ行う。UserModel保存が成功した後にのみCandidateを `APPLIED` にする。
+
+適用履歴には最低限、`candidateId`、`sourceInsightId`、`evidenceRefs`、`targetField`、`appliedAt` を保持する。

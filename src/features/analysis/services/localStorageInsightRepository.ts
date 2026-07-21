@@ -1,4 +1,5 @@
 import type { Insight } from '../types/analysis';
+import { getInsightDedupeKey, mergeDuplicateInsight } from './insightDeduplication';
 import type { IInsightRepository } from './insightRepository';
 
 const STORAGE_KEY = 'compass_insights';
@@ -26,7 +27,21 @@ export class LocalStorageInsightRepository implements IInsightRepository {
 
   save(insight: Insight): void {
     const insights = this.load();
-    insights.push(insight);
+    const incomingKey = getInsightDedupeKey(insight);
+    const existingIndex = insights.findIndex((item) =>
+      item.id === insight.id || getInsightDedupeKey(item) === incomingKey
+    );
+
+    if (existingIndex >= 0) {
+      insights[existingIndex] = mergeDuplicateInsight(
+        insights[existingIndex],
+        { ...insight, dedupeKey: incomingKey },
+        new Date().toISOString()
+      );
+    } else {
+      insights.push({ ...insight, dedupeKey: incomingKey });
+    }
+
     this.persist(insights);
   }
 
