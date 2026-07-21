@@ -68,3 +68,8 @@ export interface Insight extends AnalysisResult {
   /** インサイトの現在のステータス */
   status: InsightStatus;
 }
+
+// Formal Analysis Framework types. Legacy AnalysisResult remains for Reflection/Insight MVP compatibility.
+export type { Evidence, EvidenceId, EvidenceType, EvidenceSourceReference, AnalysisPeriod } from './evidence.ts';
+export type { AnalysisContext } from './context.ts';
+export type { EvidenceAnalyzer } from './analyzer.ts';

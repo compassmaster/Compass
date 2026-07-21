@@ -1,6 +1,7 @@
-import { activityPatternAnalyzer } from './activityPatternAnalyzer';
-import { notePatternRule } from './notePatternRule';
+import { activityPatternAnalyzer } from './activityPatternAnalyzer.ts';
+import { notePatternRule } from './notePatternRule.ts';
 import type { Analyzer } from '../types/analysis';
+export { sleepFatigueAnalyzer } from './sleepFatigueAnalyzer.ts';
 
 /**
  * Reflectionで使用するAnalyzer一覧。

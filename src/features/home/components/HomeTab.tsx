@@ -7,6 +7,9 @@ import { insightRepository } from '../../analysis/services';
 import { insightFeedbackApplicationService } from '../../../app/services';
 import type { Insight } from '../../analysis/types/analysis';
 import type { UserModelUpdateCandidate } from '../../compass-map/services/userModelUpdateCandidateService';
+import { EvidencePanel } from '../../analysis/components/EvidencePanel';
+import type { Evidence } from '../../analysis/types/evidence.ts';
+import type { AnalyzerFailure } from '../../analysis/services/analysisService.ts';
 import './HomeTab.css';
 
 interface HomeTabProps {
@@ -16,6 +19,9 @@ interface HomeTabProps {
   onReflectionFeedback: (agreed: boolean) => void;
   onApplyCandidate: (candidateId: string) => void;
   onRejectCandidate: (candidateId: string) => void;
+  analysisEvidence: Evidence[];
+  analysisFailures: AnalyzerFailure[];
+  onRunAnalysis: () => void;
 }
 
 export function HomeTab({
@@ -25,6 +31,9 @@ export function HomeTab({
   onReflectionFeedback,
   onApplyCandidate,
   onRejectCandidate,
+  analysisEvidence,
+  analysisFailures,
+  onRunAnalysis,
 }: HomeTabProps) {
 
   // 永続化されたInsight
@@ -110,6 +119,8 @@ export function HomeTab({
           </div>
         )}
       </section>
+
+      <EvidencePanel evidence={analysisEvidence} failures={analysisFailures} onRunAnalysis={onRunAnalysis} />
 
       {/* Candidate Card */}
       <section className="home-section">
