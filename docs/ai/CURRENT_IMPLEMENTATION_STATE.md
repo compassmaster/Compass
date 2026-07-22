@@ -10,12 +10,12 @@
 
 - D-0007がAcceptedになり、正式な理解フローにUnderstanding Candidateが追加された。
 - 正式フローは `DailyLog / SleepRecord → Analysis → Evidence → Understanding Candidate → Understanding Candidate Response → Understanding Object → Formal UserModel` である。
-- Understanding Candidate MVPとD-0008 Understanding Object MVPは実装済みであり、EvidenceからCandidate生成・保存・表示、AGREE / PARTIALLY_DISAGREE / UNSUREのユーザー回答保存、AGREEからのUnderstanding Object生成・保存・表示、非AGREE時のObject削除・同期まで実装されている。D-0009で設計されたFormal UserModel参照ID集約境界のPhase Aとして、Phase Aでは、FormalUserModel TypeScript型、型ガード、createEmptyFormalUserModel、Repository interface、LocalStorage Repository、`compass_formal_user_model_v1`保存、Reconciler、Resolver、ResolvedFormalUserModel、membership同期、orphan除去、layer移動を実装済みである。
+- Understanding Candidate MVPとD-0008 Understanding Object MVPは実装済みであり、EvidenceからCandidate生成・保存・表示、AGREE / PARTIALLY_DISAGREE / UNSUREのユーザー回答保存、AGREEからのUnderstanding Object生成・保存・表示、非AGREE時のObject削除・同期まで実装されている。D-0009で設計されたFormal UserModel参照ID集約境界はPhase A/Bまで実装済みであり、FormalUserModel TypeScript型、型ガード、createEmptyFormalUserModel、Repository interface、LocalStorage Repository、`compass_formal_user_model_v1`保存、Reconciler、Resolver、ResolvedFormalUserModel、membership同期、orphan除去、layer移動、App起動時reconcile、Object変更後refresh、読み取り専用確認UIを実装済みである。
 - Compass Map正式反映は未実装である。
 - Understanding Candidateは、既存のUserModelUpdateCandidateとは別責務である。
 - 旧Insight / Insight Feedback / UserModelUpdateCandidate系統は、段階移行のため互換性として残っている。
-- D-0009のPhase Aは実装済みである。次の実装対象は、Formal UserModel確認UIまたはApp起動時reconcileなどのアプリケーション統合である。Compass Map、Reflection、Conversationへの接続は、それぞれ後続の別境界として扱う。
-- 現在の実装ではUserModel更新、Compass Map反映、LLM生成を行わない。
+- D-0009のPhase A/Bは実装済みである。次の実装対象は、Compass Map、Reflection、ConversationなどのConsumerをFormal UserModel Resolverへ接続する境界である。
+- 現在の実装ではCompass Map正式反映、Reflection / Conversation正式接続、LLM生成、機械学習、予測、External Contextを行わない。
 
 
 ## UserModel Invariants
@@ -31,8 +31,11 @@ DailyLog
 → Analysis
 → Evidence
 → Understanding Candidate
-→ User Confirmation storage
-→ future UserModel
+→ Understanding Candidate Response
+→ Understanding Object
+→ Formal UserModel membership
+→ Formal UserModel Resolver
+→ read-only confirmation UI
 
 DailyLogから直接UserModelを確定しない。
 
@@ -76,7 +79,7 @@ DailyLogから直接UserModelを確定しない。
 ## 2026-07-22 Update: Formal Understanding Object MVP
 
 - D-0008の実装として、Understanding Object TypeScript型、Factory、Repository、Application Service、Understanding Object Panelを追加した。
-- 現在の正式フローは `Evidence → Understanding Candidate → Understanding Candidate Response → Understanding Object Factory → Understanding Object Repository → Understanding Object Panel` まで到達している。
+- 現在の正式フローは `Evidence → Understanding Candidate → Understanding Candidate Response → Understanding Object Factory → Understanding Object Repository → Formal UserModel Reconciler → Formal UserModel Resolver → read-only confirmation UI` まで到達している。
 - `AGREE` ResponseのみObjectを生成・upsertし、初期maturityは `HYPOTHESIS` とする。`AGREE` は `CONFIRMED` maturityを意味しない。
 - `PARTIALLY_DISAGREE` / `UNSURE` へ回答変更された場合は対応Objectを削除し、CandidateとResponseは残す。
 - `SLEEP_FATIGUE_PATTERN` Candidateは `SLEEP_FATIGUE_RELATIONSHIP` Object、`LONG_TERM` layer、`INTERNAL_STATE` / `BEHAVIOR` categoriesへ変換する。

@@ -19,11 +19,28 @@ MVPの完了条件にも含めない。
 ## Future Concepts
 
 - [Character Expression Layer](CHARACTER_EXPRESSION_LAYER.md)
+- [Machine Learning, Prediction, and External Context](MACHINE_LEARNING_EXTERNAL_CONTEXT.md)
 - Population-to-Personal Understanding
 - Candidate Prioritization
 - Understanding History
 - Adaptive Understanding
+- Machine Learning / Prediction / External Context
 ---
+
+
+## Future Item Status
+
+| Item | Status as of 2026-07-22 | Notes |
+| --- | --- | --- |
+| Evidence → Understanding Candidate | Implemented | Formal Candidate generation, storage, display, and user response storage are implemented. |
+| Understanding Candidate Response → Understanding Object | Implemented | AGREE creates/upserts Hypothesis-maturity Objects; non-AGREE removes/does not keep Objects. |
+| Understanding Object → Formal UserModel membership | Implemented | Formal UserModel Phase A/B are implemented through reference-only membership, reconciler, resolver, and read-only confirmation UI. |
+| Compass Map from Formal UserModel Resolver | Not implemented | Existing Compass Map still uses the old Hypothesis-type UserModel compatibility flow. |
+| Reflection / Conversation from Formal UserModel Resolver | Not implemented | Consumer connections remain future work. |
+| Understanding History / Agreement History | Not implemented | Still a future concept; no history store exists. |
+| Candidate Prioritizer / Candidate expiry | Not implemented | No prioritization or automatic expiry boundary exists. |
+| LLM Generator / Prompt Version management | Not implemented | No LLM generation path exists. |
+| Machine Learning / Prediction / External Context | Not implemented | Newly recorded as a future concept and not in MVP scope. |
 
 ## Current Boundary
 
@@ -38,6 +55,7 @@ MVPの完了条件にも含めない。
 - LLM Generator
 - Reflection Engineの高度化
 - Adaptive Understanding
+- Machine Learning / Prediction / External Context
 
 現在の実装対象仕様は、Accepted ADRとCurrent Implementation Stateを優先する。
 

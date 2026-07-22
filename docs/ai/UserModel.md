@@ -133,8 +133,6 @@ Understanding Object Repository
 未実装:
 
 ```text
-App起動時の自動reconcile
-Formal UserModel確認UI
 Compass Map正式反映
 Reflection接続
 Conversation接続
@@ -153,7 +151,7 @@ LLM生成
 
 ## Current TypeScript Model
 
-以下はPhase Aで追加したCurrent TypeScript Modelである。ただし、Phase Aではアプリ起動へ接続しておらず、アプリケーション統合とConsumer接続は未実装である。
+以下はPhase Aで追加したCurrent TypeScript Modelである。2026-07-22のPhase BでApp起動時reconcileと読み取り専用確認UIは実装済みであり、Consumer接続は未実装である。
 
 ```typescript
 import type { UnderstandingId } from './Understanding/understandingObject';
@@ -592,11 +590,9 @@ ReconcilerからEvidence Analyzer、Candidate Generator、LLM、Compass Map、Co
 
 ## Not Implemented
 
-Phase Aでは型・Repository・Reconciler・Resolverを実装済みである。ただし、アプリケーション統合とConsumer接続は未実装であり、以下は実装しない。
+Phase Aでは型・Repository・Reconciler・Resolverを実装済みであり、Phase BではApp起動時reconcile、Object変更後refresh、読み取り専用確認UIを実装済みである。ただし、Consumer接続は未実装であり、以下は実装しない。
 
 ```text
-App起動時の自動reconcile
-Formal UserModel確認UI
 Compass Map正式反映
 Reflection接続
 Conversation接続

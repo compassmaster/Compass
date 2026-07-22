@@ -10,7 +10,7 @@ Core Philosophy v1.0は完成済みであり、現在はFeature-First構成のRe
 
 ## 現在の正式フロー
 
-Accepted ADR D-0007により、正式な理解パイプラインは以下である。
+Accepted ADR D-0007 / D-0008 / D-0009により、現在の正式な理解パイプラインは以下である。
 
 ```text
 DailyLog / SleepRecord
@@ -21,15 +21,18 @@ Evidence
         ↓
 Understanding Candidate
         ↓
-User Confirmation
+Understanding Candidate Response
         ↓
-UserModel
-        ├── Compass Map
-        ├── Reflection
-        └── Conversation
+Understanding Object
+        ↓
+Formal UserModel membership
+        ↓
+Formal UserModel Resolver
+        ↓
+read-only confirmation UI
 ```
 
-Analysisは観測事実をEvidenceとして出力する。EvidenceからUserModelを直接更新しない。Understanding Candidateはユーザー確認前にUserModelへ反映しない。
+Analysisは観測事実をEvidenceとして出力する。EvidenceからUserModelを直接更新しない。Understanding Candidateはユーザー確認前にUserModelへ反映しない。Formal UserModelはUnderstanding Object本体を複製せず、Long-term / Short-termのUnderstanding ID membershipだけを保持する。Compass Map / Reflection / ConversationへのFormal UserModel正式接続は未実装である。
 
 ## 現在の実装状態
 
@@ -42,6 +45,9 @@ Analysisは観測事実をEvidenceとして出力する。EvidenceからUserMode
 - Formal Analysis Framework（AnalysisContext、EvidenceAnalyzer、AnalysisService、AnalysisApplicationService）。
 - Evidence、LocalStorageEvidenceRepository、EvidencePanel。
 - SleepFatigueAnalyzer。
+- Understanding Candidate / Candidate Responseの型・Repository・生成・表示・回答保存。
+- Understanding Objectの型・Factory・Repository・Application Service・Panel・Response同期。
+- Formal UserModelの型・Repository・Reconciler・Resolver・read-only確認UI。
 - 旧Insight系統（AnalysisResult / Insight / Insight Feedback）。
 - UserModelUpdateCandidateとUserModelUpdateApplicationService。
 - Hypothesis型UserModelとCompass Map表示。
@@ -49,11 +55,10 @@ Analysisは観測事実をEvidenceとして出力する。EvidenceからUserMode
 
 未実装:
 
-- D-0007の正式なUnderstanding Candidate型・生成処理。
-- Understanding Candidateへのユーザー回答保存境界。
-- Understanding ObjectをUserModelに保持する新しい構造。
-- 正式なUnderstanding CandidateからUserModelを更新する新フロー。
-- LLM連携。
+- Compass MapをFormal UserModel Resolverへ正式接続する新フロー。
+- Reflection / ConversationをFormal UserModel Resolverへ正式接続する新フロー。
+- 旧UserModel migration / 廃止、旧フロー停止、maturity昇格、Understanding履歴。
+- LLM連携、機械学習、予測、External Context。
 
 ## 現在の主要ディレクトリ
 
@@ -81,11 +86,9 @@ src/
 次の実装対象は以下の境界である。
 
 ```text
-Evidence
+Formal UserModel Resolver
     ↓
-Understanding Candidate
-    ↓
-ユーザー回答の保存
+Compass Map / Reflection / Conversation consumer接続
 ```
 
-次の実装ではUserModel更新、Compass Map反映、LLM生成は行わない。
+次の実装でも、旧UserModel migration、旧UserModel廃止、LLM生成、maturity昇格、Understanding履歴は別境界として扱う。
