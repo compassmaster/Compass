@@ -145,3 +145,14 @@ D-0008により、ユーザー回答の `AGREE` とUnderstanding成熟度の `Co
 - [Understanding Object](Understanding%20Object.md)
 - [UserModel](../UserModel.md)
 - [D-0008](../../設計決定.md#d-0008-understanding-candidateのユーザー回答からunderstanding-objectを生成する境界)
+
+## MVP Implementation Note (2026-07-22)
+
+Current TypeScript implementation stores maturity and Evidence support confidence under `UnderstandingObject.status`.
+
+- New Objects created from `AGREE` responses start at `HYPOTHESIS`.
+- `AGREE` is not `CONFIRMED`.
+- `PARTIALLY_DISAGREE` / `UNSURE` responses do not keep an Object.
+- MVP confidence is the arithmetic average of referenced Evidence confidence values after clamping each value to 0–1 and rounding the result to two decimal places.
+- `confidence` remains a measure of Evidence support, not a probability that a statement is true about the user.
+- The MVP does not implement maturity promotion, Learned / Confirmed judgment, or Understanding history.

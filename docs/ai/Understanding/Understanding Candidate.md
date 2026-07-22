@@ -120,4 +120,16 @@ D-0008により、Candidate ResponseからUnderstanding Objectを生成する条
 
 `AGREE` はUnderstanding Status `Confirmed` を意味しない。AGREEは、ユーザーが現在のCandidate表現に概ね同意したことだけを表す。
 
-CandidateとResponseは、Object生成後も監査のため参照可能にする。現時点ではUnderstanding Object生成処理、Object Repository、UserModel更新、Compass Map正式反映は未実装である。
+CandidateとResponseは、Object生成後も監査と追跡のため参照可能にする。Understanding Object生成処理と専用Repositoryは実装済みだが、Understanding ObjectをUserModelへ保存する境界とCompass Mapへの正式反映はまだ実装されていない。
+
+## Current Object Reconciliation Implementation (2026-07-22)
+
+Candidate ResponseからUnderstanding Objectを生成するMVPが実装された。現在の同期規則は以下である。
+
+```text
+AGREE → Understanding Objectを生成またはupsertして保持
+PARTIALLY_DISAGREE → 対応Understanding Objectを削除し、Candidate / Responseは保持
+UNSURE → 対応Understanding Objectを削除し、Candidate / Responseは保持
+```
+
+`AGREE` はObject生成の入力であり、`CONFIRMED` maturityを意味しない。生成されたObjectの初期maturityは `HYPOTHESIS` である。UserModel保存境界とCompass Map正式反映は未実装である。

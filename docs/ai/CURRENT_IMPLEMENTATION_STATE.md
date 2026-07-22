@@ -71,3 +71,13 @@ DailyLogから直接UserModelを確定しない。
 - `SleepFatigueAnalyzer` は睡眠6時間未満/以上を比較し、各グループ最低2日、平均疲労差0.5以上の場合のみEvidenceを生成する。同日に複数DailyLogがある場合はfatigueの算術平均を使う。
 - ホームに開発用の最小Evidence確認UIと明示的な「分析を実行」操作を追加した。DailyLog保存直後にUserModelを更新する経路は追加していない。
 - 旧 `AnalysisResult` / `notePatternRule` / `activityPatternAnalyzer` / Reflection / Insight は互換のため残し、正式Evidence Frameworkとは分離した。全面削除は行わず、段階移行する。
+
+## 2026-07-22 Update: Formal Understanding Object MVP
+
+- D-0008の実装として、Understanding Object TypeScript型、Factory、Repository、Application Service、Understanding Object Panelを追加した。
+- 現在の正式フローは `Evidence → Understanding Candidate → Understanding Candidate Response → Understanding Object Factory → Understanding Object Repository → Understanding Object Panel` まで到達している。
+- `AGREE` ResponseのみObjectを生成・upsertし、初期maturityは `HYPOTHESIS` とする。`AGREE` は `CONFIRMED` maturityを意味しない。
+- `PARTIALLY_DISAGREE` / `UNSURE` へ回答変更された場合は対応Objectを削除し、CandidateとResponseは残す。
+- `SLEEP_FATIGUE_PATTERN` Candidateは `SLEEP_FATIGUE_RELATIONSHIP` Object、`LONG_TERM` layer、`INTERNAL_STATE` / `BEHAVIOR` categoriesへ変換する。
+- Objectのconfidenceは参照Evidence confidenceを0〜1にclampした算術平均であり、ユーザーについて真実である確率ではない。
+- Objectは `compass_understanding_objects` に保存される。UserModel新構造、UserModel保存境界、Compass Map正式反映、maturity昇格、Learned / Confirmed判定、Understanding履歴、LLM生成は未実装のままである。

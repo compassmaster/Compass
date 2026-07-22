@@ -9,9 +9,11 @@ import type { Insight } from '../../analysis/types/analysis';
 import type { UserModelUpdateCandidate } from '../../compass-map/services/userModelUpdateCandidateService';
 import { EvidencePanel } from '../../analysis/components/EvidencePanel';
 import { UnderstandingCandidatePanel } from '../../understanding/components/UnderstandingCandidatePanel';
+import { UnderstandingObjectPanel } from '../../understanding/components/UnderstandingObjectPanel';
 import type { Evidence } from '../../analysis/types/evidence.ts';
 import type { AnalyzerFailure } from '../../analysis/services/analysisService.ts';
 import type { UnderstandingCandidate, UnderstandingCandidateAnswer, UnderstandingCandidateResponse } from '../../understanding/types/understandingCandidate.ts';
+import type { UnderstandingObject } from '../../understanding/types/understandingObject.ts';
 import './HomeTab.css';
 
 interface HomeTabProps {
@@ -25,6 +27,7 @@ interface HomeTabProps {
   analysisFailures: AnalyzerFailure[];
   onRunAnalysis: () => void;
   understandingCandidates: UnderstandingCandidate[];
+  understandingObjects: UnderstandingObject[];
   understandingCandidateResponses: UnderstandingCandidateResponse[];
   onUnderstandingCandidateRespond: (candidateId: string, answer: UnderstandingCandidateAnswer) => void;
 }
@@ -40,6 +43,7 @@ export function HomeTab({
   analysisFailures,
   onRunAnalysis,
   understandingCandidates,
+  understandingObjects,
   understandingCandidateResponses,
   onUnderstandingCandidateRespond,
 }: HomeTabProps) {
@@ -136,6 +140,8 @@ export function HomeTab({
         evidence={analysisEvidence}
         onRespond={onUnderstandingCandidateRespond}
       />
+
+      <UnderstandingObjectPanel objects={understandingObjects} evidence={analysisEvidence} />
 
       {/* Candidate Card */}
       <section className="home-section">
