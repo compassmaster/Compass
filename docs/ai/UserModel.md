@@ -198,3 +198,9 @@ UnderstandingRepository / UserModel boundary
 - [Future Architecture](../future/FUTURE_ARCHITECTURE.md)
 - [D-0002: User Modelを長期・短期の二層構造と根拠付き仮説で管理する](../設計決定.md#d-0002-user-modelを長期短期の二層構造と根拠付き仮説で管理する)
 - [D-0007: EvidenceからUnderstanding Candidateを生成し、ユーザー確認前にUserModelへ反映しない](../設計決定.md#d-0007-evidenceからunderstanding-candidateを生成しユーザー確認前にusermodelへ反映しない)
+
+## 2026-07-22 Implementation Boundary Note
+
+Understanding Object generation and persistence is now implemented before the UserModel boundary. Objects are stored in `compass_understanding_objects` and displayed in the Home Understanding Object Panel, but they are not saved into the current UserModel structure and are not reflected in Compass Map.
+
+The current UserModel TypeScript implementation remains the legacy Hypothesis-field structure. The new UserModel structure, Understanding Object aggregate storage boundary, Compass Map formal reflection, maturity promotion, Learned / Confirmed judgment, Understanding history, and LLM generation remain unimplemented.

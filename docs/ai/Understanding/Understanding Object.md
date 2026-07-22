@@ -1,42 +1,38 @@
 # Understanding Object
 
-## Purpose
+Understanding Objectは、Evidenceに基づくUnderstanding Candidateへユーザーが `AGREE` した場合に生成される、正式な理解オブジェクトである。
 
-Understanding Objectは、UserModelに保持される「理解1件」の目標概念である。
+これはEvidenceそのものでも、ユーザー確認前のUnderstanding Candidateでも、Candidate Response本体でもない。MVPではUserModelやCompass Mapにはまだ反映せず、専用Repositoryに保存してHomeのUnderstanding Object Panelで表示する。
 
-これはEvidenceそのものでも、ユーザー確認前のUnderstanding Candidateでも、Candidate Responseそのものでもない。Evidenceに基づくCandidateへユーザーがAGREEした場合に、将来の実装で生成対象となる正式な理解である。
+## Current Flow
 
----
+```text
+Evidence
+→ Understanding Candidate
+→ Understanding Candidate Response
+→ Understanding Object Factory
+→ Understanding Object Repository
+→ Understanding Object Panel
+```
 
-## Creation Boundary
-
-Candidate ResponseからUnderstanding Objectを生成する境界は、D-0008で定義する。
+## Response Rule
 
 | Candidate Response | Understanding Object | 初期maturity |
 | --- | --- | --- |
-| `AGREE` | 生成対象 | `HYPOTHESIS` |
-| `PARTIALLY_DISAGREE` | 生成しない | なし |
-| `UNSURE` | 生成しない | なし |
+| `AGREE` | 生成・upsertして保持する | `HYPOTHESIS` |
+| `PARTIALLY_DISAGREE` | 保持しない。既存Objectがあれば削除する | なし |
+| `UNSURE` | 保持しない。既存Objectがあれば削除する | なし |
 
-`AGREE` は「ユーザーが現在の表現に概ね同意した」ことだけを意味し、`Understanding Status Confirmed` を意味しない。新規Understanding Objectは一度の同意だけで `LEARNED` や `CONFIRMED` へ昇格しない。
+`AGREE` は「ユーザーが現在の表現に概ね同意した」ことだけを意味し、`CONFIRMED` maturityを意味しない。新規Understanding Objectは一度の同意だけで `LEARNED` や `CONFIRMED` へ昇格しない。
 
-CandidateとResponseは、Object生成後も監査と追跡のため参照可能にする。ただし、Candidate ResponseをUnderstanding Object本体へ埋め込まない。
+回答変更時は現在のResponseをSource of Truthとして扱い、`AGREE → Object保持`、`PARTIALLY_DISAGREE / UNSURE → Objectを保持しない` へ同期する。
 
-同じCandidateから複数のUnderstanding Objectが増殖しないよう、将来実装では安定した変換キーを使用する。推奨キーは以下である。
-
-```text
-understandingType + ":" + candidate.dedupeKey
-```
-
-正式なID生成アルゴリズムは実装PRで決定する。
-
----
-
-## Target Type Proposal
-
-以下は実装前の設計案であり、現時点ではTypeScriptコードとして実装しない。正式な型・Repository・Factoryは別PRで確定する。
+## Current TypeScript Model
 
 ```typescript
+import type { EvidenceId } from '../../analysis/types/evidence.ts';
+import type { UnderstandingCandidateId } from './understandingCandidate.ts';
+
 export type UnderstandingId =
   string & { readonly __brand: 'UnderstandingId' };
 
@@ -65,152 +61,134 @@ export interface UnderstandingStatus {
   readonly maturity: UnderstandingMaturity;
 
   /**
-   * 真実である確率ではない。
+   * ユーザーについて真実である確率ではない。
    * 現在のEvidenceがUnderstandingをどの程度支持しているか。
    */
   readonly confidence: number;
 
   /**
-   * 参照しているEvidence Object数。
+   * 重複排除後の参照Evidence Object数。
    */
   readonly evidenceCount: number;
 
   readonly lastUpdatedAt: string;
 
+  /**
+   * MVPでは空配列でよい。
+   * 質問生成エンジンは今回実装しない。
+   */
   readonly nextQuestions: string[];
 }
 
 export interface UnderstandingObject {
   readonly id: UnderstandingId;
-
   readonly type: UnderstandingType;
-
   readonly layer: UnderstandingLayer;
-
   readonly categories: UnderstandingCategory[];
 
   /**
-   * ユーザーを固定する診断文ではなく、修正可能な理解文。
+   * ユーザーを固定的に診断しない、修正可能な理解文。
    */
   readonly statement: string;
 
   readonly sourceCandidateIds: UnderstandingCandidateId[];
-
   readonly evidenceIds: EvidenceId[];
-
   readonly status: UnderstandingStatus;
-
   readonly createdAt: string;
-
   readonly updatedAt: string;
 }
 ```
 
-設計上の制約:
+Object直下に `confidence` は置かない。`proposedValue`、UserModel target field、Candidate Response本体、`APPLIED` / `REJECTED` のような適用状態も持たせない。
 
-- `proposedValue`を持たない。
-- UserModelの特定フィールド名を持たない。
-- Candidate ResponseをObject本体に埋め込まない。
-- Candidate IDとEvidence IDへ追跡できる。
-- `confidence`をObject直下に重複して持たない。
-- `confidence`はUnderstanding Statusにのみ属する。
-- `statement`はユーザーを固定する診断文にしない。
-- Historyの完全実装は今回含めない。
+## Current Mapping
 
----
-
-## Initial Understanding Type: Sleep Fatigue
-
-最初のUnderstanding Typeは以下として設計する。
-
-```text
-SLEEP_FATIGUE_RELATIONSHIP
-```
-
-推奨マッピング:
+MVPで実装済みの正式変換は1つだけである。
 
 ```text
 Candidate Type: SLEEP_FATIGUE_PATTERN
 Understanding Type: SLEEP_FATIGUE_RELATIONSHIP
 Layer: LONG_TERM
-Categories: INTERNAL_STATE, BEHAVIOR
+Categories: INTERNAL_STATE / BEHAVIOR
+Initial maturity: HYPOTHESIS
+statement: candidate.statement
 ```
 
-理由:
+Candidateの非断定文はObjectの `statement` としてそのまま維持し、断定文へ書き換えない。
 
-- 単日の疲労状態ではなく、複数日の睡眠と疲労の関係を表すためLong-termに分類する。
-- 疲労はInternal Stateに属する。
-- 睡眠時間・睡眠習慣はBehaviorに属する。
-- Patternは分析が見つけた構造であり、ユーザー理解の対象カテゴリとしては扱わない。
+## Stable ID
 
-例:
+同じCandidateから複数Objectが増殖しないよう、Object IDは安定キーで生成する。
 
 ```text
-睡眠時間が6時間未満の日には、
-6時間以上の日より疲労を感じやすい傾向があるかもしれない。
+understandingType + ":" + candidate.dedupeKey
 ```
 
-これは人格や性格ではない。
+現在時刻、配列index、ランダムUUIDはIDに使わない。
 
----
+## Confidence MVP Rule
 
-## Direction and Prohibited Reverse Updates
+`status.confidence` は、現在のEvidenceがこのUnderstandingをどの程度支持しているかを表す。ユーザーについて真実である確率、人格の確定度、診断精度ではない。
 
-正式フローは一方向である。
+MVP計算規則:
 
 ```text
-Evidence
-    ↓
-Understanding Candidate
-    ↓
-Candidate Response
-    ↓
-Understanding Object
-    ↓
-UserModel
+参照Evidence confidenceの算術平均
 ```
 
-以下は禁止する。
+処理手順:
+
+1. Candidateの `evidenceIds` を重複排除する。
+2. 参照Evidenceをすべて解決する。
+3. 各Evidence confidenceを0〜1へclampする。
+4. 算術平均を計算する。
+5. 小数第2位へ丸める。
+
+`status.evidenceCount` は重複排除後のEvidence Object数と一致させる。`status.nextQuestions` はMVPでは空配列である。
+
+## Repository
+
+MVPの保存先はlocalStorageの専用キーである。
+
+```text
+compass_understanding_objects
+```
+
+Repositoryはid upsert、同一source Candidateからの増殖防止、createdAt維持、sourceCandidateIds / evidenceIdsの重複排除統合、evidenceCount整合、既存maturityの非降格、不正JSON時の空配列フォールバック、配列内不正要素の除外、updatedAt降順の安定ソートを行う。
+
+maturity順位は以下であり、Repositoryでは将来の `LEARNED` / `CONFIRMED` を再生成で `HYPOTHESIS` へ戻さないためだけに使う。
+
+```text
+HYPOTHESIS < LEARNED < CONFIRMED
+```
+
+## Boundaries
+
+Understanding Objectはsource Candidateとsource Evidenceへ追跡可能でなければならない。
+
+禁止する方向:
 
 ```text
 Understanding Object → Evidence改変
 Understanding Object → Candidate回答改変
+Understanding Object → UserModel直接更新
 Compass Map表示 → Understanding Object生成
 LLM → UserModel直接更新
 ```
 
----
+## Not Implemented
 
-## Relationship with UserModel
-
-UserModelは複数のUnderstanding Objectを管理する上位集約である。Understanding Object生成とUserModel保存は別責務として扱う。
-
-現在の既存Hypothesis型UserModelは段階移行中であり、この設計PRではUserModelコードを変更しない。
-
----
-
-## Implementation Status
-
-設計済み:
-
-```text
-Candidate Response
-→ Understanding Object
-```
-
-未実装:
-
-```text
-Understanding Object TypeScript型
-Understanding Object Factory
-Understanding Object Repository
-UserModel新構造
-Compass Map正式反映
-既存UserModel migration
-LLM生成
-```
-
----
+- UserModel新構造
+- Understanding ObjectをUserModelへ保存する境界
+- Compass Map正式反映
+- maturity昇格
+- Learned / Confirmed判定
+- Understanding履歴
+- LLM生成
+- Candidate Prioritizer
+- Candidate expiration
+- 既存UserModel migration
+- Character Expression Layer
 
 ## Related Documents
 
@@ -218,6 +196,5 @@ LLM生成
 - [Understanding Candidate](Understanding%20Candidate.md)
 - [Understanding Categories](Understanding%20Categories.md)
 - [Understanding Status](Understanding%20Status.md)
-- [UserModel](../UserModel.md)
 - [Evidence](../Analysis/Evidence.md)
 - [D-0008](../../設計決定.md#d-0008-understanding-candidateのユーザー回答からunderstanding-objectを生成する境界)

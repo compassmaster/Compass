@@ -80,11 +80,11 @@ Do not confuse `Understanding Candidate` with `UserModelUpdateCandidate`.
 
 ## Next Work
 
-D-0008 designs the separate boundary from answered Understanding Candidate to Understanding Object: AGREE creates an Object at Hypothesis maturity, while PARTIALLY_DISAGREE and UNSURE do not create Objects. This is design-only; the Object type, factory, repository, UserModel new structure, Compass Map reflection, LLM generation, Candidate Prioritizer, automatic expiry, and migration changes remain unimplemented unless explicitly requested.
+D-0008 defines and the MVP now implements the separate boundary from answered Understanding Candidate to Understanding Object: AGREE creates/upserts an Object at Hypothesis maturity, while PARTIALLY_DISAGREE and UNSURE remove/do not keep Objects. UserModel new structure, UserModel storage boundary, Compass Map reflection, LLM generation, Candidate Prioritizer, automatic expiry, and migration changes remain unimplemented unless explicitly requested.
 
 ## Known Issues / Technical Debt
 
-- Understanding Object is documented as a target concept but not implemented in code.
+- Understanding Object is implemented only up to separate Object storage and Home panel display; UserModel and Compass Map reflection are still not connected.
 - Current UserModel remains Hypothesis-field based.
 - Old Insight / UserModelUpdateCandidate flow remains and must be migrated gradually.
 - `App.tsx` still owns several top-level state values; acceptable for the MVP but may need state management later.
@@ -110,3 +110,13 @@ D-0008 designs the separate boundary from answered Understanding Candidate to Un
 - `docs/ai/Understanding/Understanding Status.md`
 - `docs/設計決定.md`
 - `docs/roadmap/MVP_IMPLEMENTATION_ROADMAP.md`
+
+## 2026-07-22 Understanding Object MVP Handoff
+
+- Formal Understanding Object MVP is implemented through type, factory, localStorage repository, application service, and Home UI panel.
+- Implemented flow: `Evidence → Understanding Candidate → Candidate Response → Understanding Object → Understanding Object Panel`.
+- `AGREE` generates/upserts a Hypothesis-maturity Object. `PARTIALLY_DISAGREE` and `UNSURE` remove any Object for the current Candidate while preserving Candidate and Response records.
+- Sleep fatigue Candidates map to `SLEEP_FATIGUE_RELATIONSHIP`, `LONG_TERM`, `INTERNAL_STATE` / `BEHAVIOR`.
+- Stable Object IDs use `understandingType + ':' + candidate.dedupeKey`; no random/time/index IDs are used.
+- Object confidence is the rounded arithmetic mean of clamped referenced Evidence confidence values and is stored only under `status.confidence`.
+- Objects are stored separately under `compass_understanding_objects`; this implementation does not update UserModel, Compass Map, legacy Insight/UserModelUpdateCandidate flow, or maturity beyond Hypothesis.
