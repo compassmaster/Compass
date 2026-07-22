@@ -13,6 +13,11 @@ Compassはユーザーを決めつけない。
 
 UserModelは常に更新され続ける「現在の理解」である。
 
+UserModel StateはUserModel全体の成熟状態を表す。
+
+個々のUnderstandingの成熟度は、
+`Understanding/Understanding Status.md` で定義する。
+
 ---
 
 # Philosophy
