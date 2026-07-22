@@ -2,48 +2,36 @@
 
 ## Purpose
 
-Understanding Statusは、Compassが各Understanding Objectをどの程度理解しているかを管理する内部状態である。
+Understanding Statusは、個々のUnderstanding Objectがどの程度の根拠と成熟度を持つかを表す概念である。
 
-Understanding Statusは、Evidenceに基づいて形成された現在の理解の状態を表す。
-
-Understanding Objectが「何を理解するか」を表すのに対し、Understanding Statusは「どこまで理解できているか」を表す。
-
-ConversationやUIとは独立したAI内部の情報であり、推論・分析・Memory更新の基盤として利用される。
+これはUserModel全体の状態を表すUserModel Stateではない。また、Understanding Candidateの確認状態やユーザー回答状態でもない。
 
 ---
 
-## Responsibilities
+## Scope Separation
 
-Understanding Statusは以下を管理する。
+```text
+UserModel State
+→ UserModel全体として、現在どの程度理解が形成されているか
 
-- 理解レベル
-- 信頼度
-- 根拠の量
-- 最終更新日時
-- 次に理解を深めるために必要な情報
-
----
-
-# Status Model
-
-各Understanding Objectは1つのUnderstanding Statusを持つ。
-
-```
-Understanding Object
-        │
-        ▼
 Understanding Status
+→ 個々のUnderstandingが、どの程度の根拠と成熟度を持つか
+
+Understanding Candidate State / User Response
+→ ユーザー確認前の候補や、候補への回答状態を表す
 ```
+
+ユーザー回答の `CONFIRMED` と、Understanding成熟度の `Confirmed` は意味が異なる。
+前者は「ユーザーが候補にそう思うと回答した状態」であり、後者は「長期間再現され非常に信頼できるUnderstandingの成熟度」である。
 
 ---
 
-# Fields
+## Status Model
 
-## Level
+現在の概念設計におけるStatus Modelは以下である。
+Accepted ADRなしに、この状態名を全面変更しない。
 
-現在どの段階まで理解できているかを表す。
-
-```
+```text
 Unknown
 Observed
 Hypothesis
@@ -73,111 +61,45 @@ Confirmed
 
 ---
 
-## Confidence
+## Additional Fields
 
-理解への確信度を表す。
+Understanding Statusは、実装時に以下のような情報を持つ可能性がある。
 
-```
-0.0 ～ 1.0
-```
+- confidence
+- evidence count
+- last updated
+- next question
 
-Confidenceはデータ量・一貫性・再現性などから算出される。
-
-ConfidenceはUnderstandingが正しいことを保証するものではない。
-
-Confidenceは現在のEvidenceがどの程度Understandingを支持しているかを表す。
+ただし、正式なTypeScript型はまだ確定していない。
 
 ---
 
-## Evidence Count
+## Implementation Status
 
-理解の根拠となったEvidenceの数を表す。
-
-例
-
-Evidence Count = 84
-
-これは84件のEvidenceを根拠として理解していることを意味する。
-
-## Last Updated
-
-最後に理解が更新された日時。
+現在のStatus Modelは概念設計であり、正式なコード実装はまだ存在しない。
+現在のコードにあるInsightの状態、UserModelUpdateCandidateの状態、Hypothesis型UserModelのconfidenceとは直接同一視しない。
 
 ---
 
-## Next Question
+## Open Design Question: Confirmed Naming Collision
 
-理解をさらに深めるために必要な情報。
+`Confirmed` という名称は、以下の2つの意味で使われる可能性がある。
 
-例
+- ユーザーがCandidateに「そう思う」と回答した状態。
+- 長期間再現され非常に信頼できるUnderstandingの成熟度。
 
-```
-昼寝の有無
-運動量
-仕事の日か休日か
-```
+実装前にADRで次のいずれかを検討する必要がある。
 
-Compassはこの情報をもとに、自然なタイミングでユーザーへ質問できる。
+- Understanding成熟度側の `Confirmed` を別名へ変更する。
+- ユーザー回答側の命名を `Agreement` / `Validated` などへ変更する。
+- 両者の意味を型と名前で完全に分離する。
 
----
-
-# State Transition
-
-Understandingは段階的に成長する。
-
-```
-Unknown
-    │
-    ▼
-Observed
-    │
-    ▼
-Hypothesis
-    │
-    ▼
-Learned
-    │
-    ▼
-Confirmed
-```
-
-新しいデータによって既存の理解が崩れた場合は、より低い段階へ戻ることもある。
+今回、独断で新しいenumは確定しない。
 
 ---
 
-# Example
+## Related Documents
 
-## 睡眠
-
-```
-Level
-Learned
-
-Confidence
-0.91
-
-Evidence
-85
-
-Last Updated
-2026-07-17
-
-Next Question
-昼寝の有無
-```
-
----
-
-# Relationship with Understanding Object
-
-```
-Understanding Object
-      │
-      ▼
-Understanding Status
-      ├── Level
-      ├── Confidence
-      ├── Evidence
-      ├── Last Updated
-      └── Next Question
-```
+- [Understanding](Understanding.md)
+- [Understanding Object](Understanding%20Object.md)
+- [UserModel](../UserModel.md)

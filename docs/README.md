@@ -2,32 +2,54 @@
 status: Active
 dependsOn: []
 usedBy: []
-lastUpdated: "2026-07-15"
+lastUpdated: "2026-07-22"
 ---
 # Documentation Index
 
-Compassのドキュメント群のインデックスです。
-ドキュメントは以下の依存関係に基づいて設計されています。
+Compassのドキュメント群のインデックスです。現在のSingle Source of Truthは、実装状態・Accepted ADR・各設計文書を合わせて確認してください。
 
-Vision -> Core Philosophy -> Design Principles -> Requirements -> Architecture -> Implementation
+## Project State
 
-## 主要ドキュメント一覧
+- [Current State](CURRENT_STATE.md)
+- [Current Implementation State](ai/CURRENT_IMPLEMENTATION_STATE.md)
+- [AI Context](AI_CONTEXT.md)
+- [AI Handoff](development/AI_HANDOFF.md)
+- [AI Collaboration Protocol](AI_COLLABORATION_PROTOCOL.md)
+- [Change History](変更履歴.md)
+- [ADR / 設計決定](設計決定.md)
 
-- **[Vision](01_ビジョン.md)**
-  Compassが目指す未来と目的を定義します。
-- **[Core Philosophy](philosophy/Compass_Core_Philosophy.md)**
-  Compassの存在理由と根本的な哲学を定義する憲法です。
-- **[Design Principles](02_設計原則.md)**
-  哲学に基づいた、AIおよびシステムの行動・判断基準です。
-- **[Requirements](03_要件定義.md)**
-  設計原則を満たすための具体的な機能要件です。
-- **[Architecture](architecture/README.md)**
-  要件を満たすためのシステム構造やデータフローの設計です。
-- **[Algorithms](algorithms/README.md)**
-  推論や予測に用いるアルゴリズムの設計です。
-- **[Research](research/README.md)**
-  AI研究観点での検証結果や代替案などの調査記録です。
-- **[ADR (Architecture Decision Records)](設計決定.md)**
-  設計上の重要な意思決定の記録です。
-- **[Roadmap](roadmap/README.md)**
-  今後の開発計画とマイルストーンです。
+## Core Documents
+
+- [Vision](01_ビジョン.md)
+- [Core Philosophy](philosophy/Compass_Core_Philosophy.md)
+- [Design Principles](02_設計原則.md)
+- [Requirements](03_要件定義.md)
+- [Architecture](architecture/README.md)
+
+## AI Architecture
+
+- [UserModel](ai/UserModel.md)
+- [Future Architecture](ai/FUTURE_ARCHITECTURE.md)
+
+### Analysis
+
+- [Analysis](ai/Analysis/Analysis.md)
+- [Analysis Architecture](ai/Analysis/Analysis%20Architecture.md)
+- [Evidence](ai/Analysis/Evidence.md)
+
+### Understanding
+
+- [Understanding](ai/Understanding/Understanding.md)
+- [Understanding Object](ai/Understanding/Understanding%20Object.md)
+- [Understanding Categories](ai/Understanding/Understanding%20Categories.md)
+- [Understanding Status](ai/Understanding/Understanding%20Status.md)
+
+## Roadmap
+
+- [Roadmap Index](roadmap/README.md)
+- [MVP Implementation Roadmap](roadmap/MVP_IMPLEMENTATION_ROADMAP.md)
+
+## Research / Algorithms
+
+- [Algorithms](algorithms/README.md)
+- [Research](research/README.md)

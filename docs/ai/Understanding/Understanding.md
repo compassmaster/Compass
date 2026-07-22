@@ -2,91 +2,178 @@
 
 ## Purpose
 
-Understandingは、Compassがユーザーをどのように理解するかを定義するドキュメントである。
+Understandingは、Analysisが生成したEvidenceを、人間が確認可能な理解候補へ変換し、ユーザーと共同で検証するためのレイヤーである。
 
-ここで扱うのはAIの内部状態であり、ユーザーとの対話方法は扱わない。
+UnderstandingはDailyLogからUserModelを直接更新する処理ではない。現在の正式フローは以下である。
 
-Conversation Layerは別ドキュメントで管理する。
-
----
-
-Responsibilities
-
-- Understanding Object
-- Understanding Status
-- Memoryとの関係
-- 学習方法
-- パターン抽出
-- 長期理解の更新
-# Analysis Philosophy
-
-## 1. コア定義
-**「Compassの分析AIは、ユーザーを評価するためではなく理解するために存在する。行動や感情の表面だけを見るのではなく、その背景にある価値観や大切にしているものを探し、変化し続ける一人の人間として理解する。」**
-
-Compassの裏側にいるAIは、「評価する人」ではなく「静かな観察者であり、理解者」である。
-
-## 2. 分析の基本姿勢（5原則）
-
-### ① 判断より理解を優先する
-* **方針**: 「良い・悪い」を判定せず、「なぜそうなったのか」の構造（表面的な問題 → 背景にある理由 → 価値観）を探求する。
-* **例**: 「睡眠不足」という事実に対し、だらしないと判定するのではなく、「やるべきことを最後まで責任を持って取り組みたい」という裏側の価値観の存在を探索する。
-
-### ② ネガティブを「問題」と決めつけない
-* **方針**: ネガティブな感情や状態を「直ちに改善すべきもの」ではなく、「自分を守るためのサイン（回復要求など）」として肯定的に解釈する。
-* **例**: 「何もやる気が出ない」＝「普段から努力を続けていることによる回復要求の可能性」と捉える。
-
-### ③ 行動ではなく「パターン」を見る
-* **方針**: 1日の出来事（点）だけで断定せず、過去の記録との連なり（線・パターン）から「変化の流れ」を読み取る。
-* **例**: 「雨の日は疲労度が高い」「予定の前日は眠りが浅い」といった、ユーザー自身も気づいていない傾向を見つける。
-
-### ④ 強みを発見する（資源の探索）
-* **方針**: 問題解決ではなく、その人の中にある「強み」や「リソース（資源）」を見つけることに注力する。
-* **例**: 「疲れていても約束を守った」＝「信頼関係を大切にする価値観を持っている」と発見する。
-
-### ⑤ 仮説として扱う
-* **方針**: 絶対に断定（ラベリング）せず、常に「〜かもしれません」「〜という傾向があるようです」という仮説として扱い、最終的な決定権はユーザーに委ねる。
-
-## 3. Daily Log 分析フロー
-
-ユーザーの入力（Daily Log）からUser Modelを更新するための推論ステップは以下の段階とする。
-
-1. 状態把握
-2. 背景探索
-3. 価値観探索
-4. パターン照合
-5. 仮説生成
-6. Understanding Statusの更新
-   ※成熟度の評価方法は今後設計する。
-
-※ユーザーへの提示・確認はConversation Layerで定義する。
-# Understanding Object
-
-## Purpose
-
-Understanding Objectは、Compassがユーザーについて形成した「理解」を表す最小単位である。
-
-ここでいう「理解」とは、単なる事実や記録ではない。
-
-Daily LogやMemoryから得られた情報をもとに形成された仮説であり、ユーザーとの対話や新しい記録によって更新・修正され続ける。
-
-Understanding Objectは固定されたプロフィールではなく、時間とともに成長し続ける動的な理解である。
+```text
+DailyLog / SleepRecord
+        ↓
+Analysis
+        ↓
+Evidence
+        ↓
+Understanding Candidate
+        ↓
+User Confirmation
+        ↓
+UserModel
+```
 
 ---
 
-## Version 1 Concept
+## Responsibilities
 
-Understanding Objectは以下の要素で構成される。
+Understandingレイヤーの責務は以下である。
 
-- Hypothesis（理解した内容）
-- Evidence（その理解の根拠）
-- Understanding Status（理解の成熟度）
-- Importance（Compassにとっての重要度）
-- History（理解がどのように変化したか）
-  
-## Design Principle
+- Evidenceを解釈可能な理解候補へ変換する。
+- 理解候補と根拠Evidenceの関係を維持する。
+- 候補を仮説として表現する。
+- ユーザー確認へ渡す。
+- 将来、確認済み理解をUserModelへ接続する。
 
-Understanding Objectは「プロフィール」ではない。
+## Non-Responsibilities
 
-Compassはユーザーを固定的な性格として扱わず、常に変化し続ける存在として理解する。
+Understandingレイヤーは以下を行わない。
 
-そのため、Understanding Objectは更新・統合・分岐・消滅することを前提として設計される。
+- DailyLogやSleepRecordの保存。
+- 観測事実の生成。
+- Analysisの実行。
+- Evidenceの改変。
+- ユーザー確認前のUserModel更新。
+- LLMによる直接的な人格決定。
+- Conversationの話し方の制御。
+
+---
+
+## Input
+
+Understandingレイヤーの入力はEvidenceである。
+EvidenceはAnalysisによって生成された観測事実であり、人格・価値観・UserModel更新内容を含まない。
+
+---
+
+## Output
+
+現在の目標アーキテクチャにおける出力はUnderstanding Candidateである。
+Understanding Candidateは、Evidenceを根拠としてユーザーに確認するための一時的な理解候補であり、UserModelに保存されるUnderstanding Objectとは別物である。
+
+---
+
+## Architecture Flow
+
+```text
+AnalysisContext
+        ↓
+EvidenceAnalyzer
+        ↓
+AnalysisService
+        ↓
+Evidence
+        ↓
+Understanding Candidate
+        ↓
+User Confirmation
+        ↓
+Understanding Object
+        ↓
+UserModel
+```
+
+現在のコードで実装済みなのはEvidence保存までであり、Understanding Candidate以降は未実装である。
+
+---
+
+## Relationship with Evidence
+
+Evidenceは観測された事実である。UnderstandingはEvidenceを改変せず、Evidenceから「ユーザーと確認できる解釈候補」を作る。
+
+Evidenceが存在しないUnderstanding Candidateを生成してはならない。
+
+---
+
+## Relationship with Understanding Candidate
+
+Understanding Candidateは、Evidenceから生成される一時的な仮説である。
+Candidateはユーザー確認のために存在し、確認前にUserModelへ反映してはならない。
+
+既存コードの `UserModelUpdateCandidate` は、旧Insight系統に属する技術的なUserModel更新候補であり、D-0007のUnderstanding Candidateとは別責務である。
+
+---
+
+## Relationship with User Confirmation
+
+User Confirmationは、Compassが提示した候補をユーザーと共同で検証する境界である。
+ユーザーは候補に対して同意・相違・不明などの回答を行える。
+
+この回答は、UserModel更新とは別のステップとして保存・管理される必要がある。
+
+---
+
+## Relationship with UserModel
+
+UserModelは、ユーザー確認を経たUnderstandingを保持する集約である。
+UnderstandingレイヤーはUserModelへ直接書き込まない。Candidate生成とUserModel更新は別責務である。
+
+---
+
+## Relationship with Memory
+
+Memoryは観測や履歴を保持するための基盤であり、UnderstandingはMemoryに保存された情報そのものではない。
+Understandingは、Evidenceとユーザー確認を通じて形成される現在の理解である。
+
+---
+
+## Current Implementation Status
+
+Formal Analysis Frameworkは以下まで実装済みである。
+
+```text
+AnalysisContext
+        ↓
+EvidenceAnalyzer
+        ↓
+AnalysisService
+        ↓
+Evidence
+        ↓
+AnalysisApplicationService
+        ↓
+EvidenceRepository
+```
+
+実装済み:
+
+- SleepRecord
+- SleepDailyLogJoinService
+- Evidence
+- AnalysisContext
+- EvidenceAnalyzer
+- AnalysisService
+- AnalysisApplicationService
+- LocalStorageEvidenceRepository
+- SleepFatigueAnalyzer
+- EvidencePanel
+- Analysis Framework検証スクリプト
+
+未実装:
+
+- Understanding Candidate型・生成処理
+- ユーザー回答保存境界
+- Understanding ObjectをUserModelへ保持する新フロー
+- 新しいUserModel更新フロー
+
+旧Insight / Insight Feedback / UserModelUpdateCandidate / Hypothesis型UserModelは互換性のため残っている。これらをD-0007のUnderstanding Candidateと同一視してはならない。
+
+---
+
+## Related Documents
+
+- [Understanding Object](Understanding%20Object.md)
+- [Understanding Categories](Understanding%20Categories.md)
+- [Understanding Status](Understanding%20Status.md)
+- [UserModel](../UserModel.md)
+- [Analysis Architecture](../Analysis/Analysis%20Architecture.md)
+- [Evidence](../Analysis/Evidence.md)
+- [Future Architecture](../FUTURE_ARCHITECTURE.md)
+- [D-0007](../../設計決定.md#d-0007-evidenceからunderstanding-candidateを生成しユーザー確認前にusermodelへ反映しない)
