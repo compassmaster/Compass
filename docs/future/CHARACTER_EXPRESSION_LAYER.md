@@ -64,15 +64,24 @@ UserModel
 Character Expression Layerは、この流れの後段に位置する。
 
 ```text
-UserModel / Evidence / Confirmed Understanding
-        │
-        ▼
+DailyLog / SleepRecord / その他観測データ
+        ↓
+Analysis
+        ↓
+Evidence
+        ↓
+Understanding Candidate
+        ↓
+User Confirmation
+        ↓
+UserModel
+        ↓
 Character Interpretation
-        │
-        ▼
+        ↓
+Character Expression State
+        ↓
 Character Visual Expression
-        │
-        ▼
+        ↓
 Share / Entertainment Experience
 ```
 
@@ -624,9 +633,15 @@ interface CharacterExpressionState {
 }
 ```
 
-これは正式なTypeScriptスキーマではなく、将来の検討材料である。
+これは正式なTypeScript型ではなく、将来の検討材料である。
 
-また、Character Expression StateはUserModel本体とは別に管理する。
+このモデル方向性について、現時点では以下を明確な前提とする。
+
+- 現在未実装である
+- UserModel本体とは別管理である
+- アプリケーションコード上の正式なTypeScript型ではない
+- 実装前にADRと詳細設計が必要である
+- `sourceUnderstandingIds` は説明可能性のための参照であり、キャラクター表現からUserModelを更新するためのものではない
 
 ---
 

@@ -29,7 +29,6 @@ Compassのドキュメント群のインデックスです。現在のSingle Sou
 ## AI Architecture
 
 - [UserModel](ai/UserModel.md)
-- [Future Architecture](../future/FUTURE_ARCHITECTURE.md)
 
 ### Analysis
 
@@ -43,6 +42,11 @@ Compassのドキュメント群のインデックスです。現在のSingle Sou
 - [Understanding Object](ai/Understanding/Understanding%20Object.md)
 - [Understanding Categories](ai/Understanding/Understanding%20Categories.md)
 - [Understanding Status](ai/Understanding/Understanding%20Status.md)
+
+## Future Concepts
+
+- [Future Architecture](future/FUTURE_ARCHITECTURE.md)
+- [Character Expression Layer](future/CHARACTER_EXPRESSION_LAYER.md)
 
 ## Roadmap
 
