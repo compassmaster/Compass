@@ -6,6 +6,17 @@
 - 古いブランチや過去の会話内容を正としない
 - docs とコードが矛盾する場合は、作業前に報告する
 
+## 2026-07-22 Update: D-0007 and Understanding Candidate Boundary
+
+- D-0007がAcceptedになり、正式な理解フローにUnderstanding Candidateが追加された。
+- 正式フローは `DailyLog / SleepRecord → Analysis → Evidence → Understanding Candidate → User Confirmation → UserModel` である。
+- Understanding Candidateはまだ未実装である。
+- Understanding Candidateは、既存のUserModelUpdateCandidateとは別責務である。
+- 旧Insight / Insight Feedback / UserModelUpdateCandidate系統は、段階移行のため互換性として残っている。
+- 次の実装対象は、EvidenceからUnderstanding Candidateを生成し、ユーザー回答を保存する境界である。
+- 次の実装ではUserModel更新、Compass Map反映、LLM生成を行わない。
+
+
 ## UserModel Invariants
 
 - Evidenceのない理解をUserModelの有効な理解として扱わない

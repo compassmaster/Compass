@@ -2,78 +2,71 @@
 
 ## Purpose
 
-Understanding Objectは、Compassが理解の対象とする情報を定義する。
+Understanding Objectは、UserModelに保持される「理解1件」の概念である。
 
-Compassは単なる記録アプリではない。
-
-ユーザーの状態や行動だけでなく、その背景や変化、価値観まで含めて理解することを目的としている。
-
-Understanding Objectは、AIが「ユーザーをどのような視点で理解するか」を表現するモデルである。
+一つのUnderstandingは、ユーザー確認を経た確認済みの理解を表す。これはEvidenceそのものでも、ユーザー確認前のUnderstanding Candidateでもない。
 
 ---
 
-# Responsibilities
+## Conceptual Definition
 
-Understanding Objectは以下を定義する。
+Understanding Objectは、最低限以下の性質を持つ。
 
-- AIが理解する対象
-- 各対象が持つ役割
-- 対象同士の関係
-- Understandingの範囲
+- 確認済みの理解を表す。
+- Understanding Candidateとは別物である。
+- 必ず根拠Evidenceへ追跡できる。
+- どのCandidateを経由したか追跡できる。
+- Long-termまたはShort-termのレイヤーに属する。
+- Understanding Categoryを持つ。
+- statementまたは理解内容を持つ。
+- Understanding Statusを持つ。
+- confidenceを持つことができる。
+- 作成日時・更新日時を持つ。
+- UserModel内で管理される。
 
-具体的な状態や数値はUnderstanding Statusで管理する。
-
-Memoryの保存方法はMemoryで管理する。
+詳細なTypeScript型は、実装前に別途確定する。
 
 ---
 
-# Relationship
+## Difference from Evidence and Candidate
 
 ```text
-Daily Log
-Conversation
-      │
-      ▼
-Analysis
-      │
-      ▼
 Evidence
-      │
-      ▼
-Understanding
-      │
-      ▼
+→ 観測された事実
+
+Understanding Candidate
+→ ユーザーと確認する前の一時的な解釈候補
+
 Understanding Object
-      │
-      ▼
-Understanding Status
-      │
-      ▼
-Reasoning
+→ ユーザー確認を経てUserModelに保持される理解
 ```
 
-- Memoryは過去の情報を保持する。
-- Understanding Objectは「何を理解するか」を定義する。
-- Understanding Statusは現在の理解を保持する。
-- Reasoningは理解を利用して判断を行う。
+EvidenceはAnalysisの出力であり、人格や価値観を断定しない。
+Understanding CandidateはEvidenceに基づく仮説であり、ユーザー確認前にUserModelへ反映されない。
+Understanding Objectはユーザー確認を経てUserModelに保持される理解である。
 
 ---
 
-# Understanding Objects
+## Relationship with UserModel
 
-Compassはユーザーを以下の観点から理解する。
+UserModelは複数のUnderstanding Objectを管理する上位集約である。
+Understanding ObjectはUserModel内でLong-termまたはShort-termの理解として扱われ、Compass Map、Reflection、Conversationの文脈に利用される。
 
-```text
-Understanding
+---
 
-├── Internal State
-├── Behavior
-├── Environment
-├── Relationships
-├── Preferences
-├── Goals
-├── Patterns
-└── Identity
-```
+## Implementation Status
 
-それぞれは独立した情報ではなく、お互いに影響し合う。
+この文書は目標アーキテクチャ上の概念を定義する。
+現在のコードには、Understandingを共通の最小単位としてUserModelへ保持する構造はまだ実装されていない。
+
+現在の実装では、D-0002に基づくLong-term / Short-term構造とHypothesis型UserModelが使われている。既存のInsight、UserModelUpdateCandidate、Hypothesis型UserModelは段階移行の対象であり、今回この文書を理由にコードを変更しない。
+
+---
+
+## Related Documents
+
+- [Understanding](Understanding.md)
+- [Understanding Categories](Understanding%20Categories.md)
+- [Understanding Status](Understanding%20Status.md)
+- [UserModel](../UserModel.md)
+- [Evidence](../Analysis/Evidence.md)

@@ -7,9 +7,17 @@ dependsOn:
   - docs/CURRENT_STATE.md
 usedBy:
   - docs/roadmap/README.md
-lastUpdated: "2026-07-21"
+lastUpdated: "2026-07-22"
 ---
 # Compass MVP Implementation Roadmap
+
+## Architecture Transition Note
+
+MVP-01〜MVP-12は、既存のInsight / UserModelUpdateCandidateを中心としたMVPループを完成させるためのロードマップである。
+
+その後、D-0006およびD-0007によって、SleepRecord、Formal Analysis Framework、Evidence、Understanding Candidateを中心とする正式な理解パイプラインが定義された。
+
+旧MVP実装は互換性のため維持しながら、今後は正式パイプラインへ段階的に移行する。正式なUnderstanding Candidate実装は、MVP-01〜MVP-12の旧Insight中心ループとは別の次段階として扱う。
 
 このロードマップは、Compass Core Philosophy v1.0、ADR D-0002〜D-0005、MVP Design Review、現行コードを前提に、MVP完成までの実装をGitHub Issue単位へ分解したものです。
 
@@ -209,8 +217,8 @@ User Model更新に入る前の事前整理として、採用した2件だけを
 | 8 | #MVP-07 | #MVP-07-PREP | User Model更新ルールを対象フィールド別に実装する（Done） |
 | 9 | #MVP-08 | #MVP-07 | Compass Mapに空状態・根拠・編集導線を追加する（Done） |
 | 10 | #MVP-09 | #MVP-08 | Explain Understanding（Done） |
-| 11 | #MVP-10 | #MVP-09 | MVP完了判定用のテスト/検証スクリプトを整備する |
-| 12 | #MVP-11 | #MVP-10 | Docs/ADR/Current StateをMVP完成状態へ同期する |
+| 11 | #MVP-10 | #MVP-09 | MVP完了判定用のテスト/検証スクリプトを整備する（Done） |
+| 12 | #MVP-11 | #MVP-10 | Docs/ADR/Current StateをMVP完成状態へ同期する（Done） |
 | 13 | #MVP-12 | #MVP-11 | 手動QAとリリース前調整を行う |
 
 ## GitHub Issue分解
@@ -395,6 +403,9 @@ User Model更新に入る前の事前整理として、採用した2件だけを
 
 ### #MVP-10: MVP完了判定用のテスト/検証スクリプトを整備する
 
+- **ステータス**: Done
+- **完了日**: 2026-07-22
+- **判定**: `package.json` に `npm test` が存在し、CIでもlint / build / testが実行されている。Insight重複排除、UserModel更新候補、UserModel更新Application、SleepRecord、Analysis Frameworkの検証スクリプトが存在するため完了扱いとする。
 - **見積**: 1日
 - **種別**: Testing / CI
 - **依存**: #MVP-09
@@ -404,9 +415,9 @@ User Model更新に入る前の事前整理として、採用した2件だけを
   - `npm test` または同等スクリプトを追加する。
   - CIにテスト実行を追加する。
 - **Acceptance Criteria**:
-  - Insight重複排除のテストがある。
-  - Dismissed InsightがUser Model更新されないテストがある。
-  - `npm run lint`、`npm run build`、テストがCIで実行される。
+  - [x] Insight重複排除のテストがある。
+  - [x] Dismissed InsightがUser Model更新されないテストがある。
+  - [x] `npm run lint`、`npm run build`、テストがCIで実行される。
 - **関連ドキュメント**:
   - `.github/workflows/ci.yml`
   - `package.json`
@@ -414,6 +425,9 @@ User Model更新に入る前の事前整理として、採用した2件だけを
 
 ### #MVP-11: Docs/ADR/Current StateをMVP完成状態へ同期する
 
+- **ステータス**: Done
+- **完了日**: 2026-07-22
+- **判定**: 今回のドキュメント整合性整理により、Current State、AI Context、AI Handoff、docs index、UserModel、Understanding、MVPロードマップを現在実装とD-0007に同期したため完了扱いとする。新しいADRは作成していない。
 - **見積**: 半日
 - **種別**: Documentation
 - **依存**: #MVP-10
@@ -423,9 +437,9 @@ User Model更新に入る前の事前整理として、採用した2件だけを
   - `docs/CURRENT_STATE.md` をMVP完了直前状態へ更新する。
   - `docs/roadmap/README.md` から完了ロードマップへリンクする。
 - **Acceptance Criteria**:
-  - Current Stateが実装済み/未実装を正しく表している。
-  - ADRに実装上の重要決定が漏れていない。
-  - docs indexからMVPロードマップへ辿れる。
+  - [x] Current Stateが実装済み/未実装を正しく表している。
+  - [x] ADRに実装上の重要決定が漏れていない。
+  - [x] docs indexからMVPロードマップへ辿れる。
 - **関連ドキュメント**:
   - `docs/CURRENT_STATE.md`
   - `docs/設計決定.md`
