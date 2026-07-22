@@ -28,6 +28,7 @@ lastUpdated: "2026-07-22"
 - Formal Understanding Candidate MVP（EvidenceからCandidate生成・保存・表示・ユーザー回答保存）。
 - D-0008: Candidate ResponseからUnderstanding Objectを生成する境界のAccepted。
 - Understanding Object TypeScript型、Factory、Repository、Application Service、AGREE回答からのObject生成、非AGREE回答時のObject削除・同期、Understanding Object Panel。
+- FormalUserModel TypeScript型、型ガード、createEmptyFormalUserModel、Repository interface、LocalStorageFormalUserModelRepository、`compass_formal_user_model_v1`保存、FormalUserModel Reconciler、FormalUserModel Resolver、ResolvedFormalUserModel型、membership同期、orphan除去、layer移動。
 
 ## 設計状況
 
@@ -43,7 +44,6 @@ lastUpdated: "2026-07-22"
 
 ### 未実装
 
-- D-0009で設計済みのFormal UserModel参照ID集約構造の実装（FormalUserModel TypeScript型、Repository、Reconciler、Resolver、`compass_formal_user_model_v1`保存、membership同期）。
 - 正式なUnderstanding CandidateからUserModelを更新する新フロー。
 - LLM生成・Prompt Version管理・Candidate PrioritizerなどFuture Architecture項目。
 
@@ -94,7 +94,10 @@ UnderstandingObjectPanel
 - `UnderstandingCandidate` / `UnderstandingCandidateResponse`
 - `SleepFatigueUnderstandingCandidateGenerator`
 - `UnderstandingCandidatePanel`
-- Analysis Framework / Understanding Candidate検証スクリプト
+- `FormalUserModel` / `ResolvedFormalUserModel`
+- `LocalStorageFormalUserModelRepository`
+- `FormalUserModelReconciler` / `FormalUserModelResolver`
+- Analysis Framework / Understanding Candidate / Understanding Object / Formal UserModel検証スクリプト
 
 ## 互換性のため残っている旧系統
 
@@ -130,16 +133,17 @@ UserModel更新
 
 次の実装でも、UserModel新構造やCompass Map反映は別境界として慎重に扱う。LLM生成、Candidate Prioritizer、期限切れは未実装のままである。
 
-## 2026-07-22 D-0009 Formal UserModel設計状態
+## 2026-07-22 Formal UserModel Phase A実装状態
 
-D-0009により、Formal UserModelはUnderstanding Object本体を複製せず、現在有効なUnderstanding Object IDのmembershipだけを保持する参照ID集約として設計済みである。
+D-0009に基づき、Formal UserModelはUnderstanding Object本体を複製せず、現在有効なUnderstanding Object IDのmembershipだけを保持する参照ID集約としてPhase A実装済みである。
 
-設計済み:
+実装済み:
 
 ```text
 Understanding Object Repository
-→ Formal UserModel ID membership
-→ FormalUserModelResolver
+→ Formal UserModel Reconciler
+→ Formal UserModel Repository
+→ Formal UserModel Resolver
 → Resolved Formal UserModel
 ```
 
@@ -149,7 +153,7 @@ Understanding Object Repository
 - categoriesやmaturityからlayerを推測しない。
 - `HYPOTHESIS` maturityのObjectもFormal UserModelへ所属できる。
 - ID配列はランキングではなくmembership indexであり、永続化時はUnderstanding IDの辞書順を推奨する。
-- orphan参照、重複、Object削除、layer変更は将来のReconcilerで修復する。
+- orphan参照、重複、Object削除、layer変更はReconcilerで修復する。
 - Formal UserModelの `updatedAt` はmembership変更時だけ更新する。
 - Resolved Viewは永続化せず、Formal UserModelとUnderstanding Object Repositoryから毎回構築する。
 - UserModel Stateは概念として維持するが、Formal UserModel v1へ保存しない。
@@ -158,12 +162,7 @@ Understanding Object Repository
 未実装:
 
 ```text
-FormalUserModel TypeScript型
-FormalUserModel Repository
-FormalUserModel Reconciler
-FormalUserModel Resolver
-compass_formal_user_model_v1への保存
-Understanding Object membership同期
+App起動時の自動reconcile
 Formal UserModel確認UI
 Compass Map正式反映
 Reflection接続
