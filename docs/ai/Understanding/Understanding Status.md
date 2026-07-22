@@ -17,27 +17,39 @@ UserModel State
 Understanding Status
 → 個々のUnderstandingが、どの程度の根拠と成熟度を持つか
 
-Understanding Candidate State / User Response
-→ ユーザー確認前の候補や、候補への回答状態を表す
+Understanding Candidate Response
+→ Candidateへのユーザー回答を表す
 ```
 
-ユーザー回答の `CONFIRMED` と、Understanding成熟度の `Confirmed` は意味が異なる。
-前者は「ユーザーが候補にそう思うと回答した状態」であり、後者は「長期間再現され非常に信頼できるUnderstandingの成熟度」である。
+```text
+Candidate Response AGREE
+≠ Understanding Maturity Confirmed
+```
+
+`AGREE` は「ユーザーが現在のCandidate表現に概ね同意した」ことだけを意味する。新しいUnderstanding Objectは `Hypothesis` から開始し、一度のAGREEだけで `Confirmed` へ昇格しない。
 
 ---
 
-## Status Model
+## State Separation
 
-現在の概念設計におけるStatus Modelは以下である。
-Accepted ADRなしに、この状態名を全面変更しない。
+現在文書にあるUnknown / Observedは、Understanding Object成熟度ではなく、Analysis / Evidence / Candidate前段階を説明する概念として分離する。
 
 ```text
+Pre-Understanding Observation State:
 Unknown
 Observed
+
+Understanding Object Maturity:
 Hypothesis
 Learned
 Confirmed
 ```
+
+正式な型でどこまで保持するかは、実装PRで確定する。
+
+---
+
+## Pre-Understanding Observation State
 
 ### Unknown
 
@@ -45,61 +57,91 @@ Confirmed
 
 ### Observed
 
-事実は記録されているが、意味や傾向は分かっていない状態。
+事実は記録されているが、意味や傾向はまだUnderstanding Objectとして形成されていない状態。
+
+---
+
+## Understanding Object Maturity
 
 ### Hypothesis
 
-十分ではないが、一定の傾向や仮説が形成されている状態。
+- Evidenceとユーザー同意が存在する。
+- まだ再現性や長期安定性は十分ではない。
+- UserModelに仮説的理解として保持できる。
 
 ### Learned
 
-十分な根拠が集まり、Compassが推論や提案に利用できる状態。
+- 複数期間でEvidenceが再現されている。
+- 提案やConversationの参考として利用できる。
+- 変化する可能性は残る。
 
 ### Confirmed
 
-長期間にわたり再現され、非常に信頼できる知識となった状態。
+- 長期間にわたって再現されている。
+- 複数のEvidenceと継続的なユーザー整合性がある。
+- 固定的な真実や変更不能を意味しない。
 
 ---
 
 ## Additional Fields
 
-Understanding Statusは、実装時に以下のような情報を持つ可能性がある。
+Understanding Statusは、実装時に以下のような情報を持つ設計とする。
 
-- confidence
-- evidence count
-- last updated
-- next question
+```typescript
+interface UnderstandingStatus {
+  readonly maturity: 'HYPOTHESIS' | 'LEARNED' | 'CONFIRMED';
+  readonly confidence: number;
+  readonly evidenceCount: number;
+  readonly lastUpdatedAt: string;
+  readonly nextQuestions: string[];
+}
+```
 
-ただし、正式なTypeScript型はまだ確定していない。
+### confidence
+
+`confidence` は以下を意味する。
+
+```text
+現在のEvidenceがUnderstandingをどの程度支持しているか
+```
+
+以下を意味しない。
+
+```text
+その人について真実である確率
+人格の確定度
+ユーザーの価値
+診断精度
+```
+
+`confidence` はUnderstanding Object直下へ重複して置かず、Understanding Statusにのみ属する。
+
+### evidenceCount
+
+`evidenceCount` はEvidence文字列数ではなく、参照しているEvidence Object数とする。
+
+### nextQuestions
+
+次に確認したい問いは単数ではなく複数形で扱える設計とする。
+
+```typescript
+nextQuestions: string[];
+```
 
 ---
 
 ## Implementation Status
 
-現在のStatus Modelは概念設計であり、正式なコード実装はまだ存在しない。
-現在のコードにあるInsightの状態、UserModelUpdateCandidateの状態、Hypothesis型UserModelのconfidenceとは直接同一視しない。
+現在のStatus Modelは概念設計であり、正式なコード実装はまだ存在しない。現在のコードにあるInsightの状態、UserModelUpdateCandidateの状態、Hypothesis型UserModelのconfidenceとは直接同一視しない。
 
----
-
-## Open Design Question: Confirmed Naming Collision
-
-`Confirmed` という名称は、以下の2つの意味で使われる可能性がある。
-
-- ユーザーがCandidateに「そう思う」と回答した状態。
-- 長期間再現され非常に信頼できるUnderstandingの成熟度。
-
-実装前にADRで次のいずれかを検討する必要がある。
-
-- Understanding成熟度側の `Confirmed` を別名へ変更する。
-- ユーザー回答側の命名を `Agreement` / `Validated` などへ変更する。
-- 両者の意味を型と名前で完全に分離する。
-
-今回、独断で新しいenumは確定しない。
+D-0008により、ユーザー回答の `AGREE` とUnderstanding成熟度の `Confirmed` は別概念として扱うことがAcceptedになった。命名や型の詳細は、Understanding Object実装PRで確定する。
 
 ---
 
 ## Related Documents
 
 - [Understanding](Understanding.md)
+- [Understanding Candidate](Understanding%20Candidate.md)
 - [Understanding Object](Understanding%20Object.md)
 - [UserModel](../UserModel.md)
+- [D-0008](../../設計決定.md#d-0008-understanding-candidateのユーザー回答からunderstanding-objectを生成する境界)

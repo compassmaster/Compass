@@ -80,7 +80,7 @@ Do not confuse `Understanding Candidate` with `UserModelUpdateCandidate`.
 
 ## Next Work
 
-Next work is the separate boundary from answered Understanding Candidate to Understanding Object / UserModel update. Do not treat AGREE as Understanding Status Confirmed, and do not implement Compass Map reflection, LLM generation, Candidate Prioritizer, automatic expiry, or migration changes unless explicitly requested.
+D-0008 designs the separate boundary from answered Understanding Candidate to Understanding Object: AGREE creates an Object at Hypothesis maturity, while PARTIALLY_DISAGREE and UNSURE do not create Objects. This is design-only; the Object type, factory, repository, UserModel new structure, Compass Map reflection, LLM generation, Candidate Prioritizer, automatic expiry, and migration changes remain unimplemented unless explicitly requested.
 
 ## Known Issues / Technical Debt
 

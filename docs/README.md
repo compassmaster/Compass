@@ -18,6 +18,8 @@ Compassのドキュメント群のインデックスです。現在のSingle Sou
 - [Change History](変更履歴.md)
 - [ADR / 設計決定](設計決定.md)
 
+Current implementation includes Evidence, Understanding Candidate, and Candidate Response storage. The Candidate Response → Understanding Object boundary is designed in D-0008, but Understanding Object type, factory, repository, new UserModel structure, and Compass Map reflection are not implemented yet.
+
 ## Core Documents
 
 - [Vision](01_ビジョン.md)
