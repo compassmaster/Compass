@@ -198,3 +198,27 @@ LLM → UserModel直接更新
 - [Understanding Status](Understanding%20Status.md)
 - [Evidence](../Analysis/Evidence.md)
 - [D-0008](../../設計決定.md#d-0008-understanding-candidateのユーザー回答からunderstanding-objectを生成する境界)
+
+---
+
+## Formal UserModel Boundary (D-0009)
+
+D-0009により、Formal UserModelとの関係は以下のように設計済みである。ただし、この境界はまだ未実装である。
+
+- Understanding Object RepositoryがObject本体のSource of Truthである。
+- Formal UserModelはObject IDだけを参照する。
+- Object本体、statement、confidence、maturity、categories、Evidence参照、Candidate参照、Object timestampsをFormal UserModelへコピーしない。
+- `LONG_TERM` / `SHORT_TERM` の `layer` がFormal UserModelのmembership先を決める。
+- Objectのmaturityが `HYPOTHESIS` でもFormal UserModelへ所属できる。
+- UserModel membershipと `CONFIRMED` maturityは別概念である。
+- Formal UserModelは `compass_formal_user_model_v1` に旧 `compass_user_model` とは別保存する設計だが、TypeScript型、Repository、Reconciler、Resolver、保存処理は未実装である。
+
+```text
+Understanding Object Repository
+        ↓
+Formal UserModel ID membership
+        ↓
+Resolver
+        ↓
+Resolved Formal UserModel
+```

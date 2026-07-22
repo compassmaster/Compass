@@ -9,11 +9,11 @@
 ## 2026-07-22 Update: D-0007 and Understanding Candidate Boundary
 
 - D-0007がAcceptedになり、正式な理解フローにUnderstanding Candidateが追加された。
-- 正式フローは `DailyLog / SleepRecord → Analysis → Evidence → Understanding Candidate → User Confirmation → UserModel` である。
-- Understanding Candidate MVPは実装済みであり、Evidenceから生成・保存・表示し、AGREE / PARTIALLY_DISAGREE / UNSUREのユーザー回答を保存できる。UserModel更新、Understanding Object型、Object生成処理、Object Repository、Compass Map正式反映は未実装である。Candidate Response → Understanding Objectの境界はD-0008で設計済みである。
+- 正式フローは `DailyLog / SleepRecord → Analysis → Evidence → Understanding Candidate → Understanding Candidate Response → Understanding Object → Formal UserModel` である。
+- Understanding Candidate MVPとD-0008 Understanding Object MVPは実装済みであり、EvidenceからCandidate生成・保存・表示、AGREE / PARTIALLY_DISAGREE / UNSUREのユーザー回答保存、AGREEからのUnderstanding Object生成・保存・表示、非AGREE時のObject削除・同期まで実装されている。D-0009でFormal UserModelの参照ID集約境界は設計済みだが、FormalUserModel TypeScript型、Repository、Reconciler、Resolver、`compass_formal_user_model_v1`保存、Compass Map正式反映は未実装である。
 - Understanding Candidateは、既存のUserModelUpdateCandidateとは別責務である。
 - 旧Insight / Insight Feedback / UserModelUpdateCandidate系統は、段階移行のため互換性として残っている。
-- 次の実装対象は、設計済みのCandidate Response → Understanding Object境界をコードへ実装し、その後にUserModel更新へ接続する別境界である。
+- 次の実装対象は、D-0009のPhase AであるFormalUserModel TypeScript型、FormalUserModel Repository、FormalUserModel Reconciler、FormalUserModel Resolverの実装である。Formal UserModel確認UI、Compass Map、Reflection、Conversationへの接続は、それぞれ後続の別境界として扱う。
 - 現在の実装ではUserModel更新、Compass Map反映、LLM生成を行わない。
 
 

@@ -18,7 +18,7 @@ Compassのドキュメント群のインデックスです。現在のSingle Sou
 - [Change History](変更履歴.md)
 - [ADR / 設計決定](設計決定.md)
 
-Current implementation includes Evidence, Understanding Candidate, Candidate Response storage, and the D-0008 MVP for Understanding Object type, factory, repository, AGREE-based generation, non-AGREE removal/reconciliation, and the Understanding Object Panel. New UserModel structure, UserModel storage boundary, Compass Map reflection, maturity promotion, Learned / Confirmed judgment, Understanding history, and LLM generation remain unimplemented.
+Current implementation includes Evidence, Understanding Candidate, Candidate Response storage, and the D-0008 MVP for Understanding Object type, factory, repository, AGREE-based generation, non-AGREE removal/reconciliation, and the Understanding Object Panel. D-0009 now designs the Formal UserModel reference-only aggregate boundary: it stores only Long-term / Short-term Understanding IDs, keeps `UnderstandingObjectRepository` as the content Source of Truth, separates `compass_formal_user_model_v1` from legacy `compass_user_model`, and defines Resolver/Reconciliation/migration boundaries. FormalUserModel TypeScript model, repository, reconciler, resolver, storage, membership sync, Compass Map integration, Reflection / Conversation connection, legacy migration, maturity promotion, Understanding history, and LLM generation remain unimplemented.
 
 ## Core Documents
 

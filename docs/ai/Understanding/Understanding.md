@@ -198,3 +198,33 @@ Evidence
 ```
 
 `PARTIALLY_DISAGREE` / `UNSURE` はUnderstanding Objectを保持しない。回答変更時は現在ResponseをSource of TruthとしてObjectをreconcileする。UserModel新構造、Understanding ObjectのUserModel保存境界、Compass Map正式反映、maturity昇格、Learned / Confirmed判定、Understanding履歴、LLM生成は未実装である。
+
+---
+
+## Current Formal Flow after D-0009
+
+実装済み:
+
+```text
+Evidence
+→ Understanding Candidate
+→ Candidate Response
+→ Understanding Object
+→ Object Repository / Panel
+```
+
+設計済み・未実装:
+
+```text
+Understanding Object
+→ Formal UserModel ID membership
+```
+
+未設計または未実装:
+
+```text
+Formal UserModel
+→ Compass Map / Reflection / Conversation
+```
+
+Formal UserModelはUnderstanding Object本体を複製せず、Long-term / Short-termのUnderstanding ID membershipだけを保持する。Object内容はUnderstanding Object RepositoryをSource of TruthとしてResolverが解決する。
