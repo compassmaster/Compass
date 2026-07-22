@@ -29,7 +29,7 @@ Compassのドキュメント群のインデックスです。現在のSingle Sou
 ## AI Architecture
 
 - [UserModel](ai/UserModel.md)
-- [Future Architecture](../future/FUTURE_ARCHITECTURE.md)
+- [Future Architecture](future/FUTURE_ARCHITECTURE.md)
 
 ### Analysis
 
