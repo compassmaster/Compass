@@ -56,11 +56,23 @@ export class FormalUserModelReconciler {
 type Membership = FormalUserModel['understandingIds'];
 
 function buildMembership(objects: readonly UnderstandingObject[]): Membership {
+  const currentObjectsById = new Map<UnderstandingId, UnderstandingObject>();
+
+  for (const object of objects) {
+    const existing = currentObjectsById.get(object.id);
+    if (!existing || object.updatedAt.localeCompare(existing.updatedAt) > 0) {
+      currentObjectsById.set(object.id, object);
+    }
+  }
+
   const longTerm: UnderstandingId[] = [];
   const shortTerm: UnderstandingId[] = [];
-  for (const object of objects) {
-    if (object.layer === 'LONG_TERM') longTerm.push(object.id);
-    if (object.layer === 'SHORT_TERM') shortTerm.push(object.id);
+  for (const object of currentObjectsById.values()) {
+    if (object.layer === 'LONG_TERM') {
+      longTerm.push(object.id);
+    } else if (object.layer === 'SHORT_TERM') {
+      shortTerm.push(object.id);
+    }
   }
   return normalizeMembership({ longTerm, shortTerm });
 }

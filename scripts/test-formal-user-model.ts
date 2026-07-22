@@ -8,7 +8,7 @@ import type { UnderstandingCandidateId } from '../src/features/understanding/typ
 import type { UnderstandingId, UnderstandingLayer, UnderstandingMaturity, UnderstandingObject } from '../src/features/understanding/types/understandingObject.ts';
 import type { EvidenceId } from '../src/features/analysis/types/evidence.ts';
 
-class MemoryStorage implements Storage { private values = new Map<string, string>(); get length() { return this.values.size; } clear() { this.values.clear(); } getItem(k: string) { return this.values.get(k) ?? null; } key(i: number) { return [...this.values.keys()][i] ?? null; } removeItem(k: string) { this.values.delete(k); } setItem(k: string, v: string) { this.values.set(k, v); } }
+class MemoryStorage implements Storage { private values = new Map<string, string>(); setItemCount = 0; get length() { return this.values.size; } clear() { this.values.clear(); } getItem(k: string) { return this.values.get(k) ?? null; } key(i: number) { return [...this.values.keys()][i] ?? null; } removeItem(k: string) { this.values.delete(k); } setItem(k: string, v: string) { this.setItemCount += 1; this.values.set(k, v); } }
 class MemoryUnderstandingObjectRepository implements IUnderstandingObjectRepository {
   saveCount = 0;
   private objects: UnderstandingObject[];
@@ -49,18 +49,36 @@ objectRepo.replace([object('lt', 'LONG_TERM', 'HYPOTHESIS'), object('st', 'SHORT
 result = reconciler.reconcile('user-1', '2026-07-22T01:00:00.000Z');
 assert.equal(result.action, 'UPDATED'); assert.deepEqual(result.model.understandingIds.longTerm, [id('cf'), id('lt')]); assert.deepEqual(result.model.understandingIds.shortTerm, [id('st')]); assert.deepEqual(result.addedUnderstandingIds, [id('cf'), id('lt'), id('st')]); assert.equal(result.model.createdAt, now);
 const updatedAt = result.model.updatedAt;
-const beforeSaves = JSON.stringify(objectRepo.list());
 objectRepo.replace([object('lt', 'LONG_TERM', 'HYPOTHESIS', 'newer'), { ...object('st', 'SHORT_TERM', 'CONFIRMED'), statement: 'changed', status: { ...object('st', 'SHORT_TERM').status, confidence: 0.9, maturity: 'CONFIRMED' } }, object('cf', 'LONG_TERM', 'LEARNED')]);
-const saveCountBefore = JSON.parse(storage.getItem(FORMAL_USER_MODEL_STORAGE_KEY) ?? '{}').updatedAt;
+const objectsBeforeUnchangedReconcile = JSON.stringify(objectRepo.list());
+const storageSetItemCountBeforeUnchanged = storage.setItemCount;
 result = reconciler.reconcile('user-1', '2026-07-22T02:00:00.000Z');
-assert.equal(result.action, 'UNCHANGED'); assert.equal(result.model.updatedAt, updatedAt); assert.equal(JSON.parse(storage.getItem(FORMAL_USER_MODEL_STORAGE_KEY) ?? '{}').updatedAt, saveCountBefore);
-assert.notEqual(JSON.stringify(objectRepo.list()), beforeSaves, 'test fixture changed Understanding Objects without reconciler mutation');
+assert.equal(result.action, 'UNCHANGED'); assert.equal(result.model.updatedAt, updatedAt); assert.equal(storage.setItemCount, storageSetItemCountBeforeUnchanged, 'UNCHANGED reconcile must not save the Formal UserModel');
+assert.equal(JSON.stringify(objectRepo.list()), objectsBeforeUnchangedReconcile, 'reconciler must not mutate Understanding Objects');
 formalRepo.save({ ...result.model, understandingIds: { longTerm: [id('st'), id('orphan'), id('lt'), id('lt')], shortTerm: [id('st'), id('cf'), id('orphan')] } });
 objectRepo.replace([object('lt', 'SHORT_TERM'), object('st', 'SHORT_TERM'), object('cf', 'LONG_TERM')]);
 result = reconciler.reconcile('user-1', '2026-07-22T03:00:00.000Z');
 assert.equal(result.action, 'UPDATED'); assert.deepEqual(result.model.understandingIds, { longTerm: [id('cf')], shortTerm: [id('lt'), id('st')] }); assert.deepEqual(result.removedUnderstandingIds, [id('orphan')]); assert.deepEqual(result.movedUnderstandingIds, [id('cf'), id('lt'), id('st')]); assert.equal(result.model.updatedAt, '2026-07-22T03:00:00.000Z');
 assert.throws(() => reconciler.reconcile('other-user', now), /mismatch/);
 assert.equal(storage.getItem('compass_user_model'), 'legacy-sentinel');
+
+const duplicateStorage = new MemoryStorage();
+const duplicateFormalRepo = new LocalStorageFormalUserModelRepository(duplicateStorage);
+const duplicateObjectRepo = new MemoryUnderstandingObjectRepository();
+const duplicateReconciler = new FormalUserModelReconciler(duplicateFormalRepo, duplicateObjectRepo);
+duplicateObjectRepo.replace([object('duplicate', 'LONG_TERM', 'HYPOTHESIS', '2026-07-22T00:00:00.000Z'), object('duplicate', 'LONG_TERM', 'LEARNED', '2026-07-22T01:00:00.000Z')]);
+let duplicateResult = duplicateReconciler.reconcile('user-1', now);
+assert.deepEqual(duplicateResult.model.understandingIds, { longTerm: [id('duplicate')], shortTerm: [] }, 'same ID in same layer must not multiply');
+duplicateObjectRepo.replace([object('duplicate', 'LONG_TERM', 'HYPOTHESIS', '2026-07-22T00:00:00.000Z'), object('duplicate', 'SHORT_TERM', 'LEARNED', '2026-07-22T01:00:00.000Z')]);
+duplicateResult = duplicateReconciler.reconcile('user-1', '2026-07-22T01:30:00.000Z');
+assert.deepEqual(duplicateResult.model.understandingIds, { longTerm: [], shortTerm: [id('duplicate')] }, 'newer duplicate Object layer should win from long-term to short-term');
+duplicateObjectRepo.replace([object('duplicate', 'SHORT_TERM', 'HYPOTHESIS', '2026-07-22T02:00:00.000Z'), object('duplicate', 'LONG_TERM', 'CONFIRMED', '2026-07-22T03:00:00.000Z')]);
+duplicateResult = duplicateReconciler.reconcile('user-1', '2026-07-22T03:30:00.000Z');
+assert.deepEqual(duplicateResult.model.understandingIds, { longTerm: [id('duplicate')], shortTerm: [] }, 'newer duplicate Object layer should win from short-term to long-term');
+duplicateObjectRepo.replace([object('duplicate', 'SHORT_TERM', 'HYPOTHESIS', '2026-07-22T04:00:00.000Z'), object('duplicate', 'LONG_TERM', 'CONFIRMED', '2026-07-22T04:00:00.000Z')]);
+duplicateResult = duplicateReconciler.reconcile('user-1', '2026-07-22T04:30:00.000Z');
+assert.deepEqual(duplicateResult.model.understandingIds, { longTerm: [], shortTerm: [id('duplicate')] }, 'first duplicate Object should win when updatedAt is equal');
+assert.equal(duplicateResult.model.understandingIds.longTerm.includes(id('duplicate')) && duplicateResult.model.understandingIds.shortTerm.includes(id('duplicate')), false, 'same ID must not be present in both layers');
 
 const resolverRepo = new MemoryUnderstandingObjectRepository([object('a', 'LONG_TERM', 'HYPOTHESIS', '2026-07-22T02:00:00.000Z'), object('b', 'SHORT_TERM', 'LEARNED', '2026-07-22T03:00:00.000Z'), object('c', 'LONG_TERM', 'CONFIRMED', '2026-07-22T02:00:00.000Z')]);
 const resolver = new FormalUserModelResolver(resolverRepo);
