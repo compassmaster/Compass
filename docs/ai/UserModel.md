@@ -624,3 +624,10 @@ LLM生成
 - [D-0007: EvidenceからUnderstanding Candidateを生成し、ユーザー確認前にUserModelへ反映しない](../設計決定.md#d-0007-evidenceからunderstanding-candidateを生成しユーザー確認前にusermodelへ反映しない)
 - [D-0008: Understanding Candidateのユーザー回答からUnderstanding Objectを生成する境界](../設計決定.md#d-0008-understanding-candidateのユーザー回答からunderstanding-objectを生成する境界)
 - [D-0009: Formal UserModelはUnderstanding Objectを複製せず参照IDで集約する](../設計決定.md#d-0009-formal-usermodelはunderstanding-objectを複製せず参照idで集約する)
+
+
+## 2026-07-22 Formal UserModel Phase B実装状態
+
+実装済み: App起動時Formal UserModel reconcile、Object変更後のmembership refresh、Resolved Formal UserModel state、Formal UserModel読み取り専用確認UI、Long-term / Short-term表示、unresolved参照表示、modelUpdatedAt表示。
+
+未実装として維持: Compass Map正式反映、Reflection正式接続、Conversation正式接続、Formal UserModel編集UI、Understanding Object編集UI、旧UserModel migration、旧UserModel廃止、旧フロー停止、UserModel State判定、maturity昇格、Understanding履歴、LLM生成。

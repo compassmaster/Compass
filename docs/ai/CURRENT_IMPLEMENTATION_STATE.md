@@ -14,7 +14,7 @@
 - Compass Map正式反映は未実装である。
 - Understanding Candidateは、既存のUserModelUpdateCandidateとは別責務である。
 - 旧Insight / Insight Feedback / UserModelUpdateCandidate系統は、段階移行のため互換性として残っている。
-- D-0009のPhase Aは実装済みである。次の実装対象は、Formal UserModel確認UIまたはApp起動時reconcileなどのアプリケーション統合である。Formal UserModel確認UI、Compass Map、Reflection、Conversationへの接続は、それぞれ後続の別境界として扱う。
+- D-0009のPhase Aは実装済みである。次の実装対象は、Formal UserModel確認UIまたはApp起動時reconcileなどのアプリケーション統合である。Compass Map、Reflection、Conversationへの接続は、それぞれ後続の別境界として扱う。
 - 現在の実装ではUserModel更新、Compass Map反映、LLM生成を行わない。
 
 
@@ -81,4 +81,11 @@ DailyLogから直接UserModelを確定しない。
 - `PARTIALLY_DISAGREE` / `UNSURE` へ回答変更された場合は対応Objectを削除し、CandidateとResponseは残す。
 - `SLEEP_FATIGUE_PATTERN` Candidateは `SLEEP_FATIGUE_RELATIONSHIP` Object、`LONG_TERM` layer、`INTERNAL_STATE` / `BEHAVIOR` categoriesへ変換する。
 - Objectのconfidenceは参照Evidence confidenceを0〜1にclampした算術平均であり、ユーザーについて真実である確率ではない。
-- Objectは `compass_understanding_objects` に保存される。Formal UserModel Phase Aの型・Repository・Reconciler・Resolverは実装済みである。App起動時reconcile、Formal UserModel確認UI、Compass Map正式反映、maturity昇格、Learned / Confirmed判定、Understanding履歴、LLM生成は未実装のままである。
+- Objectは `compass_understanding_objects` に保存される。Formal UserModel Phase Aの型・Repository・Reconciler・Resolverに加え、Phase BのApp起動時reconcile、Object変更後refresh、Resolved state、読み取り専用確認UIは実装済みである。Compass Map正式反映、maturity昇格、Learned / Confirmed判定、Understanding履歴、LLM生成は未実装のままである。
+
+
+## 2026-07-22 Formal UserModel Phase B実装状態
+
+実装済み: App起動時Formal UserModel reconcile、Object変更後のmembership refresh、Resolved Formal UserModel state、Formal UserModel読み取り専用確認UI、Long-term / Short-term表示、unresolved参照表示、modelUpdatedAt表示。
+
+未実装として維持: Compass Map正式反映、Reflection正式接続、Conversation正式接続、Formal UserModel編集UI、Understanding Object編集UI、旧UserModel migration、旧UserModel廃止、旧フロー停止、UserModel State判定、maturity昇格、Understanding履歴、LLM生成。

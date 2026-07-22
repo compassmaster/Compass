@@ -643,3 +643,10 @@ LLM生成
 ```
 
 Formal UserModelはUnderstanding Object本体を複製せず、Long-term / Short-termのUnderstanding ID membershipだけを保持する。旧 `compass_user_model` と新 `compass_formal_user_model_v1` は同じキーで扱わない。
+
+
+## 2026-07-22 Formal UserModel Phase B実装状態
+
+実装済み: App起動時Formal UserModel reconcile、Object変更後のmembership refresh、Resolved Formal UserModel state、Formal UserModel読み取り専用確認UI、Long-term / Short-term表示、unresolved参照表示、modelUpdatedAt表示。
+
+未実装として維持: Compass Map正式反映、Reflection正式接続、Conversation正式接続、Formal UserModel編集UI、Understanding Object編集UI、旧UserModel migration、旧UserModel廃止、旧フロー停止、UserModel State判定、maturity昇格、Understanding履歴、LLM生成。

@@ -80,7 +80,7 @@ Do not confuse `Understanding Candidate` with `UserModelUpdateCandidate`.
 
 ## Next Work
 
-D-0008 defines and the MVP now implements the separate boundary from answered Understanding Candidate to Understanding Object: AGREE creates/upserts an Object at Hypothesis maturity, while PARTIALLY_DISAGREE and UNSURE remove/do not keep Objects. D-0009 designs the Formal UserModel boundary as a reference-only aggregate: it stores only Long-term / Short-term Understanding IDs in the future `compass_formal_user_model_v1` key, keeps UnderstandingObjectRepository as the content Source of Truth, and defines Resolver/Reconciler/orphan/migration rules. FormalUserModel TypeScript model, runtime guard, empty-model creation, repository interface, LocalStorage repository, `compass_formal_user_model_v1` storage, reconciler, resolver, ResolvedFormalUserModel, membership sync, orphan removal, and layer repair are implemented as Phase A. App startup reconcile, Formal UserModel UI, Compass Map reflection, Reflection / Conversation connection, legacy migration/removal, old-flow shutdown, maturity promotion, UserModel State, LLM generation, Candidate Prioritizer, and automatic expiry remain unimplemented unless explicitly requested.
+D-0008 defines and the MVP now implements the separate boundary from answered Understanding Candidate to Understanding Object: AGREE creates/upserts an Object at Hypothesis maturity, while PARTIALLY_DISAGREE and UNSURE remove/do not keep Objects. D-0009 designs the Formal UserModel boundary as a reference-only aggregate: it stores only Long-term / Short-term Understanding IDs in the future `compass_formal_user_model_v1` key, keeps UnderstandingObjectRepository as the content Source of Truth, and defines Resolver/Reconciler/orphan/migration rules. FormalUserModel TypeScript model, runtime guard, empty-model creation, repository interface, LocalStorage repository, `compass_formal_user_model_v1` storage, reconciler, resolver, ResolvedFormalUserModel, membership sync, orphan removal, and layer repair are implemented as Phase A. App startup reconcile, Compass Map reflection, Reflection / Conversation connection, legacy migration/removal, old-flow shutdown, maturity promotion, UserModel State, LLM generation, Candidate Prioritizer, and automatic expiry remain unimplemented unless explicitly requested.
 
 ## Known Issues / Technical Debt
 
@@ -120,3 +120,10 @@ D-0008 defines and the MVP now implements the separate boundary from answered Un
 - Stable Object IDs use `understandingType + ':' + candidate.dedupeKey`; no random/time/index IDs are used.
 - Object confidence is the rounded arithmetic mean of clamped referenced Evidence confidence values and is stored only under `status.confidence`.
 - Objects are stored separately under `compass_understanding_objects`; this implementation does not update UserModel, Compass Map, legacy Insight/UserModelUpdateCandidate flow, or maturity beyond Hypothesis.
+
+
+## 2026-07-22 Formal UserModel Phase B実装状態
+
+実装済み: App起動時Formal UserModel reconcile、Object変更後のmembership refresh、Resolved Formal UserModel state、Formal UserModel読み取り専用確認UI、Long-term / Short-term表示、unresolved参照表示、modelUpdatedAt表示。
+
+未実装として維持: Compass Map正式反映、Reflection正式接続、Conversation正式接続、Formal UserModel編集UI、Understanding Object編集UI、旧UserModel migration、旧UserModel廃止、旧フロー停止、UserModel State判定、maturity昇格、Understanding履歴、LLM生成。

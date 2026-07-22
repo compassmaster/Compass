@@ -15,11 +15,14 @@ import type { UserModelUpdateHistoryEntry } from '../features/compass-map/servic
 import { HomeTab } from '../features/home/components/HomeTab';
 import { analysisApplicationService } from '../features/analysis/services';
 import { understandingCandidateApplicationService, understandingObjectApplicationService } from '../features/understanding/services';
+import { DEFAULT_FORMAL_USER_ID } from '../features/formal-user-model/constants.ts';
+import { formalUserModelReconciler, formalUserModelRepository, formalUserModelResolver } from '../features/formal-user-model/services';
 import { sleepRecordApplicationService } from '../features/sleep/services';
 import type { Evidence } from '../features/analysis/types/evidence.ts';
 import type { AnalyzerFailure } from '../features/analysis/services/analysisService.ts';
 import type { UnderstandingCandidate, UnderstandingCandidateAnswer, UnderstandingCandidateResponse } from '../features/understanding/types/understandingCandidate.ts';
 import type { UnderstandingObject } from '../features/understanding/types/understandingObject.ts';
+import type { ResolvedFormalUserModel } from '../features/formal-user-model/types/formalUserModel.ts';
 import { LogTab } from '../features/daily-log/components/LogTab';
 import { MapTab } from '../features/compass-map/components/MapTab';
 
@@ -43,6 +46,33 @@ function loadInitialUnderstandingObjects(): UnderstandingObject[] {
   return understandingObjectApplicationService.listObjects();
 }
 
+
+function createFallbackResolvedFormalUserModel(): ResolvedFormalUserModel {
+  return {
+    schemaVersion: 1,
+    userId: DEFAULT_FORMAL_USER_ID,
+    longTerm: [],
+    shortTerm: [],
+    unresolvedUnderstandingIds: [],
+    modelUpdatedAt: new Date().toISOString(),
+  };
+}
+
+function reconcileAndResolveFormalUserModel(): ResolvedFormalUserModel {
+  try {
+    formalUserModelReconciler.reconcile(DEFAULT_FORMAL_USER_ID);
+    const model = formalUserModelRepository.get();
+    if (!model) {
+      console.error('[Compass] Formal UserModel was not created after reconcile');
+      return createFallbackResolvedFormalUserModel();
+    }
+    return formalUserModelResolver.resolve(model);
+  } catch (error) {
+    console.error('[Compass] Failed to reconcile and resolve Formal UserModel:', error);
+    return createFallbackResolvedFormalUserModel();
+  }
+}
+
 function loadInitialUserModel(): UserModel {
   const storedModel = userRepository.get();
 
@@ -50,7 +80,7 @@ function loadInitialUserModel(): UserModel {
     return storedModel;
   }
 
-  const initialModel = createInitialUserModel('user-default');
+  const initialModel = createInitialUserModel(DEFAULT_FORMAL_USER_ID);
   userRepository.save(initialModel);
   return initialModel;
 }
@@ -78,6 +108,9 @@ export function App() {
   const [understandingObjects, setUnderstandingObjects] = useState<UnderstandingObject[]>(() =>
     loadInitialUnderstandingObjects()
   );
+  const [resolvedFormalUserModel, setResolvedFormalUserModel] = useState<ResolvedFormalUserModel>(() =>
+    reconcileAndResolveFormalUserModel()
+  );
 
   const refreshLogs = () => {
     setLogs(logRepository.getAll());
@@ -93,6 +126,10 @@ export function App() {
     setUnderstandingCandidates(understandingCandidateApplicationService.listCandidates());
     setUnderstandingCandidateResponses(understandingCandidateApplicationService.listResponses());
     setUnderstandingObjects(understandingObjectApplicationService.listObjects());
+  };
+
+  const refreshResolvedFormalUserModel = () => {
+    setResolvedFormalUserModel(reconcileAndResolveFormalUserModel());
   };
 
 
@@ -120,6 +157,7 @@ export function App() {
     if (dates.length === 0) {
       setAnalysisEvidence(analysisApplicationService.listEvidence());
       setAnalysisFailures([]);
+      refreshResolvedFormalUserModel();
       return;
     }
     const result = analysisApplicationService.runAndSave({
@@ -132,6 +170,7 @@ export function App() {
     setAnalysisFailures(result.failures);
     understandingObjectApplicationService.reconcileAll(analysisApplicationService.listEvidence());
     refreshUnderstandingState();
+    refreshResolvedFormalUserModel();
   };
 
   const handleUnderstandingCandidateResponse = (candidateId: string, answer: UnderstandingCandidateAnswer) => {
@@ -139,6 +178,7 @@ export function App() {
     if (!response) return;
     understandingObjectApplicationService.reconcileCandidate(candidateId, analysisApplicationService.listEvidence());
     refreshUnderstandingState();
+    refreshResolvedFormalUserModel();
   };
 
   const handleReflectionFeedback = (agreed: boolean) => {
@@ -195,6 +235,7 @@ export function App() {
             understandingCandidates={understandingCandidates}
             understandingObjects={understandingObjects}
             understandingCandidateResponses={understandingCandidateResponses}
+            resolvedFormalUserModel={resolvedFormalUserModel}
             onUnderstandingCandidateRespond={handleUnderstandingCandidateResponse}
           />
         )}
