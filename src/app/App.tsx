@@ -14,9 +14,11 @@ import type { UserModelUpdateHistoryEntry } from '../features/compass-map/servic
 
 import { HomeTab } from '../features/home/components/HomeTab';
 import { analysisApplicationService } from '../features/analysis/services';
+import { understandingCandidateApplicationService } from '../features/understanding/services';
 import { sleepRecordApplicationService } from '../features/sleep/services';
 import type { Evidence } from '../features/analysis/types/evidence.ts';
 import type { AnalyzerFailure } from '../features/analysis/services/analysisService.ts';
+import type { UnderstandingCandidate, UnderstandingCandidateAnswer, UnderstandingCandidateResponse } from '../features/understanding/types/understandingCandidate.ts';
 import { LogTab } from '../features/daily-log/components/LogTab';
 import { MapTab } from '../features/compass-map/components/MapTab';
 
@@ -24,6 +26,15 @@ import './App.css';
 
 
 type AppTab = 'home' | 'log' | 'compassMap';
+
+
+function loadInitialUnderstandingCandidates(): UnderstandingCandidate[] {
+  const storedEvidence = analysisApplicationService.listEvidence();
+  if (storedEvidence.length > 0) {
+    understandingCandidateApplicationService.generateAndSaveFromEvidence(storedEvidence);
+  }
+  return understandingCandidateApplicationService.listCandidates();
+}
 
 function loadInitialUserModel(): UserModel {
   const storedModel = userRepository.get();
@@ -51,6 +62,12 @@ export function App() {
     analysisApplicationService.listEvidence()
   );
   const [analysisFailures, setAnalysisFailures] = useState<AnalyzerFailure[]>([]);
+  const [understandingCandidates, setUnderstandingCandidates] = useState<UnderstandingCandidate[]>(() =>
+    loadInitialUnderstandingCandidates()
+  );
+  const [understandingCandidateResponses, setUnderstandingCandidateResponses] = useState<UnderstandingCandidateResponse[]>(() =>
+    understandingCandidateApplicationService.listResponses()
+  );
 
   const refreshLogs = () => {
     setLogs(logRepository.getAll());
@@ -61,6 +78,12 @@ export function App() {
     setUserModelUpdateCandidates(userModelUpdateCandidateRepository.getAll());
     setUserModelUpdateHistory(userModelUpdateHistoryRepository.getAll());
   };
+
+  const refreshUnderstandingCandidates = () => {
+    setUnderstandingCandidates(understandingCandidateApplicationService.listCandidates());
+    setUnderstandingCandidateResponses(understandingCandidateApplicationService.listResponses());
+  };
+
 
   const handleApplyUserModelUpdateCandidate = (candidateId: string) => {
     const result = userModelUpdateApplicationService.applyCandidate(candidateId);
@@ -93,8 +116,15 @@ export function App() {
       sleepRecords,
       period: { from: dates[0], to: dates[dates.length - 1] },
     });
+    understandingCandidateApplicationService.generateAndSaveFromEvidence(result.evidence);
     setAnalysisEvidence(analysisApplicationService.listEvidence());
     setAnalysisFailures(result.failures);
+    refreshUnderstandingCandidates();
+  };
+
+  const handleUnderstandingCandidateResponse = (candidateId: string, answer: UnderstandingCandidateAnswer) => {
+    understandingCandidateApplicationService.respond(candidateId, answer);
+    setUnderstandingCandidateResponses(understandingCandidateApplicationService.listResponses());
   };
 
   const handleReflectionFeedback = (agreed: boolean) => {
@@ -148,6 +178,9 @@ export function App() {
             analysisEvidence={analysisEvidence}
             analysisFailures={analysisFailures}
             onRunAnalysis={handleRunAnalysis}
+            understandingCandidates={understandingCandidates}
+            understandingCandidateResponses={understandingCandidateResponses}
+            onUnderstandingCandidateRespond={handleUnderstandingCandidateResponse}
           />
         )}
         {activeTab === 'log' && <LogTab onSaveSuccess={refreshLogs} />}

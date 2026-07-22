@@ -1,0 +1,24 @@
+.understanding-candidate-panel { overflow-wrap: anywhere; }
+.understanding-candidate-description { color: #526070; line-height: 1.7; margin: 0; }
+.understanding-candidate-list { display: grid; gap: 1rem; }
+.understanding-candidate-card { background: #fff; border: 1px solid #dce5ef; border-radius: 18px; box-shadow: 0 8px 24px rgba(31, 47, 70, 0.08); padding: 1rem; }
+.understanding-candidate-card-header { align-items: flex-start; display: flex; gap: 0.75rem; justify-content: space-between; }
+.understanding-candidate-card h3 { color: #24364b; margin: 0; }
+.hypothesis-badge { background: #eef6ff; border: 1px solid #b9d8ff; border-radius: 999px; color: #285b8f; flex: 0 0 auto; font-size: 0.85rem; padding: 0.25rem 0.65rem; }
+.understanding-candidate-statement { color: #25364a; font-size: 1.02rem; line-height: 1.8; }
+.understanding-candidate-meta, .understanding-candidate-current-answer { color: #5b6b7d; margin: 0.35rem 0; }
+.understanding-candidate-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1rem 0; }
+.understanding-answer-button { background: #f7fafc; border: 1px solid #cbd7e3; border-radius: 999px; color: #2f4054; cursor: pointer; padding: 0.55rem 0.9rem; }
+.understanding-answer-button:hover { background: #eef6ff; }
+.understanding-answer-button.selected, .understanding-answer-button[aria-pressed='true'] { background: #2f6fb0; border-color: #2f6fb0; color: #fff; font-weight: 700; }
+.understanding-evidence-detail { border-top: 1px solid #e6edf5; margin-top: 0.75rem; padding-top: 0.75rem; }
+.understanding-evidence-detail summary { color: #315f8f; cursor: pointer; font-weight: 700; }
+.understanding-evidence-detail-body { color: #526070; line-height: 1.7; margin-top: 0.75rem; }
+.understanding-evidence-list { display: grid; gap: 0.75rem; list-style: none; margin: 0.75rem 0 0; padding: 0; }
+.understanding-evidence-item { background: #f8fbfe; border: 1px solid #e0e8f1; border-radius: 14px; padding: 0.85rem; }
+.understanding-evidence-item h4 { color: #24364b; margin: 0 0 0.35rem; }
+.understanding-evidence-item dl { display: grid; gap: 0.35rem; margin: 0.75rem 0 0; }
+.understanding-evidence-item dl div { display: flex; gap: 0.5rem; justify-content: space-between; }
+.understanding-evidence-item dt { color: #66778b; font-weight: 700; }
+.understanding-evidence-item dd { color: #24364b; margin: 0; text-align: right; }
+@media (max-width: 640px) { .understanding-candidate-card-header, .understanding-evidence-item dl div { display: block; } .hypothesis-badge { display: inline-block; margin-top: 0.5rem; } .understanding-evidence-item dd { text-align: left; } }

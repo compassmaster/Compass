@@ -80,7 +80,7 @@ Understanding Object
 UserModel
 ```
 
-現在のコードで実装済みなのはEvidence保存までであり、Understanding Candidate以降は未実装である。
+現在のコードでは、Evidence保存からUnderstanding Candidate生成・保存・ユーザー回答保存までがMVPとして実装済みである。Understanding Object生成とUserModel更新は未実装である。
 
 ---
 
@@ -156,10 +156,15 @@ EvidenceRepository
 - EvidencePanel
 - Analysis Framework検証スクリプト
 
-未実装:
+実装済み:
 
 - Understanding Candidate型・生成処理
-- ユーザー回答保存境界
+- SleepFatigue Understanding Candidate Generator
+- Candidate / ResponseのlocalStorage保存境界
+- Understanding Candidate Panel
+
+未実装:
+
 - Understanding ObjectをUserModelへ保持する新フロー
 - 新しいUserModel更新フロー
 
@@ -169,6 +174,7 @@ EvidenceRepository
 
 ## Related Documents
 
+- [Understanding Candidate](Understanding%20Candidate.md)
 - [Understanding Object](Understanding%20Object.md)
 - [Understanding Categories](Understanding%20Categories.md)
 - [Understanding Status](Understanding%20Status.md)

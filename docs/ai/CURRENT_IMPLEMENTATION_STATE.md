@@ -10,11 +10,11 @@
 
 - D-0007がAcceptedになり、正式な理解フローにUnderstanding Candidateが追加された。
 - 正式フローは `DailyLog / SleepRecord → Analysis → Evidence → Understanding Candidate → User Confirmation → UserModel` である。
-- Understanding Candidateはまだ未実装である。
+- Understanding Candidate MVPは実装済みであり、Evidenceから生成・保存・表示し、AGREE / PARTIALLY_DISAGREE / UNSUREのユーザー回答を保存できる。UserModel更新は未実装である。
 - Understanding Candidateは、既存のUserModelUpdateCandidateとは別責務である。
 - 旧Insight / Insight Feedback / UserModelUpdateCandidate系統は、段階移行のため互換性として残っている。
-- 次の実装対象は、EvidenceからUnderstanding Candidateを生成し、ユーザー回答を保存する境界である。
-- 次の実装ではUserModel更新、Compass Map反映、LLM生成を行わない。
+- 次の実装対象は、保存済みユーザー回答からUnderstanding Object / UserModel更新へ接続する別境界である。
+- 現在の実装ではUserModel更新、Compass Map反映、LLM生成を行わない。
 
 
 ## UserModel Invariants
@@ -30,8 +30,8 @@ DailyLog
 → Analysis
 → Evidence
 → Understanding Candidate
-→ User Confirmation
-→ UserModel
+→ User Confirmation storage
+→ future UserModel
 
 DailyLogから直接UserModelを確定しない。
 
