@@ -14,11 +14,12 @@ import type { UserModelUpdateHistoryEntry } from '../features/compass-map/servic
 
 import { HomeTab } from '../features/home/components/HomeTab';
 import { analysisApplicationService } from '../features/analysis/services';
-import { understandingCandidateApplicationService } from '../features/understanding/services';
+import { understandingCandidateApplicationService, understandingObjectApplicationService } from '../features/understanding/services';
 import { sleepRecordApplicationService } from '../features/sleep/services';
 import type { Evidence } from '../features/analysis/types/evidence.ts';
 import type { AnalyzerFailure } from '../features/analysis/services/analysisService.ts';
 import type { UnderstandingCandidate, UnderstandingCandidateAnswer, UnderstandingCandidateResponse } from '../features/understanding/types/understandingCandidate.ts';
+import type { UnderstandingObject } from '../features/understanding/types/understandingObject.ts';
 import { LogTab } from '../features/daily-log/components/LogTab';
 import { MapTab } from '../features/compass-map/components/MapTab';
 
@@ -34,6 +35,12 @@ function loadInitialUnderstandingCandidates(): UnderstandingCandidate[] {
     understandingCandidateApplicationService.generateAndSaveFromEvidence(storedEvidence);
   }
   return understandingCandidateApplicationService.listCandidates();
+}
+
+function loadInitialUnderstandingObjects(): UnderstandingObject[] {
+  const evidence = analysisApplicationService.listEvidence();
+  understandingObjectApplicationService.reconcileAll(evidence);
+  return understandingObjectApplicationService.listObjects();
 }
 
 function loadInitialUserModel(): UserModel {
@@ -68,6 +75,9 @@ export function App() {
   const [understandingCandidateResponses, setUnderstandingCandidateResponses] = useState<UnderstandingCandidateResponse[]>(() =>
     understandingCandidateApplicationService.listResponses()
   );
+  const [understandingObjects, setUnderstandingObjects] = useState<UnderstandingObject[]>(() =>
+    loadInitialUnderstandingObjects()
+  );
 
   const refreshLogs = () => {
     setLogs(logRepository.getAll());
@@ -79,9 +89,10 @@ export function App() {
     setUserModelUpdateHistory(userModelUpdateHistoryRepository.getAll());
   };
 
-  const refreshUnderstandingCandidates = () => {
+  const refreshUnderstandingState = () => {
     setUnderstandingCandidates(understandingCandidateApplicationService.listCandidates());
     setUnderstandingCandidateResponses(understandingCandidateApplicationService.listResponses());
+    setUnderstandingObjects(understandingObjectApplicationService.listObjects());
   };
 
 
@@ -119,12 +130,15 @@ export function App() {
     understandingCandidateApplicationService.generateAndSaveFromEvidence(result.evidence);
     setAnalysisEvidence(analysisApplicationService.listEvidence());
     setAnalysisFailures(result.failures);
-    refreshUnderstandingCandidates();
+    understandingObjectApplicationService.reconcileAll(analysisApplicationService.listEvidence());
+    refreshUnderstandingState();
   };
 
   const handleUnderstandingCandidateResponse = (candidateId: string, answer: UnderstandingCandidateAnswer) => {
-    understandingCandidateApplicationService.respond(candidateId, answer);
-    setUnderstandingCandidateResponses(understandingCandidateApplicationService.listResponses());
+    const response = understandingCandidateApplicationService.respond(candidateId, answer);
+    if (!response) return;
+    understandingObjectApplicationService.reconcileCandidate(candidateId, analysisApplicationService.listEvidence());
+    refreshUnderstandingState();
   };
 
   const handleReflectionFeedback = (agreed: boolean) => {
@@ -179,6 +193,7 @@ export function App() {
             analysisFailures={analysisFailures}
             onRunAnalysis={handleRunAnalysis}
             understandingCandidates={understandingCandidates}
+            understandingObjects={understandingObjects}
             understandingCandidateResponses={understandingCandidateResponses}
             onUnderstandingCandidateRespond={handleUnderstandingCandidateResponse}
           />

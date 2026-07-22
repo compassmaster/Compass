@@ -183,3 +183,18 @@ EvidenceRepository
 - [Evidence](../Analysis/Evidence.md)
 - [Future Architecture](../../future/FUTURE_ARCHITECTURE.md)
 - [D-0007](../../設計決定.md#d-0007-evidenceからunderstanding-candidateを生成しユーザー確認前にusermodelへ反映しない)
+
+## Current MVP Implementation Note (2026-07-22)
+
+現在のコードでは、Evidence保存からUnderstanding Candidate生成・保存・ユーザー回答保存を経て、AGREE回答からHypothesis段階のUnderstanding Objectを生成・保存・表示するところまで実装済みである。
+
+```text
+Evidence
+→ Understanding Candidate
+→ Understanding Candidate Response
+→ Understanding Object Factory
+→ Understanding Object Repository
+→ Understanding Object Panel
+```
+
+`PARTIALLY_DISAGREE` / `UNSURE` はUnderstanding Objectを保持しない。回答変更時は現在ResponseをSource of TruthとしてObjectをreconcileする。UserModel新構造、Understanding ObjectのUserModel保存境界、Compass Map正式反映、maturity昇格、Learned / Confirmed判定、Understanding履歴、LLM生成は未実装である。
