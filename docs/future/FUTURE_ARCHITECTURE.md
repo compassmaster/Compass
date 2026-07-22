@@ -2,16 +2,19 @@
 
 ## Purpose
 
-このドキュメントは、CompassのMVPでは採用しなかったが、
-将来的に実現したいアーキテクチャや設計思想を記録するためのものである。
+このディレクトリは、MVPでは実装しないが、
+Compassの長期的な発展に重要な構想を記録する。
 
-ここに書かれている内容は正式な設計決定（ADR）ではない。
+ここに記載された内容は正式なADRではない。
+正式採用する場合は、実装前にADRとして決定する。
 
-現在の実装を変更するものではなく、
-Compassの長期的な進化の方向性を共有することを目的とする。
+## Future Concepts
 
-正式に採用された場合は、ADRとして記録する。
-
+- [Character Expression Layer](CHARACTER_EXPRESSION_LAYER.md)
+- Population-to-Personal Understanding
+- Candidate Prioritization
+- Understanding History
+- Adaptive Understanding
 ---
 
 ## Current Boundary
