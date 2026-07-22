@@ -43,7 +43,7 @@ lastUpdated: "2026-07-22"
 
 ### 未実装
 
-- Understanding ObjectをUserModelへ保持する新構造。
+- D-0009で設計済みのFormal UserModel参照ID集約構造の実装（FormalUserModel TypeScript型、Repository、Reconciler、Resolver、`compass_formal_user_model_v1`保存、membership同期）。
 - 正式なUnderstanding CandidateからUserModelを更新する新フロー。
 - LLM生成・Prompt Version管理・Candidate PrioritizerなどFuture Architecture項目。
 
@@ -129,3 +129,49 @@ UserModel更新
 ```
 
 次の実装でも、UserModel新構造やCompass Map反映は別境界として慎重に扱う。LLM生成、Candidate Prioritizer、期限切れは未実装のままである。
+
+## 2026-07-22 D-0009 Formal UserModel設計状態
+
+D-0009により、Formal UserModelはUnderstanding Object本体を複製せず、現在有効なUnderstanding Object IDのmembershipだけを保持する参照ID集約として設計済みである。
+
+設計済み:
+
+```text
+Understanding Object Repository
+→ Formal UserModel ID membership
+→ FormalUserModelResolver
+→ Resolved Formal UserModel
+```
+
+- Understanding Object本体のSource of Truthは `UnderstandingObjectRepository` である。
+- Formal UserModelのSource of TruthはLong-term / Short-term membershipである。
+- `LONG_TERM` は `longTerm` IDs、`SHORT_TERM` は `shortTerm` IDsへ所属する。
+- categoriesやmaturityからlayerを推測しない。
+- `HYPOTHESIS` maturityのObjectもFormal UserModelへ所属できる。
+- ID配列はランキングではなくmembership indexであり、永続化時はUnderstanding IDの辞書順を推奨する。
+- orphan参照、重複、Object削除、layer変更は将来のReconcilerで修復する。
+- Formal UserModelの `updatedAt` はmembership変更時だけ更新する。
+- Resolved Viewは永続化せず、Formal UserModelとUnderstanding Object Repositoryから毎回構築する。
+- UserModel Stateは概念として維持するが、Formal UserModel v1へ保存しない。
+- 新保存キーは `compass_formal_user_model_v1`、旧保存キーは `compass_user_model` とし、旧Hypothesis型UserModelは自動変換しない。
+
+未実装:
+
+```text
+FormalUserModel TypeScript型
+FormalUserModel Repository
+FormalUserModel Reconciler
+FormalUserModel Resolver
+compass_formal_user_model_v1への保存
+Understanding Object membership同期
+Formal UserModel確認UI
+Compass Map正式反映
+Reflection接続
+Conversation接続
+旧UserModel migration
+旧UserModel廃止
+UserModel State判定
+maturity昇格
+Understanding履歴
+LLM生成
+```

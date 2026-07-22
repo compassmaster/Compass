@@ -599,3 +599,51 @@ MVPでは、30分単位のステッパーを優先候補とする。
 - 改行
 
 将来的には、文字列入力ではなくタグチップUIへの変更を優先する。
+---
+
+## 2026-07-22 Addendum: Formal UserModel Aggregate Boundary (D-0009)
+
+D-0009でFormal UserModelの最小保存境界を設計済みとした。今回のロードマップ上の整理はドキュメント設計のみであり、アプリケーションコードは変更していない。
+
+実装済み:
+
+```text
+Evidence
+→ Understanding Candidate
+→ Candidate Response
+→ Understanding Object Factory
+→ Understanding Object Repository
+→ Understanding Object Panel
+```
+
+設計済み:
+
+```text
+Understanding Object Repository
+→ Formal UserModel ID membership
+→ FormalUserModelResolver
+→ Resolved Formal UserModel
+```
+
+未実装:
+
+```text
+FormalUserModel TypeScript型
+FormalUserModel Repository
+FormalUserModel Reconciler
+FormalUserModel Resolver
+compass_formal_user_model_v1への保存
+Understanding Object membership同期
+Formal UserModel確認UI
+Compass Map正式反映
+Reflection接続
+Conversation接続
+旧UserModel migration
+旧UserModel廃止
+UserModel State判定
+maturity昇格
+Understanding履歴
+LLM生成
+```
+
+Formal UserModelはUnderstanding Object本体を複製せず、Long-term / Short-termのUnderstanding ID membershipだけを保持する。旧 `compass_user_model` と新 `compass_formal_user_model_v1` は同じキーで扱わない。
