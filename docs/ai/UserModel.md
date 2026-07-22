@@ -118,29 +118,29 @@ Evidence
 
 実装済み範囲には、Formal Understanding Object型、Factory、Repository、Application Service、AGREEからの生成、`PARTIALLY_DISAGREE` / `UNSURE` 時の削除・同期、Object Panelが含まれる。
 
-設計済み・未実装:
+実装済み（Phase A）:
 
 ```text
-Understanding Object
-→ Formal UserModel ID membership
+Understanding Object Repository
+→ Formal UserModel Reconciler
+→ Formal UserModel Repository
+→ Formal UserModel Resolver
 → Resolved Formal UserModel
 ```
+
+実装済み: FormalUserModel TypeScript型、型ガード、createEmptyFormalUserModel、Repository interface、LocalStorageFormalUserModelRepository、`compass_formal_user_model_v1`保存、ResolvedFormalUserModel型、membership同期、orphan除去、layer移動。
 
 未実装:
 
 ```text
-FormalUserModel TypeScript型
-FormalUserModel Repository
-FormalUserModel Reconciler
-FormalUserModel Resolver
-compass_formal_user_model_v1への保存
-Understanding Object membership同期
+App起動時の自動reconcile
 Formal UserModel確認UI
 Compass Map正式反映
 Reflection接続
 Conversation接続
 旧UserModel migration
 旧UserModel廃止
+旧フロー停止
 UserModel State判定
 maturity昇格
 Understanding履歴
@@ -151,9 +151,9 @@ LLM生成
 
 ---
 
-## Formal UserModel Target Structure
+## Current TypeScript Model
 
-以下は実装前の目標型であり、今回TypeScriptコードとして追加しない。
+以下はPhase Aで追加したCurrent TypeScript Modelである。ただし、Phase Aではアプリ起動へ接続しておらず、アプリケーション統合とConsumer接続は未実装である。
 
 ```typescript
 import type { UnderstandingId } from './Understanding/understandingObject';
@@ -299,7 +299,7 @@ ID配列の並びをランキングとして使用しない。
 
 ## Reconciliation Rules
 
-将来実装するFormal UserModel Reconcilerの概念フロー:
+実装済みFormal UserModel Reconcilerの概念フロー:
 
 ```text
 UnderstandingObjectRepository.list()
@@ -520,7 +520,7 @@ Understanding ID membership structure
 
 ## Migration Phases
 
-旧UserModelから新Formal UserModelへの全面移行は今回行わない。将来の移行は以下の段階に分け、各Phaseを別PRとする。特にPhase C以降は別ADRまたは明示的レビューを必要とする。
+旧UserModelから新Formal UserModelへの全面移行はPhase Aでは行わない。将来の移行は以下の段階に分け、各Phaseを別PRとする。特にPhase C以降は別ADRまたは明示的レビューを必要とする。
 
 ```text
 Phase A
@@ -592,15 +592,10 @@ ReconcilerからEvidence Analyzer、Candidate Generator、LLM、Compass Map、Co
 
 ## Not Implemented
 
-今回のD-0009はADRおよびドキュメント設計のみであり、以下は実装しない。
+Phase Aでは型・Repository・Reconciler・Resolverを実装済みである。ただし、アプリケーション統合とConsumer接続は未実装であり、以下は実装しない。
 
 ```text
-FormalUserModel TypeScript型
-FormalUserModel Repository
-FormalUserModel Reconciler
-FormalUserModel Resolver
-compass_formal_user_model_v1への保存
-Understanding Object membership同期
+App起動時の自動reconcile
 Formal UserModel確認UI
 Compass Map正式反映
 Reflection接続

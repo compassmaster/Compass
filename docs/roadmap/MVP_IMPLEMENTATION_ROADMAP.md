@@ -603,7 +603,7 @@ MVPでは、30分単位のステッパーを優先候補とする。
 
 ## 2026-07-22 Addendum: Formal UserModel Aggregate Boundary (D-0009)
 
-D-0009でFormal UserModelの最小保存境界を設計済みとした。今回のロードマップ上の整理はドキュメント設計のみであり、アプリケーションコードは変更していない。
+D-0009でFormal UserModelの最小保存境界を設計し、2026-07-22のPhase Aで型・Repository・Reconciler・Resolverを実装した。UI、Compass Map、Reflection、Conversation接続は未実装である。
 
 実装済み:
 
@@ -616,24 +616,20 @@ Evidence
 → Understanding Object Panel
 ```
 
-設計済み:
+実装済み（Phase A）:
 
 ```text
 Understanding Object Repository
-→ Formal UserModel ID membership
-→ FormalUserModelResolver
+→ Formal UserModel Reconciler
+→ Formal UserModel Repository
+→ Formal UserModel Resolver
 → Resolved Formal UserModel
 ```
 
 未実装:
 
 ```text
-FormalUserModel TypeScript型
-FormalUserModel Repository
-FormalUserModel Reconciler
-FormalUserModel Resolver
-compass_formal_user_model_v1への保存
-Understanding Object membership同期
+App起動時の自動reconcile
 Formal UserModel確認UI
 Compass Map正式反映
 Reflection接続

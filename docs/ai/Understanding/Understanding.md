@@ -80,7 +80,7 @@ Understanding Object
 UserModel
 ```
 
-現在のコードでは、Evidence保存からUnderstanding Candidate生成・保存・ユーザー回答保存までがMVPとして実装済みである。Understanding Object生成とUserModel更新は未実装である。
+現在のコードでは、Evidence保存からUnderstanding Candidate生成・保存・ユーザー回答保存、Understanding Object生成・保存、Formal UserModel Phase A（参照IDmembershipの型・Repository・Reconciler・Resolver）までがMVPとして実装済みである。App統合とConsumer接続は未実装である。
 
 ---
 
@@ -197,7 +197,7 @@ Evidence
 → Understanding Object Panel
 ```
 
-`PARTIALLY_DISAGREE` / `UNSURE` はUnderstanding Objectを保持しない。回答変更時は現在ResponseをSource of TruthとしてObjectをreconcileする。UserModel新構造、Understanding ObjectのUserModel保存境界、Compass Map正式反映、maturity昇格、Learned / Confirmed判定、Understanding履歴、LLM生成は未実装である。
+`PARTIALLY_DISAGREE` / `UNSURE` はUnderstanding Objectを保持しない。回答変更時は現在ResponseをSource of TruthとしてObjectをreconcileする。Formal UserModel Phase Aの保存境界は実装済みである。Compass Map正式反映、maturity昇格、Learned / Confirmed判定、Understanding履歴、LLM生成は未実装である。
 
 ---
 
@@ -213,14 +213,14 @@ Evidence
 → Object Repository / Panel
 ```
 
-設計済み・未実装:
+実装済み（Phase A）:
 
 ```text
 Understanding Object
 → Formal UserModel ID membership
 ```
 
-未設計または未実装:
+未接続または未実装:
 
 ```text
 Formal UserModel
