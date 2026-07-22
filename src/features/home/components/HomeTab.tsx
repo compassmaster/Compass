@@ -8,8 +8,10 @@ import { insightFeedbackApplicationService } from '../../../app/services';
 import type { Insight } from '../../analysis/types/analysis';
 import type { UserModelUpdateCandidate } from '../../compass-map/services/userModelUpdateCandidateService';
 import { EvidencePanel } from '../../analysis/components/EvidencePanel';
+import { UnderstandingCandidatePanel } from '../../understanding/components/UnderstandingCandidatePanel';
 import type { Evidence } from '../../analysis/types/evidence.ts';
 import type { AnalyzerFailure } from '../../analysis/services/analysisService.ts';
+import type { UnderstandingCandidate, UnderstandingCandidateAnswer, UnderstandingCandidateResponse } from '../../understanding/types/understandingCandidate.ts';
 import './HomeTab.css';
 
 interface HomeTabProps {
@@ -22,6 +24,9 @@ interface HomeTabProps {
   analysisEvidence: Evidence[];
   analysisFailures: AnalyzerFailure[];
   onRunAnalysis: () => void;
+  understandingCandidates: UnderstandingCandidate[];
+  understandingCandidateResponses: UnderstandingCandidateResponse[];
+  onUnderstandingCandidateRespond: (candidateId: string, answer: UnderstandingCandidateAnswer) => void;
 }
 
 export function HomeTab({
@@ -34,6 +39,9 @@ export function HomeTab({
   analysisEvidence,
   analysisFailures,
   onRunAnalysis,
+  understandingCandidates,
+  understandingCandidateResponses,
+  onUnderstandingCandidateRespond,
 }: HomeTabProps) {
 
   // 永続化されたInsight
@@ -122,6 +130,13 @@ export function HomeTab({
 
       <EvidencePanel evidence={analysisEvidence} failures={analysisFailures} onRunAnalysis={onRunAnalysis} />
 
+      <UnderstandingCandidatePanel
+        candidates={understandingCandidates}
+        responses={understandingCandidateResponses}
+        evidence={analysisEvidence}
+        onRespond={onUnderstandingCandidateRespond}
+      />
+
       {/* Candidate Card */}
       <section className="home-section">
         <h2 className="section-title">🧭 Candidate Card</h2>
@@ -130,7 +145,7 @@ export function HomeTab({
           <div className="candidate-list">
             {pendingCandidates.map((candidate) => (
               <div key={candidate.id} className="candidate-card">
-                <p className="section-eyebrow">Compassが理解候補として考えている内容</p>
+                <p className="section-eyebrow">既存Insight系統のUserModel更新候補です。正式なUnderstanding Candidateとは別の互換フローです。</p>
                 <h3>{candidate.targetField}</h3>
                 <ul className="candidate-values">
                   {candidate.proposedValue.map((value) => (

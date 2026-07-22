@@ -11,7 +11,7 @@ Every AI assistant must read this document before starting work and update it be
 
 - **Status:** Active Development
 - **Version:** v0.1.0-alpha
-- **Current phase:** Formal Analysis Framework implemented; preparing for Understanding Candidate implementation.
+- **Current phase:** Formal Analysis Framework and Understanding Candidate MVP implemented; UserModel reflection from responses is not implemented.
 
 ## Current Architecture
 
@@ -25,7 +25,8 @@ src/
 │   ├── compass-map/
 │   ├── daily-log/
 │   ├── home/
-│   └── sleep/
+│   ├── sleep/
+│   └── understanding/
 └── shared/
 ```
 
@@ -48,6 +49,7 @@ src/
   - LocalStorageEvidenceRepository
   - SleepFatigueAnalyzer
   - EvidencePanel
+- Understanding Candidate MVP: sleep-fatigue generator, localStorage Candidate/Response repositories, confirmation UI, and tests.
 - CI runs lint, build, and test.
 - `npm test` runs validation scripts for Insight deduplication, UserModel update candidates, UserModel update application, SleepRecord, and Analysis Framework.
 
@@ -62,10 +64,10 @@ src/
 
 ## Coexisting Old and New Systems
 
-Formal Analysis Framework currently reaches Evidence persistence.
+Formal Analysis Framework now reaches Evidence persistence and Understanding Candidate / Response storage.
 
 ```text
-AnalysisContext → EvidenceAnalyzer → AnalysisService → Evidence → AnalysisApplicationService → EvidenceRepository
+AnalysisContext → EvidenceAnalyzer → AnalysisService → Evidence → EvidenceRepository → UnderstandingCandidateGenerator → UnderstandingCandidateRepository → UnderstandingCandidateResponseRepository
 ```
 
 The old MVP loop remains for compatibility.
@@ -78,21 +80,10 @@ Do not confuse `Understanding Candidate` with `UserModelUpdateCandidate`.
 
 ## Next Work
 
-Implement only this boundary next:
-
-```text
-Evidence
-    ↓
-Understanding Candidate
-    ↓
-ユーザー回答の保存
-```
-
-Do not implement UserModel update, Compass Map reflection, LLM generation, Candidate Prioritizer, automatic expiry, or migration changes as part of that next step unless a separate task explicitly asks for them.
+Next work is the separate boundary from answered Understanding Candidate to Understanding Object / UserModel update. Do not treat AGREE as Understanding Status Confirmed, and do not implement Compass Map reflection, LLM generation, Candidate Prioritizer, automatic expiry, or migration changes unless explicitly requested.
 
 ## Known Issues / Technical Debt
 
-- Understanding Candidate is designed by D-0007 but not implemented.
 - Understanding Object is documented as a target concept but not implemented in code.
 - Current UserModel remains Hypothesis-field based.
 - Old Insight / UserModelUpdateCandidate flow remains and must be migrated gradually.

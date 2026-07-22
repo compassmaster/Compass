@@ -8,7 +8,7 @@ lastUpdated: "2026-07-22"
 
 ## 現在のVersion
 
-**v0.1.0-alpha**（Formal Analysis Framework実装済み / Understanding Candidate実装前のドキュメント整合性整理完了）
+**v0.1.0-alpha**（Formal Analysis Framework / Understanding Candidate MVP実装済み）
 
 ## 完了済み
 
@@ -25,6 +25,7 @@ lastUpdated: "2026-07-22"
 - Evidence保存とEvidencePanelによる確認UI。
 - D-0007: EvidenceからUnderstanding Candidateを生成し、ユーザー確認前にUserModelへ反映しない正式フローのAccepted。
 - ドキュメント整合性整理（2026-07-22）。
+- Formal Understanding Candidate MVP（EvidenceからCandidate生成・保存・表示・ユーザー回答保存）。
 
 ## 設計状況
 
@@ -40,8 +41,6 @@ lastUpdated: "2026-07-22"
 
 ### 未実装
 
-- Understanding Candidate型・生成処理。
-- Understanding Candidateへのユーザー回答保存。
 - Understanding ObjectをUserModelへ保持する新構造。
 - 正式なUnderstanding CandidateからUserModelを更新する新フロー。
 - LLM生成・Prompt Version管理・Candidate PrioritizerなどFuture Architecture項目。
@@ -60,6 +59,16 @@ Evidence
 AnalysisApplicationService
         ↓
 EvidenceRepository
+        ↓
+UnderstandingCandidateGenerator
+        ↓
+UnderstandingCandidate
+        ↓
+UnderstandingCandidateRepository
+        ↓
+UnderstandingCandidateResponse
+        ↓
+UnderstandingCandidateResponseRepository
 ```
 
 主な実装済み要素:
@@ -74,7 +83,10 @@ EvidenceRepository
 - `LocalStorageEvidenceRepository`
 - `SleepFatigueAnalyzer`
 - `EvidencePanel`
-- Analysis Framework検証スクリプト
+- `UnderstandingCandidate` / `UnderstandingCandidateResponse`
+- `SleepFatigueUnderstandingCandidateGenerator`
+- `UnderstandingCandidatePanel`
+- Analysis Framework / Understanding Candidate検証スクリプト
 
 ## 互換性のため残っている旧系統
 
@@ -93,11 +105,11 @@ Hypothesis型UserModel
 ## 次の実装対象
 
 ```text
-Evidence
+Understanding Candidate Response
     ↓
-Understanding Candidate
+Understanding Object
     ↓
-ユーザー回答の保存
+UserModel更新
 ```
 
-次の実装では、UserModel更新、Compass Map反映、LLM生成は行わない。
+次の実装でも、UserModel新構造やCompass Map反映は別境界として慎重に扱う。LLM生成、Candidate Prioritizer、期限切れは未実装のままである。

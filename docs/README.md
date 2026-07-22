@@ -39,6 +39,7 @@ Compassのドキュメント群のインデックスです。現在のSingle Sou
 ### Understanding
 
 - [Understanding](ai/Understanding/Understanding.md)
+- [Understanding Candidate](ai/Understanding/Understanding%20Candidate.md)
 - [Understanding Object](ai/Understanding/Understanding%20Object.md)
 - [Understanding Categories](ai/Understanding/Understanding%20Categories.md)
 - [Understanding Status](ai/Understanding/Understanding%20Status.md)
