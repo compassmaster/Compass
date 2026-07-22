@@ -10,10 +10,12 @@ import type { UserModelUpdateCandidate } from '../../compass-map/services/userMo
 import { EvidencePanel } from '../../analysis/components/EvidencePanel';
 import { UnderstandingCandidatePanel } from '../../understanding/components/UnderstandingCandidatePanel';
 import { UnderstandingObjectPanel } from '../../understanding/components/UnderstandingObjectPanel';
+import { FormalUserModelPanel } from '../../formal-user-model/components';
 import type { Evidence } from '../../analysis/types/evidence.ts';
 import type { AnalyzerFailure } from '../../analysis/services/analysisService.ts';
 import type { UnderstandingCandidate, UnderstandingCandidateAnswer, UnderstandingCandidateResponse } from '../../understanding/types/understandingCandidate.ts';
 import type { UnderstandingObject } from '../../understanding/types/understandingObject.ts';
+import type { ResolvedFormalUserModel } from '../../formal-user-model/types/formalUserModel.ts';
 import './HomeTab.css';
 
 interface HomeTabProps {
@@ -29,6 +31,7 @@ interface HomeTabProps {
   understandingCandidates: UnderstandingCandidate[];
   understandingObjects: UnderstandingObject[];
   understandingCandidateResponses: UnderstandingCandidateResponse[];
+  resolvedFormalUserModel: ResolvedFormalUserModel;
   onUnderstandingCandidateRespond: (candidateId: string, answer: UnderstandingCandidateAnswer) => void;
 }
 
@@ -45,6 +48,7 @@ export function HomeTab({
   understandingCandidates,
   understandingObjects,
   understandingCandidateResponses,
+  resolvedFormalUserModel,
   onUnderstandingCandidateRespond,
 }: HomeTabProps) {
 
@@ -142,6 +146,8 @@ export function HomeTab({
       />
 
       <UnderstandingObjectPanel objects={understandingObjects} evidence={analysisEvidence} />
+
+      <FormalUserModelPanel model={resolvedFormalUserModel} />
 
       {/* Candidate Card */}
       <section className="home-section">

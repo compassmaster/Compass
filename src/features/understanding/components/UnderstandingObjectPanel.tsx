@@ -13,7 +13,7 @@ export function UnderstandingObjectPanel({ objects, evidence }: UnderstandingObj
   return <section className="understanding-object-panel home-section">
     <div className="understanding-object-header">
       <h2 className="section-title">🌿 確認から育ち始めた理解</h2>
-      <p className="understanding-object-description">「そう思う」と回答した理解候補から作られた、<br />Hypothesis段階のUnderstandingです。<br />まだUserModelやCompass Mapには反映されません。</p>
+      <p className="understanding-object-description">「そう思う」と回答した理解候補から作られた、<br />保存されているUnderstanding Object一覧です。<br />この一覧は生成されたUnderstanding Objectそのものを表示しています。<br />現在User Modelに所属している理解は、下の「現在のUser Model」で確認できます。<br />Compass Mapへの正式反映はまだ行いません。</p>
     </div>
     {objects.length === 0 ? <div className="empty-card"><p className="empty-text">まだ確認済みのUnderstandingはありません。</p><p className="empty-text">Understanding Candidateに「そう思う」と回答すると、<br />Hypothesis段階の理解がここに表示されます。</p></div> :
       <div className="understanding-object-list">{objects.map((object) => {

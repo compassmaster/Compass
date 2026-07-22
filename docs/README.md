@@ -18,7 +18,7 @@ Compassのドキュメント群のインデックスです。現在のSingle Sou
 - [Change History](変更履歴.md)
 - [ADR / 設計決定](設計決定.md)
 
-Current implementation includes Evidence, Understanding Candidate, Candidate Response storage, and the D-0008 MVP for Understanding Object type, factory, repository, AGREE-based generation, non-AGREE removal/reconciliation, and the Understanding Object Panel. D-0009 now designs the Formal UserModel reference-only aggregate boundary: it stores only Long-term / Short-term Understanding IDs, keeps `UnderstandingObjectRepository` as the content Source of Truth, separates `compass_formal_user_model_v1` from legacy `compass_user_model`, and defines Resolver/Reconciliation/migration boundaries. FormalUserModel TypeScript model, runtime guard, empty-model creation, repository interface, LocalStorage repository, `compass_formal_user_model_v1` reference-only storage, reconciler, resolver, ResolvedFormalUserModel, membership sync, orphan removal, and layer repair are implemented as Phase A. App startup reconcile, Formal UserModel UI, Compass Map integration, Reflection / Conversation connection, legacy migration/removal, old-flow shutdown, maturity promotion, UserModel State, Understanding history, and LLM generation remain unimplemented.
+Current implementation includes Evidence, Understanding Candidate, Candidate Response storage, and the D-0008 MVP for Understanding Object type, factory, repository, AGREE-based generation, non-AGREE removal/reconciliation, and the Understanding Object Panel. D-0009 now designs the Formal UserModel reference-only aggregate boundary: it stores only Long-term / Short-term Understanding IDs, keeps `UnderstandingObjectRepository` as the content Source of Truth, separates `compass_formal_user_model_v1` from legacy `compass_user_model`, and defines Resolver/Reconciliation/migration boundaries. FormalUserModel TypeScript model, runtime guard, empty-model creation, repository interface, LocalStorage repository, `compass_formal_user_model_v1` reference-only storage, reconciler, resolver, ResolvedFormalUserModel, membership sync, orphan removal, and layer repair are implemented as Phase A. Compass Map integration, Reflection / Conversation connection, legacy migration/removal, old-flow shutdown, maturity promotion, UserModel State, Understanding history, and LLM generation remain unimplemented.
 
 ## Core Documents
 
@@ -60,3 +60,10 @@ Current implementation includes Evidence, Understanding Candidate, Candidate Res
 
 - [Algorithms](algorithms/README.md)
 - [Research](research/README.md)
+
+
+## 2026-07-22 Formal UserModel Phase B実装状態
+
+実装済み: App起動時Formal UserModel reconcile、Object変更後のmembership refresh、Resolved Formal UserModel state、Formal UserModel読み取り専用確認UI、Long-term / Short-term表示、unresolved参照表示、modelUpdatedAt表示。
+
+未実装として維持: Compass Map正式反映、Reflection正式接続、Conversation正式接続、Formal UserModel編集UI、Understanding Object編集UI、旧UserModel migration、旧UserModel廃止、旧フロー停止、UserModel State判定、maturity昇格、Understanding履歴、LLM生成。
