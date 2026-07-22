@@ -175,6 +175,6 @@ RejectedまたはUncertainな候補はUserModelへ反映しない。
 - [Understanding Status](Understanding/Understanding%20Status.md)
 - [Analysis Architecture](Analysis/Analysis%20Architecture.md)
 - [Evidence](Analysis/Evidence.md)
-- [Future Architecture](FUTURE_ARCHITECTURE.md)
+- [Future Architecture](../future/FUTURE_ARCHITECTURE.md)
 - [D-0002: User Modelを長期・短期の二層構造と根拠付き仮説で管理する](../設計決定.md#d-0002-user-modelを長期短期の二層構造と根拠付き仮説で管理する)
 - [D-0007: EvidenceからUnderstanding Candidateを生成し、ユーザー確認前にUserModelへ反映しない](../設計決定.md#d-0007-evidenceからunderstanding-candidateを生成しユーザー確認前にusermodelへ反映しない)
