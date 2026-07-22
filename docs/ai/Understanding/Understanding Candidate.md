@@ -105,3 +105,19 @@ MVPでは `SLEEP_FATIGUE_OBSERVATION` Evidenceから `SLEEP_FATIGUE_PATTERN` Can
 ## UserModelへまだ反映しないこと
 
 今回の実装では、Candidate生成とユーザー回答保存後もUserModelを更新しない。正式なUserModel更新は、Understanding Objectと更新境界が別途設計・実装された後に扱う。
+
+---
+
+## Candidate Response to Understanding Object Boundary
+
+D-0008により、Candidate ResponseからUnderstanding Objectを生成する条件を以下のように定義する。
+
+| Answer | Object生成 | 備考 |
+| --- | --- | --- |
+| `AGREE` | 生成対象 | 初期maturityは `Hypothesis`。`Confirmed` ではない。 |
+| `PARTIALLY_DISAGREE` | 生成しない | Candidate / Responseは保存し、将来の再生成や補足設計のため参照可能にする。 |
+| `UNSURE` | 生成しない | Candidate / Responseは保存し、将来の追加Evidenceによる再提示・再評価のため参照可能にする。 |
+
+`AGREE` はUnderstanding Status `Confirmed` を意味しない。AGREEは、ユーザーが現在のCandidate表現に概ね同意したことだけを表す。
+
+CandidateとResponseは、Object生成後も監査のため参照可能にする。現時点ではUnderstanding Object生成処理、Object Repository、UserModel更新、Compass Map正式反映は未実装である。
