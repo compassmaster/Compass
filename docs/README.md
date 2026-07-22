@@ -17,8 +17,9 @@ Compassのドキュメント群のインデックスです。現在のSingle Sou
 - [AI Collaboration Protocol](AI_COLLABORATION_PROTOCOL.md)
 - [Change History](変更履歴.md)
 - [ADR / 設計決定](設計決定.md)
+- [Documentation Architecture Audit](DOCUMENTATION_ARCHITECTURE_AUDIT.md)
 
-Current implementation includes Evidence, Understanding Candidate, Candidate Response storage, and the D-0008 MVP for Understanding Object type, factory, repository, AGREE-based generation, non-AGREE removal/reconciliation, and the Understanding Object Panel. D-0009 now designs the Formal UserModel reference-only aggregate boundary: it stores only Long-term / Short-term Understanding IDs, keeps `UnderstandingObjectRepository` as the content Source of Truth, separates `compass_formal_user_model_v1` from legacy `compass_user_model`, and defines Resolver/Reconciliation/migration boundaries. FormalUserModel TypeScript model, runtime guard, empty-model creation, repository interface, LocalStorage repository, `compass_formal_user_model_v1` reference-only storage, reconciler, resolver, ResolvedFormalUserModel, membership sync, orphan removal, and layer repair are implemented as Phase A. Compass Map integration, Reflection / Conversation connection, legacy migration/removal, old-flow shutdown, maturity promotion, UserModel State, Understanding history, and LLM generation remain unimplemented.
+Current implementation includes Evidence, Understanding Candidate, Candidate Response storage, and the D-0008 MVP for Understanding Object type, factory, repository, AGREE-based generation, non-AGREE removal/reconciliation, and the Understanding Object Panel. D-0009 now designs the Formal UserModel reference-only aggregate boundary: it stores only Long-term / Short-term Understanding IDs, keeps `UnderstandingObjectRepository` as the content Source of Truth, separates `compass_formal_user_model_v1` from legacy `compass_user_model`, and defines Resolver/Reconciliation/migration boundaries. FormalUserModel TypeScript model, runtime guard, empty-model creation, repository interface, LocalStorage repository, `compass_formal_user_model_v1` reference-only storage, reconciler, resolver, ResolvedFormalUserModel, membership sync, orphan removal, layer repair, App startup reconcile, Object-change refresh, and read-only confirmation UI are implemented as Phase A/B. Compass Map integration, Reflection / Conversation connection, legacy migration/removal, old-flow shutdown, maturity promotion, UserModel State, Understanding history, LLM generation, machine learning, prediction, and External Context remain unimplemented.
 
 ## Core Documents
 
@@ -50,6 +51,7 @@ Current implementation includes Evidence, Understanding Candidate, Candidate Res
 
 - [Future Architecture](future/FUTURE_ARCHITECTURE.md)
 - [Character Expression Layer](future/CHARACTER_EXPRESSION_LAYER.md)
+- [Machine Learning, Prediction, and External Context](future/MACHINE_LEARNING_EXTERNAL_CONTEXT.md)
 
 ## Roadmap
 

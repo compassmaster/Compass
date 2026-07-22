@@ -44,8 +44,9 @@ lastUpdated: "2026-07-22"
 
 ### 未実装
 
-- 正式なUnderstanding CandidateからUserModelを更新する新フロー。
-- LLM生成・Prompt Version管理・Candidate PrioritizerなどFuture Architecture項目。
+- Compass MapをFormal UserModel Resolverへ正式接続する新フロー。
+- Reflection / ConversationをFormal UserModel Resolverへ正式接続する新フロー。
+- LLM生成・Prompt Version管理・Candidate Prioritizer・External Context・PredictionなどFuture Architecture項目。
 
 ## 実装済み項目
 
@@ -126,12 +127,12 @@ Understanding Object
 ## 次の実装対象
 
 ```text
-Understanding Object
+Formal UserModel Resolver
     ↓
-UserModel更新
+Compass Map / Reflection / Conversation consumer接続
 ```
 
-次の実装でも、UserModel新構造やCompass Map反映は別境界として慎重に扱う。LLM生成、Candidate Prioritizer、期限切れは未実装のままである。
+次の実装でも、旧UserModel migration、旧UserModel廃止、maturity昇格、Understanding履歴、LLM生成、Candidate Prioritizer、期限切れ、External Context、Predictionは別境界として慎重に扱う。
 
 ## 2026-07-22 Formal UserModel Phase A実装状態
 
@@ -162,8 +163,6 @@ Understanding Object Repository
 未実装:
 
 ```text
-App起動時の自動reconcile
-Formal UserModel確認UI
 Compass Map正式反映
 Reflection接続
 Conversation接続
