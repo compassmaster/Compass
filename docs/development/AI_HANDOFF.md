@@ -140,3 +140,7 @@ Reflection now consumes the existing App-level ResolvedFormalUserModel state as 
 Legacy compatibility option A was chosen for Home Reflection: the old `analyzeLogs(logs)` Reflection Card remains available as a clearly labeled “Legacy / 即時フィードバック” section, while the official Reflection section is sourced from ResolvedFormalUserModel. Formal Reflection does not read repositories directly, persist anything, create a localStorage key, update Formal UserModel membership, update Understanding Objects, update Candidates, update Candidate Responses, update Evidence, update DailyLog, update legacy `compass_user_model`, or generate LLM text.
 
 Compass Map remains connected to ResolvedFormalUserModel. Conversation, Character Expression, Prediction, External Context, and Machine Learning remain unimplemented.
+
+## 2026-07-23 Weather Domain Model MVP handoff
+
+D-0010 Weather Domain Model MVP is implemented under `src/features/external-context/weather` as the first External Context domain. It adds branded `WeatherForecastSnapshotId` and `ObservedWeatherRecordId`, schemaVersion `1`, separate immutable-by-shape `WeatherForecastSnapshot` and updateable `ObservedWeatherRecord`, normalized Weather measurements, source metadata, local-date/timezone periods, location snapshots, missing reasons, runtime guards, and factory functions. This PR intentionally does not add Repository, localStorage, API Client, fetching Service, UI, Analyzer, Prediction, or Machine Learning. `npm test` now includes `scripts/test-weather-domain-model.ts`.
