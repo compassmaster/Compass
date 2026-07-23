@@ -15,7 +15,7 @@
 - Understanding Candidateは、既存のUserModelUpdateCandidateとは別責務である。
 - 旧Insight / Insight Feedback / UserModelUpdateCandidate系統は、段階移行のため互換性として残っている。
 - D-0009のPhase A/Bは実装済みである。Compass MapとReflectionのConsumer接続は実装済みであり、次の実装対象はConversationなど残るConsumerをFormal UserModel Resolverへ接続する境界である。
-- 現在の実装ではReflection / Conversation正式接続、LLM生成、機械学習、予測、External Contextを行わない。
+- Weather Domain Model MVPは実装済みであり、ForecastとObservedは別型、runtime guardとFactory、availability / missing / sourceType境界を持つ。現在の実装ではReflection / Conversation正式接続、LLM生成、機械学習、予測、Weather Repository、localStorage、Base Location、API Client、Analyzerを行わない。
 
 
 ## UserModel Invariants
@@ -104,3 +104,8 @@ Formal UserModel Resolver → Reflection read-only consumer接続を実装済み
 Formal Reflectionは永続化・書き込みを行わない。Formal UserModel Repository、Understanding Object Repository、Candidate、Candidate Response、Evidence、DailyLog、旧`compass_user_model`、旧Insightを更新しない。unresolvedUnderstandingIdsは「参照先を確認できない理解があります」として表示し、Reflectionでは修復しない。
 
 旧`analyzeLogs(logs)` Reflection Cardは「Legacy / 即時フィードバック」と明示した別セクションへ移動した。旧コード、旧型、旧Service、旧localStorage keyは削除していない。Compass Map接続は引き続き実装済み。Conversation接続、Character Expression、Prediction、External Context、Machine Learningは未実装。
+
+
+## 2026-07-23 Weather Domain Model MVP実装状態
+
+D-0010に基づくWeather Domain Model MVPを `src/features/external-context/weather` に実装済み。`WeatherForecastSnapshot` と `ObservedWeatherRecord` は別型であり、Forecastは `sourceType: FORECAST` のみ、Observedは `sourceType: OBSERVED | HISTORICAL` のみを受理する。runtime guardとFactoryは、availability（AVAILABLE / PARTIAL / UNAVAILABLE）、missing reason、sourceType、日付、timestamp、location、数値範囲を検証する。Repository、localStorage key、Base Location、API Client、Open-Meteo DTO、fetch、Location UI、Weather UI、Analyzer、Evidence、Prediction、Machine Learningは未実装として維持する。次の実装対象はWeather Repositoryである。

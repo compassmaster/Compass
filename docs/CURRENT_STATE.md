@@ -47,7 +47,7 @@ lastUpdated: "2026-07-22"
 ### 未実装
 
 - ConversationをFormal UserModel Resolverへ正式接続する新フロー。
-- LLM生成・Prompt Version管理・Candidate Prioritizer・External Context実装・PredictionなどFuture Architecture項目。D-0010でWeather保存境界は設計済みだが、Weather TypeやAPIは未実装。
+- LLM生成・Prompt Version管理・Candidate Prioritizer・External Context永続化・PredictionなどFuture Architecture項目。D-0010に基づくWeather Domain Modelは実装済みだが、Weather Repository、localStorage、Base Location、API Client、Analyzer、Prediction、Machine Learningは未実装。
 
 ## 実装済み項目
 
@@ -127,12 +127,12 @@ Understanding Object
 
 ## 次の実装対象
 
-D-0010の次段階として、Weather Domain Modelが次の実装候補である。Conversationは未実装のままであり、External Context、Prediction、Machine Learningもまだ実装しない。
+D-0010の次段階として、Weather Repositoryが次の実装候補である。Weather Domain ModelではForecastとObservedの別型、runtime guard、Factory、availability / missing / sourceType境界を実装済みである。Conversationは未実装のままであり、Base Location、API Client、Analyzer、Prediction、Machine Learningもまだ実装しない。
 
 ```text
-Weather Domain Model
+Weather Repository
     ↓
-WeatherForecastSnapshot / ObservedWeatherRecord / missing / source metadata / runtime guard
+WeatherForecastSnapshot / ObservedWeatherRecord の保存境界
 ```
 
 次の実装でも、旧UserModel migration、旧UserModel廃止、maturity昇格、Understanding履歴、LLM生成、Candidate Prioritizer、期限切れ、External Context、Predictionは別境界として慎重に扱う。
