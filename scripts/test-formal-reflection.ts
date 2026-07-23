@@ -54,8 +54,9 @@ assert.deepEqual(vm.longTermItems.map((item) => item.id), ['newer-long', 'same-a
 assert.equal(vm.longTermItems.length, 3, 'maximum layer item count is respected');
 assert.deepEqual(vm.shortTermItems.map((item) => item.id), ['newer-short'], 'shortTerm display is separate');
 assert.deepEqual(vm.recentItems.map((item) => item.id), ['newer-short', 'newer-long', 'same-a'], 'recent items are updatedAt descending with deterministic ties');
-assert.equal(vm.longTermItems[0].layerLabel, 'Short-term', 'presentation does not recalculate membership from Object.layer');
-assert.equal(vm.shortTermItems[0].layerLabel, 'Long-term', 'Object.layer is displayed without moving membership sections');
+assert.equal(vm.longTermItems[0].layerLabel, 'Long-term', 'longTerm membership displays as Long-term even when Object.layer is SHORT_TERM');
+assert.equal(vm.shortTermItems[0].layerLabel, 'Short-term', 'shortTerm membership displays as Short-term even when Object.layer is LONG_TERM');
+assert.deepEqual(vm.recentItems.map((item) => [item.id, item.layerLabel]), [['newer-short', 'Short-term'], ['newer-long', 'Long-term'], ['same-a', 'Long-term']], 'recent items preserve membership-based layer labels');
 assert.equal(vm.longTermItems[1].categoriesLabel, '内的状態', 'categories are labels only and not used for membership');
 assert.equal(vm.shortTermItems[0].maturityLabel, '確認が積み重なった理解');
 assert.equal(vm.shortTermItems[0].confidenceLabel, '64%');

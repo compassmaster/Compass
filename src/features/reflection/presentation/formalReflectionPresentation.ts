@@ -37,15 +37,18 @@ export function buildFormalReflectionViewModel(
 ): FormalReflectionViewModel {
   const longTermObjects = sortForReflection(model.longTerm);
   const shortTermObjects = sortForReflection(model.shortTerm);
-  const allObjects = sortForReflection([...model.longTerm, ...model.shortTerm]);
+  const recentObjects = sortReflectionMembershipItems([
+    ...model.longTerm.map((object) => ({ object, layerLabel: 'Long-term' as const })),
+    ...model.shortTerm.map((object) => ({ object, layerLabel: 'Short-term' as const })),
+  ]);
 
   return {
     totalCount: longTermObjects.length + shortTermObjects.length,
     longTermCount: longTermObjects.length,
     shortTermCount: shortTermObjects.length,
-    longTermItems: longTermObjects.slice(0, layerItemLimit).map(toReflectionItem),
-    shortTermItems: shortTermObjects.slice(0, layerItemLimit).map(toReflectionItem),
-    recentItems: allObjects.slice(0, RECENT_ITEM_LIMIT).map(toReflectionItem),
+    longTermItems: longTermObjects.slice(0, layerItemLimit).map((object) => toReflectionItem(object, 'Long-term')),
+    shortTermItems: shortTermObjects.slice(0, layerItemLimit).map((object) => toReflectionItem(object, 'Short-term')),
+    recentItems: recentObjects.slice(0, RECENT_ITEM_LIMIT).map(({ object, layerLabel }) => toReflectionItem(object, layerLabel)),
     unresolvedUnderstandingIds: [...model.unresolvedUnderstandingIds],
     modelUpdatedAtLabel: formatFormalUserModelDate(model.modelUpdatedAt),
     isEmpty: longTermObjects.length + shortTermObjects.length === 0,
@@ -58,11 +61,15 @@ function sortForReflection(objects: readonly UnderstandingObject[]): Understandi
   return [...objects].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt) || a.id.localeCompare(b.id));
 }
 
-function toReflectionItem(object: UnderstandingObject): FormalReflectionItemViewModel {
+function sortReflectionMembershipItems(items: readonly { readonly object: UnderstandingObject; readonly layerLabel: 'Long-term' | 'Short-term' }[]): { readonly object: UnderstandingObject; readonly layerLabel: 'Long-term' | 'Short-term' }[] {
+  return [...items].sort((a, b) => b.object.updatedAt.localeCompare(a.object.updatedAt) || a.object.id.localeCompare(b.object.id));
+}
+
+function toReflectionItem(object: UnderstandingObject, layerLabel: 'Long-term' | 'Short-term'): FormalReflectionItemViewModel {
   return {
     id: object.id,
     statement: object.statement,
-    layerLabel: object.layer === 'LONG_TERM' ? 'Long-term' : 'Short-term',
+    layerLabel,
     maturityLabel: getMaturityLabel(object.status.maturity),
     maturityCode: object.status.maturity,
     categoriesLabel: object.categories.length > 0
