@@ -11,7 +11,7 @@ Every AI assistant must read this document before starting work and update it be
 
 - **Status:** Active Development
 - **Version:** v0.1.0-alpha
-- **Current phase:** Formal Analysis Framework, Understanding Candidate MVP, Understanding Object MVP, and Formal UserModel Phase A/B are implemented; Consumer connection from Formal UserModel Resolver is not implemented.
+- **Current phase:** Formal Analysis Framework, Understanding Candidate MVP, Understanding Object MVP, and Formal UserModel Phase A/B are implemented; Compass Map and Formal Reflection are connected to the Formal UserModel Resolver as read-only MVPs; Conversation consumer connection is not implemented.
 
 ## Current Architecture
 
@@ -80,11 +80,11 @@ Do not confuse `Understanding Candidate` with `UserModelUpdateCandidate`.
 
 ## Next Work
 
-D-0008 implements the separate boundary from answered Understanding Candidate to Understanding Object: AGREE creates/upserts an Object at Hypothesis maturity, while PARTIALLY_DISAGREE and UNSURE remove/do not keep Objects. D-0009 implements the Formal UserModel boundary as a reference-only aggregate: it stores only Long-term / Short-term Understanding IDs in `compass_formal_user_model_v1`, keeps UnderstandingObjectRepository as the content Source of Truth, and provides Resolver/Reconciler/orphan/migration rules. FormalUserModel TypeScript model, runtime guard, empty-model creation, repository interface, LocalStorage repository, storage, reconciler, resolver, ResolvedFormalUserModel, membership sync, orphan removal, layer repair, App startup reconcile, Object-change refresh, and read-only confirmation UI are implemented. Compass Map formal reflection, Reflection / Conversation connection, legacy migration/removal, old-flow shutdown, maturity promotion, UserModel State, LLM generation, Candidate Prioritizer, External Context, Prediction, and automatic expiry remain unimplemented unless explicitly requested.
+D-0008 implements the separate boundary from answered Understanding Candidate to Understanding Object: AGREE creates/upserts an Object at Hypothesis maturity, while PARTIALLY_DISAGREE and UNSURE remove/do not keep Objects. D-0009 implements the Formal UserModel boundary as a reference-only aggregate: it stores only Long-term / Short-term Understanding IDs in `compass_formal_user_model_v1`, keeps UnderstandingObjectRepository as the content Source of Truth, and provides Resolver/Reconciler/orphan/migration rules. FormalUserModel TypeScript model, runtime guard, empty-model creation, repository interface, LocalStorage repository, storage, reconciler, resolver, ResolvedFormalUserModel, membership sync, orphan removal, layer repair, App startup reconcile, Object-change refresh, and read-only confirmation UI are implemented. Conversation connection, legacy migration/removal, old-flow shutdown, maturity promotion, UserModel State, LLM generation, Candidate Prioritizer, External Context, Prediction, and automatic expiry remain unimplemented unless explicitly requested.
 
 ## Known Issues / Technical Debt
 
-- Understanding Object and Formal UserModel read-only confirmation are implemented; Compass Map / Reflection / Conversation are still not connected to Formal UserModel Resolver.
+- Understanding Object and Formal UserModel read-only confirmation are implemented; Compass Map and Formal Reflection now consume ResolvedFormalUserModel read-only, while Conversation is still not connected to Formal UserModel Resolver.
 - Current UserModel remains Hypothesis-field based.
 - Old Insight / UserModelUpdateCandidate flow remains and must be migrated gradually.
 - `App.tsx` still owns several top-level state values; acceptable for the MVP but may need state management later.
@@ -126,4 +126,12 @@ D-0008 implements the separate boundary from answered Understanding Candidate to
 
 実装済み: App起動時Formal UserModel reconcile、Object変更後のmembership refresh、Resolved Formal UserModel state、Formal UserModel読み取り専用確認UI、Long-term / Short-term表示、unresolved参照表示、modelUpdatedAt表示。
 
-未実装として維持: Compass Map正式反映、Reflection正式接続、Conversation正式接続、Formal UserModel編集UI、Understanding Object編集UI、旧UserModel migration、旧UserModel廃止、旧フロー停止、UserModel State判定、maturity昇格、Understanding履歴、LLM生成。
+未実装として維持: Conversation正式接続、Formal UserModel編集UI、Understanding Object編集UI、旧UserModel migration、旧UserModel廃止、旧フロー停止、UserModel State判定、maturity昇格、Understanding履歴、LLM生成。
+
+## 2026-07-22 Formal UserModel Phase C handoff
+
+Compass Map now receives the existing App-level ResolvedFormalUserModel state and refreshes it with the existing reconciler/resolver composition root when opening the tab. The Map is read-only and does not write Formal UserModel membership, Understanding Objects, Candidates, Evidence, or legacy `compass_user_model`. Legacy compatibility option B was chosen: old UserModelUpdateCandidate Apply / Reject UI is hidden from Compass Map while legacy code and storage remain. Conversation consumer connection, Character Expression, Prediction, and External Context remain unimplemented.
+
+## 2026-07-23 Formal UserModel Phase D handoff
+
+Home now includes Formal Reflection, a read-only consumer of the existing App-level ResolvedFormalUserModel state. It uses a pure presentation builder to sort display copies by updatedAt descending and ID ascending ties, separates Long-term and Short-term directly from ResolvedFormalUserModel membership, limits each layer summary to three items, surfaces unresolved IDs, and does not persist or write Formal UserModel, Understanding Objects, Candidates, Evidence, DailyLog, legacy UserModel, or legacy Insight. Legacy handling option B was chosen: the old `analyzeLogs(logs)` Reflection Card remains in code for compatibility but is hidden from Home to avoid confusion with the official Reflection. Conversation, Character Expression, Prediction, External Context, Machine Learning, maturity promotion, and Understanding history remain unimplemented.

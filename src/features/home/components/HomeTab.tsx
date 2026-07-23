@@ -1,7 +1,5 @@
 import { useState } from 'react';
 import type { DailyLog } from '../../daily-log/types/log';
-import { analyzeLogs } from '../../analysis/services/analysisService';
-import { ReflectionCard } from './ReflectionCard';
 import { InsightCard } from '../../analysis/components/InsightCard';
 import { insightRepository } from '../../analysis/services';
 import { insightFeedbackApplicationService } from '../../../app/services';
@@ -11,6 +9,7 @@ import { EvidencePanel } from '../../analysis/components/EvidencePanel';
 import { UnderstandingCandidatePanel } from '../../understanding/components/UnderstandingCandidatePanel';
 import { UnderstandingObjectPanel } from '../../understanding/components/UnderstandingObjectPanel';
 import { FormalUserModelPanel } from '../../formal-user-model/components';
+import { FormalReflectionPanel } from '../../reflection/components/FormalReflectionPanel';
 import type { Evidence } from '../../analysis/types/evidence.ts';
 import type { AnalyzerFailure } from '../../analysis/services/analysisService.ts';
 import type { UnderstandingCandidate, UnderstandingCandidateAnswer, UnderstandingCandidateResponse } from '../../understanding/types/understandingCandidate.ts';
@@ -22,7 +21,7 @@ interface HomeTabProps {
   logs: DailyLog[];
   candidates: UserModelUpdateCandidate[];
   onNavigateToLog: () => void;
-  onReflectionFeedback: (agreed: boolean) => void;
+  onNavigateToCompassMap: () => void;
   onApplyCandidate: (candidateId: string) => void;
   onRejectCandidate: (candidateId: string) => void;
   analysisEvidence: Evidence[];
@@ -39,7 +38,7 @@ export function HomeTab({
   logs,
   candidates,
   onNavigateToLog,
-  onReflectionFeedback,
+  onNavigateToCompassMap,
   onApplyCandidate,
   onRejectCandidate,
   analysisEvidence,
@@ -79,11 +78,7 @@ export function HomeTab({
   };
 
 
-  // リアルタイム分析結果
-  const liveInsights = analyzeLogs(logs);
   const pendingCandidates = candidates.filter((candidate) => candidate.status === 'PENDING');
-  const hasLogs = logs.length > 0;
-  const isReflecting = false;
 
 
   return (
@@ -104,36 +99,16 @@ export function HomeTab({
         </button>
       </section>
 
-      {/* Reflection Card */}
-      <section className="home-section">
-        <h2 className="section-title">🌱 Reflection Card</h2>
+      <FormalReflectionPanel
+        resolvedFormalUserModel={resolvedFormalUserModel}
+        onNavigateToCompassMap={onNavigateToCompassMap}
+      />
 
-        {isReflecting ? (
-          <p className="status-text">Compassが記録を整理しています…</p>
-        ) : liveInsights.length > 0 ? (
-          <div className="reflection-list">
-            {liveInsights.map((insight) => (
-              <ReflectionCard
-                key={insight.id}
-                insight={insight}
-                onFeedback={onReflectionFeedback}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="empty-card">
-            <p className="status-text">
-              {hasLogs
-                ? 'Compassが記録を整理しています…'
-                : 'まだReflectionはありません。今日の記録を追加すると、仮説の芽が表示されます。'}
-            </p>
-            {hasLogs && (
-              <p className="empty-text">
-                今回はカード化できる十分な傾向がまだ見つかっていません。これは「何もない」ではなく、理解を急がないための余白です。
-              </p>
-            )}
-          </div>
-        )}
+      <section className="home-section legacy-reflection-note">
+        <p className="section-eyebrow">Legacy / 即時フィードバック</p>
+        <p className="home-description">
+          旧analyzeLogs由来のReflection Cardは互換性のためコードを残していますが、正式なReflectionと混同しないようHomeでは非表示にしています。
+        </p>
       </section>
 
       <EvidencePanel evidence={analysisEvidence} failures={analysisFailures} onRunAnalysis={onRunAnalysis} />

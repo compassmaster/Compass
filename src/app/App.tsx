@@ -3,14 +3,12 @@ import { logRepository } from '../features/daily-log/services';
 import {
   userModelUpdateApplicationService,
   userModelUpdateCandidateRepository,
-  userModelUpdateHistoryRepository,
   userRepository,
 } from '../features/compass-map/services';
 import { createInitialUserModel } from '../features/compass-map/services/localStorageUserRepository';
 import { type DailyLog } from '../features/daily-log/types/log';
 import { type UserModel } from '../features/compass-map/types/userModel';
 import type { UserModelUpdateCandidate } from '../features/compass-map/services/userModelUpdateCandidateService.ts';
-import type { UserModelUpdateHistoryEntry } from '../features/compass-map/services/userModelUpdateApplicationService.ts';
 
 import { HomeTab } from '../features/home/components/HomeTab';
 import { analysisApplicationService } from '../features/analysis/services';
@@ -88,12 +86,9 @@ function loadInitialUserModel(): UserModel {
 export function App() {
   const [activeTab, setActiveTab] = useState<AppTab>('home');
   const [logs, setLogs] = useState<DailyLog[]>(() => logRepository.getAll());
-  const [userModel, setUserModel] = useState<UserModel>(() => loadInitialUserModel());
+  const [, setUserModel] = useState<UserModel>(() => loadInitialUserModel());
   const [userModelUpdateCandidates, setUserModelUpdateCandidates] = useState<UserModelUpdateCandidate[]>(() =>
     userModelUpdateCandidateRepository.getAll()
-  );
-  const [userModelUpdateHistory, setUserModelUpdateHistory] = useState<UserModelUpdateHistoryEntry[]>(() =>
-    userModelUpdateHistoryRepository.getAll()
   );
   const [analysisEvidence, setAnalysisEvidence] = useState<Evidence[]>(() =>
     analysisApplicationService.listEvidence()
@@ -119,7 +114,6 @@ export function App() {
 
   const refreshUserModelUpdateCandidates = () => {
     setUserModelUpdateCandidates(userModelUpdateCandidateRepository.getAll());
-    setUserModelUpdateHistory(userModelUpdateHistoryRepository.getAll());
   };
 
   const refreshUnderstandingState = () => {
@@ -181,14 +175,6 @@ export function App() {
     refreshResolvedFormalUserModel();
   };
 
-  const handleReflectionFeedback = (agreed: boolean) => {
-    alert(
-      agreed
-        ? 'フィードバックを受け取りました。User Modelへの反映は、根拠と対象が揃った段階で行います。'
-        : 'フィードバックを受け取りました。この気づきは断定せず、今後の観察で見直します。'
-    );
-  };
-
   return (
     <div className="app-container">
       <header className="app-header">
@@ -213,6 +199,7 @@ export function App() {
           className={`tab-button ${activeTab === 'compassMap' ? 'active-tab' : ''}`} 
           onClick={() => {
             refreshUserModelUpdateCandidates();
+            refreshResolvedFormalUserModel();
             setActiveTab('compassMap');
           }}
         >
@@ -226,7 +213,11 @@ export function App() {
             logs={logs}
             candidates={userModelUpdateCandidates}
             onNavigateToLog={() => setActiveTab('log')}
-            onReflectionFeedback={handleReflectionFeedback}
+            onNavigateToCompassMap={() => {
+              refreshUserModelUpdateCandidates();
+              refreshResolvedFormalUserModel();
+              setActiveTab('compassMap');
+            }}
             onApplyCandidate={handleApplyUserModelUpdateCandidate}
             onRejectCandidate={handleRejectUserModelUpdateCandidate}
             analysisEvidence={analysisEvidence}
@@ -242,11 +233,7 @@ export function App() {
         {activeTab === 'log' && <LogTab onSaveSuccess={refreshLogs} />}
         {activeTab === 'compassMap' && (
           <MapTab
-            userModel={userModel}
-            candidates={userModelUpdateCandidates}
-            historyEntries={userModelUpdateHistory}
-            onApplyCandidate={handleApplyUserModelUpdateCandidate}
-            onRejectCandidate={handleRejectUserModelUpdateCandidate}
+            resolvedFormalUserModel={resolvedFormalUserModel}
           />
         )}
       </main>

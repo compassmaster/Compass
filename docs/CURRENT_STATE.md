@@ -29,6 +29,8 @@ lastUpdated: "2026-07-22"
 - D-0008: Candidate ResponseからUnderstanding Objectを生成する境界のAccepted。
 - Understanding Object TypeScript型、Factory、Repository、Application Service、AGREE回答からのObject生成、非AGREE回答時のObject削除・同期、Understanding Object Panel。
 - FormalUserModel TypeScript型、型ガード、createEmptyFormalUserModel、Repository interface、LocalStorageFormalUserModelRepository、`compass_formal_user_model_v1`保存、FormalUserModel Reconciler、FormalUserModel Resolver、ResolvedFormalUserModel型、membership同期、orphan除去、layer移動。
+- Formal UserModel Phase C: Compass Mapの正式表示元をResolvedFormalUserModelへ接続する読み取り専用MVP。
+- Formal UserModel Phase D: HomeのFormal ReflectionをResolvedFormalUserModelへ接続する読み取り専用MVP。
 
 ## 設計状況
 
@@ -44,8 +46,7 @@ lastUpdated: "2026-07-22"
 
 ### 未実装
 
-- Compass MapをFormal UserModel Resolverへ正式接続する新フロー。
-- Reflection / ConversationをFormal UserModel Resolverへ正式接続する新フロー。
+- ConversationをFormal UserModel Resolverへ正式接続する新フロー。
 - LLM生成・Prompt Version管理・Candidate Prioritizer・External Context・PredictionなどFuture Architecture項目。
 
 ## 実装済み項目
@@ -129,7 +130,7 @@ Understanding Object
 ```text
 Formal UserModel Resolver
     ↓
-Compass Map / Reflection / Conversation consumer接続
+Compass Map consumer接続（実装済み） / Reflection consumer接続（実装済み） / Conversation consumer接続
 ```
 
 次の実装でも、旧UserModel migration、旧UserModel廃止、maturity昇格、Understanding履歴、LLM生成、Candidate Prioritizer、期限切れ、External Context、Predictionは別境界として慎重に扱う。
@@ -163,8 +164,6 @@ Understanding Object Repository
 未実装:
 
 ```text
-Compass Map正式反映
-Reflection接続
 Conversation接続
 旧UserModel migration
 旧UserModel廃止
@@ -179,4 +178,20 @@ LLM生成
 
 実装済み: App起動時Formal UserModel reconcile、Object変更後のmembership refresh、Resolved Formal UserModel state、Formal UserModel読み取り専用確認UI、Long-term / Short-term表示、unresolved参照表示、modelUpdatedAt表示。
 
-未実装として維持: Compass Map正式反映、Reflection正式接続、Conversation正式接続、Formal UserModel編集UI、Understanding Object編集UI、旧UserModel migration、旧UserModel廃止、旧フロー停止、UserModel State判定、maturity昇格、Understanding履歴、LLM生成。
+未実装として維持: Reflection正式接続、Conversation正式接続、Formal UserModel編集UI、Understanding Object編集UI、旧UserModel migration、旧UserModel廃止、旧フロー停止、UserModel State判定、maturity昇格、Understanding履歴、LLM生成。
+
+## 2026-07-22 Formal UserModel Phase C実装状態
+
+実装済み: Compass MapはAppの既存`resolvedFormalUserModel` stateを受け取り、タブ表示時に既存composition rootのreconcile/resolveでrefreshする。正式表示元はResolvedFormalUserModelであり、Long-term / Short-termを分離し、件数、statement、maturity、categories、支持度、Evidence参照件数、updatedAt、Understanding Object ID、modelUpdatedAt、unresolved参照警告を読み取り専用で表示する。
+
+Legacy compatibility: 旧Hypothesis型UserModel、UserModelUpdateCandidate、UserModelUpdateHistory、旧localStorage keyは削除せず保持する。ただしCompass Mapでは正式な航海図と混同しないよう、旧候補のApply / Reject UIは非表示にした。Formal UserModel、Understanding Object、Candidate、EvidenceをMapから更新しない。
+
+未実装として維持: Conversation正式接続、Character Expression、Prediction、External Context、Formal UserModel編集UI、Understanding Object編集UI、旧UserModel migration、旧UserModel廃止。
+
+## 2026-07-23 Formal UserModel Phase D実装状態
+
+実装済み: HomeのFormal ReflectionはAppの既存`resolvedFormalUserModel` stateを受け取り、ResolvedFormalUserModelのみから表示データを組み立てる読み取り専用Consumerになった。Formal Reflectionは理解の総数、Long-term / Short-term件数、modelUpdatedAt、最近更新された理解、各layer最大3件、statement、maturity、categories、支持度、Evidence参照件数、updatedAt、Understanding Object ID、空状態、unresolved参照警告を表示する。表示順はupdatedAt降順、同一updatedAtはID辞書順で、表示用コピーだけをsortする。
+
+Legacy compatibility: 旧`analyzeLogs(logs)`由来のReflection Cardはコードを削除せず保持するが、正式Reflectionと混同しないようHomeから非表示にした（方針B）。旧ReflectionのFeedback操作からFormal UserModelを更新する経路は追加していない。Formal Reflectionは新Repository、新localStorage key、永続化、Analyzer、LLM、Formal UserModel/Understanding Object/Candidate/Evidence/DailyLog/旧UserModel/旧Insightへの書き込みを行わない。
+
+未実装として維持: Conversation正式接続、Character Expression、Prediction、External Context、Machine Learning、Formal UserModel編集UI、Understanding Object編集UI、maturity昇格、Understanding履歴、旧UserModel migration、旧UserModel廃止。Compass Map接続は引き続き実装済み。

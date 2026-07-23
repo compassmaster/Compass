@@ -11,11 +11,11 @@
 - D-0007がAcceptedになり、正式な理解フローにUnderstanding Candidateが追加された。
 - 正式フローは `DailyLog / SleepRecord → Analysis → Evidence → Understanding Candidate → Understanding Candidate Response → Understanding Object → Formal UserModel` である。
 - Understanding Candidate MVPとD-0008 Understanding Object MVPは実装済みであり、EvidenceからCandidate生成・保存・表示、AGREE / PARTIALLY_DISAGREE / UNSUREのユーザー回答保存、AGREEからのUnderstanding Object生成・保存・表示、非AGREE時のObject削除・同期まで実装されている。D-0009で設計されたFormal UserModel参照ID集約境界はPhase A/Bまで実装済みであり、FormalUserModel TypeScript型、型ガード、createEmptyFormalUserModel、Repository interface、LocalStorage Repository、`compass_formal_user_model_v1`保存、Reconciler、Resolver、ResolvedFormalUserModel、membership同期、orphan除去、layer移動、App起動時reconcile、Object変更後refresh、読み取り専用確認UIを実装済みである。
-- Compass Map正式反映は未実装である。
+- Compass Map正式表示とFormal ReflectionはResolvedFormalUserModelを表示元にする読み取り専用MVPとして実装済みである。
 - Understanding Candidateは、既存のUserModelUpdateCandidateとは別責務である。
 - 旧Insight / Insight Feedback / UserModelUpdateCandidate系統は、段階移行のため互換性として残っている。
-- D-0009のPhase A/Bは実装済みである。次の実装対象は、Compass Map、Reflection、ConversationなどのConsumerをFormal UserModel Resolverへ接続する境界である。
-- 現在の実装ではCompass Map正式反映、Reflection / Conversation正式接続、LLM生成、機械学習、予測、External Contextを行わない。
+- D-0009のPhase A/Bは実装済みである。次の実装対象は、Conversationなど残るConsumerをFormal UserModel Resolverへ接続する境界である。
+- 現在の実装ではConversation正式接続、LLM生成、機械学習、予測、External Contextを行わない。
 
 
 ## UserModel Invariants
@@ -84,11 +84,19 @@ DailyLogから直接UserModelを確定しない。
 - `PARTIALLY_DISAGREE` / `UNSURE` へ回答変更された場合は対応Objectを削除し、CandidateとResponseは残す。
 - `SLEEP_FATIGUE_PATTERN` Candidateは `SLEEP_FATIGUE_RELATIONSHIP` Object、`LONG_TERM` layer、`INTERNAL_STATE` / `BEHAVIOR` categoriesへ変換する。
 - Objectのconfidenceは参照Evidence confidenceを0〜1にclampした算術平均であり、ユーザーについて真実である確率ではない。
-- Objectは `compass_understanding_objects` に保存される。Formal UserModel Phase Aの型・Repository・Reconciler・Resolverに加え、Phase BのApp起動時reconcile、Object変更後refresh、Resolved state、読み取り専用確認UIは実装済みである。Compass Map正式反映、maturity昇格、Learned / Confirmed判定、Understanding履歴、LLM生成は未実装のままである。
+- Objectは `compass_understanding_objects` に保存される。Formal UserModel Phase Aの型・Repository・Reconciler・Resolverに加え、Phase BのApp起動時reconcile、Object変更後refresh、Resolved state、読み取り専用確認UIは実装済みである。maturity昇格、Learned / Confirmed判定、Understanding履歴、LLM生成は未実装のままである。
 
 
 ## 2026-07-22 Formal UserModel Phase B実装状態
 
 実装済み: App起動時Formal UserModel reconcile、Object変更後のmembership refresh、Resolved Formal UserModel state、Formal UserModel読み取り専用確認UI、Long-term / Short-term表示、unresolved参照表示、modelUpdatedAt表示。
 
-未実装として維持: Compass Map正式反映、Reflection正式接続、Conversation正式接続、Formal UserModel編集UI、Understanding Object編集UI、旧UserModel migration、旧UserModel廃止、旧フロー停止、UserModel State判定、maturity昇格、Understanding履歴、LLM生成。
+未実装として維持: Conversation正式接続、Formal UserModel編集UI、Understanding Object編集UI、旧UserModel migration、旧UserModel廃止、旧フロー停止、UserModel State判定、maturity昇格、Understanding履歴、LLM生成。
+
+## 2026-07-22 Formal UserModel Phase C実装状態
+
+Compass MapはResolvedFormalUserModelを正式表示元として読むConsumerになった。Long-term / Short-termはResolvedFormalUserModel.longTerm / shortTermをそのまま使用し、categoriesやmaturityからlayerを再計算しない。Objectがない場合は空状態を表示し、unresolvedUnderstandingIdsがある場合はIDつき警告を表示する。Legacy compatibility方針はBで、旧更新候補のApply / Reject UIはCompass Mapから非表示にしたが、旧Repository、旧型、旧Service、旧localStorage key、migrationは削除していない。Conversation、Character Expression、Prediction、External Contextは未実装のまま。
+
+## 2026-07-23 Formal UserModel Phase D実装状態
+
+Formal ReflectionはHome上でResolvedFormalUserModelを正式表示元として読むConsumerになった。表示入力はAppから渡される既存stateで、Reflection用に新Repository、新localStorage key、新Analyzer、LLM生成、永続化は追加していない。Long-term / Short-termはResolvedFormalUserModel.longTerm / shortTermをそのまま使用し、categoriesやObject.layerからmembershipを再計算しない。表示用コピーだけをupdatedAt降順、同一updatedAtはID辞書順で決定論的に並べ、最近更新された理解、各layer最大3件、空状態、unresolvedUnderstandingIds警告を表示する。旧analyzeLogs由来のReflection CardはLegacy / 即時フィードバックとしてコードを残し、正式Reflectionと混同しないようHomeから非表示にした。Conversation、Character Expression、Prediction、External Context、Machine Learningは未実装のまま。
