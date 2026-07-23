@@ -109,3 +109,16 @@ Formal Reflectionは永続化・書き込みを行わない。Formal UserModel R
 ## 2026-07-23 Weather Domain Model MVP実装状態
 
 D-0010に基づくWeather Domain Model MVPを `src/features/external-context/weather` に実装済み。`WeatherForecastSnapshot` と `ObservedWeatherRecord` は別型であり、Forecastは `sourceType: FORECAST` のみ、Observedは `sourceType: OBSERVED | HISTORICAL` のみを受理する。runtime guardとFactoryは、availability（AVAILABLE / PARTIAL / UNAVAILABLE）、missing reason、sourceType、日付、timestamp、location、数値範囲を検証する。Repository、localStorage key、Base Location、API Client、Open-Meteo DTO、fetch、Location UI、Weather UI、Analyzer、Evidence、Prediction、Machine Learningは未実装として維持する。次の実装対象はWeather Repositoryである。
+
+## 2026-07-23 Weather Repository MVP
+
+Implemented: WeatherForecastSnapshotRepository, ObservedWeatherRecordRepository, LocalStorageWeatherForecastSnapshotRepository, LocalStorageObservedWeatherRecordRepository, schema-versioned storage envelopes, runtime-guard validation on load, Forecast/Observed storage separation, same-ID replacement within each repository only, invalid loaded data quarantine, and focused repository tests.
+
+Storage keys:
+
+- `compass_weather_forecast_snapshots_v1`
+- `compass_weather_forecast_snapshots_invalid_v1`
+- `compass_observed_weather_records_v1`
+- `compass_observed_weather_records_invalid_v1`
+
+Still not implemented: Weather API Client, Open-Meteo, HTTP, Base Location, Location UI, Weather acquisition Application Service, Weather Analyzer, DailyLog/SleepRecord join, Prediction, Prediction Evaluation, Machine Learning, Conversation, or direct Formal UserModel updates from Weather.
