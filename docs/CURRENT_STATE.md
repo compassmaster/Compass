@@ -47,7 +47,7 @@ lastUpdated: "2026-07-22"
 ### 未実装
 
 - ConversationをFormal UserModel Resolverへ正式接続する新フロー。
-- LLM生成・Prompt Version管理・Candidate Prioritizer・External Context永続化・PredictionなどFuture Architecture項目。D-0010に基づくWeather Domain Modelは実装済みだが、Weather Repository、localStorage、Base Location、API Client、Analyzer、Prediction、Machine Learningは未実装。
+- LLM生成・Prompt Version管理・Candidate Prioritizer・External Context永続化・PredictionなどFuture Architecture項目。D-0010に基づくWeather Domain ModelとWeather Repository MVPは実装済みだが、Base Location、API Client、Analyzer、Prediction、Machine Learningは未実装。
 
 ## 実装済み項目
 
