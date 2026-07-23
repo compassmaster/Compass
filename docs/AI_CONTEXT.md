@@ -57,7 +57,7 @@ Analysisは観測事実をEvidenceとして出力する。EvidenceからUserMode
 
 - ConversationをFormal UserModel Resolverへ正式接続する新フロー。
 - 旧UserModel migration / 廃止、旧フロー停止、maturity昇格、Understanding履歴。
-- LLM連携、機械学習、予測、External Context。
+- LLM連携、機械学習、予測、External Context実装。D-0010でWeatherの保存境界は設計済みだが、Weather Type、Repository、API Client、Analyzer、Predictionは未実装。
 
 ## 現在の主要ディレクトリ
 
@@ -79,10 +79,11 @@ src/
 - 旧Insight系統は互換性のため残っている。
 - UserModelは `docs/ai/UserModel.md` を正とし、`docs/ai/Understanding/` へ移動しない。
 - Future Architectureは将来案であり、Accepted ADRではない。
+- D-0010はExternal Context実装前のWeather保存境界だけをAcceptedにした。WeatherはAnalysisの入力であり、Formal UserModel、Character、Prediction結果を直接更新しない。
 
 ## 次のタスク
 
-次の実装対象は以下の境界である。
+次の実装対象候補は、D-0010に基づくWeather Domain Modelである。Conversationは未実装のままである。既存Consumer接続については以下の境界も残る。
 
 ```text
 Formal UserModel Resolver

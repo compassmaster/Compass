@@ -5,7 +5,7 @@ Every AI assistant must read this document before starting work and update it be
 
 ---
 
-**Last Updated:** 2026-07-22
+**Last Updated:** 2026-07-23
 
 ## Current Project Status
 
@@ -61,6 +61,7 @@ src/
 - D-0005: Immediate Response and Reflection separation.
 - D-0006: SleepRecord by day.
 - D-0007: Evidence → Understanding Candidate → User Confirmation → UserModel. Candidate must not update UserModel before user confirmation.
+- D-0010: External Context and Weather storage boundary. WeatherForecastSnapshot and ObservedWeatherRecord are separate, Location/Privacy/Missing/API failure boundaries are defined, and Weather must not directly update Formal UserModel.
 
 ## Coexisting Old and New Systems
 
@@ -80,7 +81,7 @@ Do not confuse `Understanding Candidate` with `UserModelUpdateCandidate`.
 
 ## Next Work
 
-D-0008 implements the separate boundary from answered Understanding Candidate to Understanding Object: AGREE creates/upserts an Object at Hypothesis maturity, while PARTIALLY_DISAGREE and UNSURE remove/do not keep Objects. D-0009 implements the Formal UserModel boundary as a reference-only aggregate: it stores only Long-term / Short-term Understanding IDs in `compass_formal_user_model_v1`, keeps UnderstandingObjectRepository as the content Source of Truth, and provides Resolver/Reconciler/orphan/migration rules. FormalUserModel TypeScript model, runtime guard, empty-model creation, repository interface, LocalStorage repository, storage, reconciler, resolver, ResolvedFormalUserModel, membership sync, orphan removal, layer repair, App startup reconcile, Object-change refresh, and read-only confirmation UI are implemented. Reflection / Conversation connection, legacy migration/removal, old-flow shutdown, maturity promotion, UserModel State, LLM generation, Candidate Prioritizer, External Context, Prediction, and automatic expiry remain unimplemented unless explicitly requested.
+D-0008 implements the separate boundary from answered Understanding Candidate to Understanding Object: AGREE creates/upserts an Object at Hypothesis maturity, while PARTIALLY_DISAGREE and UNSURE remove/do not keep Objects. D-0009 implements the Formal UserModel boundary as a reference-only aggregate: it stores only Long-term / Short-term Understanding IDs in `compass_formal_user_model_v1`, keeps UnderstandingObjectRepository as the content Source of Truth, and provides Resolver/Reconciler/orphan/migration rules. FormalUserModel TypeScript model, runtime guard, empty-model creation, repository interface, LocalStorage repository, storage, reconciler, resolver, ResolvedFormalUserModel, membership sync, orphan removal, layer repair, App startup reconcile, Object-change refresh, and read-only confirmation UI are implemented. Reflection / Conversation connection, legacy migration/removal, old-flow shutdown, maturity promotion, UserModel State, LLM generation, Candidate Prioritizer, External Context implementation, Prediction, and automatic expiry remain unimplemented unless explicitly requested. D-0010 accepts only the Weather storage boundary; Weather TypeScript types, Repository, API Client, and Analyzer are not implemented. The next External Context implementation target is Weather Domain Model. Conversation remains unimplemented.
 
 ## Known Issues / Technical Debt
 
