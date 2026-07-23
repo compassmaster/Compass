@@ -32,7 +32,7 @@ Formal UserModel Resolver
 read-only confirmation UI
 ```
 
-Analysisは観測事実をEvidenceとして出力する。EvidenceからUserModelを直接更新しない。Understanding Candidateはユーザー確認前にUserModelへ反映しない。Formal UserModelはUnderstanding Object本体を複製せず、Long-term / Short-termのUnderstanding ID membershipだけを保持する。Compass MapへのFormal UserModel正式接続は読み取り専用MVPとして実装済みである。Reflection / ConversationへのFormal UserModel正式接続は未実装である。
+Analysisは観測事実をEvidenceとして出力する。EvidenceからUserModelを直接更新しない。Understanding Candidateはユーザー確認前にUserModelへ反映しない。Formal UserModelはUnderstanding Object本体を複製せず、Long-term / Short-termのUnderstanding ID membershipだけを保持する。Compass MapとHomeのFormal ReflectionへのFormal UserModel正式接続は読み取り専用MVPとして実装済みである。ConversationへのFormal UserModel正式接続は未実装である。
 
 ## 現在の実装状態
 
@@ -55,7 +55,7 @@ Analysisは観測事実をEvidenceとして出力する。EvidenceからUserMode
 
 未実装:
 
-- Reflection / ConversationをFormal UserModel Resolverへ正式接続する新フロー。
+- ConversationをFormal UserModel Resolverへ正式接続する新フロー。
 - 旧UserModel migration / 廃止、旧フロー停止、maturity昇格、Understanding履歴。
 - LLM連携、機械学習、予測、External Context。
 
@@ -87,7 +87,7 @@ src/
 ```text
 Formal UserModel Resolver
     ↓
-Compass Map consumer接続（実装済み） / Reflection / Conversation consumer接続
+Compass Map consumer接続（実装済み） / Formal Reflection consumer接続（実装済み） / Conversation consumer接続
 ```
 
 次の実装でも、旧UserModel migration、旧UserModel廃止、LLM生成、maturity昇格、Understanding履歴は別境界として扱う。

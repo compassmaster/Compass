@@ -187,3 +187,11 @@ LLM生成
 Legacy compatibility: 旧Hypothesis型UserModel、UserModelUpdateCandidate、UserModelUpdateHistory、旧localStorage keyは削除せず保持する。ただしCompass Mapでは正式な航海図と混同しないよう、旧候補のApply / Reject UIは非表示にした。Formal UserModel、Understanding Object、Candidate、EvidenceをMapから更新しない。
 
 未実装として維持: Reflection正式接続、Conversation正式接続、Character Expression、Prediction、External Context、Formal UserModel編集UI、Understanding Object編集UI、旧UserModel migration、旧UserModel廃止。
+
+## 2026-07-23 Formal UserModel Phase D実装状態
+
+実装済み: Homeの正式ReflectionはAppの既存`resolvedFormalUserModel` stateを表示元にする読み取り専用Consumerになった。Formal ReflectionはResolvedFormalUserModelからLong-term / Short-term件数、各layer最大3件、最近更新された理解、maturity、categories、Evidence参照件数、Evidence支持度、updatedAt、modelUpdatedAt、unresolved参照警告を決定論的に表示する。表示順は`updatedAt`降順、同一日時はUnderstanding ID辞書順であり、Formal UserModel membership配列は保存し直さない。
+
+Legacy compatibility: 旧`analyzeLogs(logs)`によるReflection Cardは削除せず、「Legacy / 即時フィードバック」と明示した別セクションへ移動した。旧ReflectionのフィードバックはFormal UserModel、Understanding Object、Understanding Candidate、Candidate Response、Evidence、DailyLog、旧Hypothesis型UserModel、旧Insightを更新しない。
+
+Formal Reflectionは永続化、Repository直接読み取り、新しいlocalStorage key、LLM生成、Analyzer追加、Formal UserModel編集、Understanding Object編集、Candidate回答、Evidence更新を行わない。Compass MapのResolvedFormalUserModel正式接続も引き続き実装済みである。Conversation接続、Character Expression、Prediction、External Context、Machine Learningは未実装のままである。
