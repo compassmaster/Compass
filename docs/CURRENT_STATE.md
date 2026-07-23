@@ -42,11 +42,12 @@ lastUpdated: "2026-07-22"
 - Understanding ObjectとUnderstanding Categoriesの分離。
 - Understanding Statusの概念設計と命名衝突のOpen Design Question。
 - D-0007によるFormal Understanding Pipeline。
+- D-0010によるExternal ContextとWeather Recordの保存境界。
 
 ### 未実装
 
-- Reflection / ConversationをFormal UserModel Resolverへ正式接続する新フロー。
-- LLM生成・Prompt Version管理・Candidate Prioritizer・External Context・PredictionなどFuture Architecture項目。
+- ConversationをFormal UserModel Resolverへ正式接続する新フロー。
+- LLM生成・Prompt Version管理・Candidate Prioritizer・External Context実装・PredictionなどFuture Architecture項目。D-0010でWeather保存境界は設計済みだが、Weather TypeやAPIは未実装。
 
 ## 実装済み項目
 
@@ -126,10 +127,12 @@ Understanding Object
 
 ## 次の実装対象
 
+D-0010の次段階として、Weather Domain Modelが次の実装候補である。Conversationは未実装のままであり、External Context、Prediction、Machine Learningもまだ実装しない。
+
 ```text
-Formal UserModel Resolver
+Weather Domain Model
     ↓
-Compass Map consumer接続（実装済み） / Reflection / Conversation consumer接続
+WeatherForecastSnapshot / ObservedWeatherRecord / missing / source metadata / runtime guard
 ```
 
 次の実装でも、旧UserModel migration、旧UserModel廃止、maturity昇格、Understanding履歴、LLM生成、Candidate Prioritizer、期限切れ、External Context、Predictionは別境界として慎重に扱う。

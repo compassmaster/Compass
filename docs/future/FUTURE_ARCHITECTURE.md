@@ -24,7 +24,7 @@ MVPの完了条件にも含めない。
 - Candidate Prioritization
 - Understanding History
 - Adaptive Understanding
-- Machine Learning / Prediction / External Context
+- Machine Learning / Prediction / External Context（D-0010はWeather保存境界のみを定義し、Conversationも未実装のまま維持する）
 ---
 
 
@@ -41,7 +41,7 @@ MVPの完了条件にも含めない。
 | Understanding History / Agreement History | Not implemented | Still a future concept; no history store exists. |
 | Candidate Prioritizer / Candidate expiry | Not implemented | No prioritization or automatic expiry boundary exists. |
 | LLM Generator / Prompt Version management | Not implemented | No LLM generation path exists. |
-| Machine Learning / Prediction / External Context | Not implemented | Newly recorded as a future concept and not in MVP scope. |
+| Machine Learning / Prediction / External Context | Not implemented | D-0010 has accepted the Weather storage boundary before implementation; Weather Type/API, Prediction, and ML remain unimplemented. |
 
 ## Current Boundary
 
@@ -56,7 +56,7 @@ MVPの完了条件にも含めない。
 - LLM Generator
 - Reflection Engineの高度化
 - Adaptive Understanding
-- Machine Learning / Prediction / External Context
+- Machine Learning / Prediction / External Context（D-0010はWeather保存境界のみを定義し、Conversationも未実装のまま維持する）
 
 現在の実装対象仕様は、Accepted ADRとCurrent Implementation Stateを優先する。
 
