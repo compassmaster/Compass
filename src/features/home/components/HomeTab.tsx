@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { DailyLog } from '../../daily-log/types/log';
 import { analyzeLogs } from '../../analysis/services/analysisService';
 import { ReflectionCard } from './ReflectionCard';
+import { FormalReflectionPanel } from '../../reflection/components/FormalReflectionPanel';
 import { InsightCard } from '../../analysis/components/InsightCard';
 import { insightRepository } from '../../analysis/services';
 import { insightFeedbackApplicationService } from '../../../app/services';
@@ -23,6 +24,7 @@ interface HomeTabProps {
   candidates: UserModelUpdateCandidate[];
   onNavigateToLog: () => void;
   onReflectionFeedback: (agreed: boolean) => void;
+  onNavigateToCompassMap: () => void;
   onApplyCandidate: (candidateId: string) => void;
   onRejectCandidate: (candidateId: string) => void;
   analysisEvidence: Evidence[];
@@ -40,6 +42,7 @@ export function HomeTab({
   candidates,
   onNavigateToLog,
   onReflectionFeedback,
+  onNavigateToCompassMap,
   onApplyCandidate,
   onRejectCandidate,
   analysisEvidence,
@@ -104,9 +107,18 @@ export function HomeTab({
         </button>
       </section>
 
-      {/* Reflection Card */}
+      <FormalReflectionPanel
+        model={resolvedFormalUserModel}
+        onNavigateToCompassMap={onNavigateToCompassMap}
+      />
+
+      {/* Legacy Reflection Card */}
       <section className="home-section">
-        <h2 className="section-title">🌱 Reflection Card</h2>
+        <p className="section-eyebrow">Legacy / 即時フィードバック</p>
+        <h2 className="section-title">旧Reflection Card</h2>
+        <p className="home-description">
+          これは旧AnalysisResult / Insight互換系統の即時フィードバックです。正式なReflectionは上のResolved Formal UserModel表示です。
+        </p>
 
         {isReflecting ? (
           <p className="status-text">Compassが記録を整理しています…</p>

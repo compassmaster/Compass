@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "node --experimental-strip-types scripts/test-insight-deduplication.ts && node --experimental-strip-types scripts/test-user-model-update-candidates.ts && node --experimental-strip-types scripts/test-user-model-update-application.ts && node --experimental-strip-types scripts/test-sleep-records.ts && node --experimental-strip-types scripts/test-analysis-framework.ts && node --experimental-strip-types scripts/test-understanding-candidates.ts && node --experimental-strip-types scripts/test-understanding-objects.ts && node --experimental-strip-types scripts/test-formal-user-model.ts && node --experimental-strip-types scripts/test-formal-user-model-panel.ts && node --experimental-strip-types scripts/test-compass-map-formal-user-model.ts"
+    "test": "node --experimental-strip-types scripts/test-insight-deduplication.ts && node --experimental-strip-types scripts/test-user-model-update-candidates.ts && node --experimental-strip-types scripts/test-user-model-update-application.ts && node --experimental-strip-types scripts/test-sleep-records.ts && node --experimental-strip-types scripts/test-analysis-framework.ts && node --experimental-strip-types scripts/test-understanding-candidates.ts && node --experimental-strip-types scripts/test-understanding-objects.ts && node --experimental-strip-types scripts/test-formal-user-model.ts && node --experimental-strip-types scripts/test-formal-user-model-panel.ts && node --experimental-strip-types scripts/test-compass-map-formal-user-model.ts && node --experimental-strip-types scripts/test-formal-reflection.ts"
   },
   "dependencies": {
     "react": "^19.2.7",

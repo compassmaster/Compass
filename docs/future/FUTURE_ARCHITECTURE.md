@@ -35,8 +35,9 @@ MVPの完了条件にも含めない。
 | Evidence → Understanding Candidate | Implemented | Formal Candidate generation, storage, display, and user response storage are implemented. |
 | Understanding Candidate Response → Understanding Object | Implemented | AGREE creates/upserts Hypothesis-maturity Objects; non-AGREE removes/does not keep Objects. |
 | Understanding Object → Formal UserModel membership | Implemented | Formal UserModel Phase A/B are implemented through reference-only membership, reconciler, resolver, and read-only confirmation UI. |
-| Compass Map from Formal UserModel Resolver | Not implemented | Existing Compass Map still uses the old Hypothesis-type UserModel compatibility flow. |
-| Reflection / Conversation from Formal UserModel Resolver | Not implemented | Consumer connections remain future work. |
+| Compass Map from Formal UserModel Resolver | Implemented | Compass Map consumes ResolvedFormalUserModel read-only. |
+| Reflection from Formal UserModel Resolver | Implemented | Home Formal Reflection consumes ResolvedFormalUserModel read-only; legacy Reflection remains separate. |
+| Conversation from Formal UserModel Resolver | Not implemented | Conversation consumer connection remains future work. |
 | Understanding History / Agreement History | Not implemented | Still a future concept; no history store exists. |
 | Candidate Prioritizer / Candidate expiry | Not implemented | No prioritization or automatic expiry boundary exists. |
 | LLM Generator / Prompt Version management | Not implemented | No LLM generation path exists. |

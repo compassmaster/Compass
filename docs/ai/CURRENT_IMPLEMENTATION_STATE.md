@@ -14,7 +14,7 @@
 - Compass Map正式表示はResolvedFormalUserModelを表示元にする読み取り専用MVPとして実装済みである。
 - Understanding Candidateは、既存のUserModelUpdateCandidateとは別責務である。
 - 旧Insight / Insight Feedback / UserModelUpdateCandidate系統は、段階移行のため互換性として残っている。
-- D-0009のPhase A/Bは実装済みである。次の実装対象は、Compass Map、Reflection、ConversationなどのReflection、Conversationなど残るConsumerをFormal UserModel Resolverへ接続する境界である。
+- D-0009のPhase A/Bは実装済みである。Compass MapとReflectionのConsumer接続は実装済みであり、次の実装対象はConversationなど残るConsumerをFormal UserModel Resolverへ接続する境界である。
 - 現在の実装ではReflection / Conversation正式接続、LLM生成、機械学習、予測、External Contextを行わない。
 
 
@@ -96,3 +96,11 @@ DailyLogから直接UserModelを確定しない。
 ## 2026-07-22 Formal UserModel Phase C実装状態
 
 Compass MapはResolvedFormalUserModelを正式表示元として読むConsumerになった。Long-term / Short-termはResolvedFormalUserModel.longTerm / shortTermをそのまま使用し、categoriesやmaturityからlayerを再計算しない。Objectがない場合は空状態を表示し、unresolvedUnderstandingIdsがある場合はIDつき警告を表示する。Legacy compatibility方針はBで、旧更新候補のApply / Reject UIはCompass Mapから非表示にしたが、旧Repository、旧型、旧Service、旧localStorage key、migrationは削除していない。Reflection / Conversation、Character Expression、Prediction、External Contextは未実装のまま。
+
+## 2026-07-23 Formal UserModel Phase D実装状態
+
+Formal UserModel Resolver → Reflection read-only consumer接続を実装済み。HomeのFormal Reflectionは既存App stateのResolvedFormalUserModelだけを入力にし、Long-term / Short-termを分けて振り返る。最近更新された理解は`updatedAt`降順、同一`updatedAt`ではID辞書順で表示する。categories、maturity、Object.layerからFormal UserModel membershipを再推測しない。
+
+Formal Reflectionは永続化・書き込みを行わない。Formal UserModel Repository、Understanding Object Repository、Candidate、Candidate Response、Evidence、DailyLog、旧`compass_user_model`、旧Insightを更新しない。unresolvedUnderstandingIdsは「参照先を確認できない理解があります」として表示し、Reflectionでは修復しない。
+
+旧`analyzeLogs(logs)` Reflection Cardは「Legacy / 即時フィードバック」と明示した別セクションへ移動した。旧コード、旧型、旧Service、旧localStorage keyは削除していない。Compass Map接続は引き続き実装済み。Conversation接続、Character Expression、Prediction、External Context、Machine Learningは未実装。

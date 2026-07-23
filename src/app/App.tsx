@@ -222,6 +222,11 @@ export function App() {
             candidates={userModelUpdateCandidates}
             onNavigateToLog={() => setActiveTab('log')}
             onReflectionFeedback={handleReflectionFeedback}
+            onNavigateToCompassMap={() => {
+              refreshUserModelUpdateCandidates();
+              refreshResolvedFormalUserModel();
+              setActiveTab('compassMap');
+            }}
             onApplyCandidate={handleApplyUserModelUpdateCandidate}
             onRejectCandidate={handleRejectUserModelUpdateCandidate}
             analysisEvidence={analysisEvidence}
