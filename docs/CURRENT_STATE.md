@@ -135,7 +135,7 @@ Understanding Object
 
 回答別の扱いは、`AGREE` のみObject生成・保持対象、`PARTIALLY_DISAGREE` / `UNSURE` はCandidate / Responseを保存するがObjectを保持しない。回答変更時も現在ResponseをSource of TruthとしてObjectをreconcileする。新規Objectの初期maturityは `Hypothesis` であり、`Confirmed` ではない。
 
-## 次の実装対象
+## 次の設計対象
 
 D-0010に基づくWeather Domain ModelとWeather Repository MVPは実装済みである。
 
