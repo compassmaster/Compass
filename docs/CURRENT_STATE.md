@@ -2,7 +2,7 @@
 status: Active
 dependsOn: []
 usedBy: []
-lastUpdated: "2026-07-22"
+lastUpdated: "2026-07-25"
 ---
 # Current State (現在のプロジェクト状況)
 
@@ -30,6 +30,10 @@ lastUpdated: "2026-07-22"
 - Understanding Object TypeScript型、Factory、Repository、Application Service、AGREE回答からのObject生成、非AGREE回答時のObject削除・同期、Understanding Object Panel。
 - FormalUserModel TypeScript型、型ガード、createEmptyFormalUserModel、Repository interface、LocalStorageFormalUserModelRepository、`compass_formal_user_model_v1`保存、FormalUserModel Reconciler、FormalUserModel Resolver、ResolvedFormalUserModel型、membership同期、orphan除去、layer移動。
 - Formal UserModel Phase C: Compass Mapの正式表示元をResolvedFormalUserModelへ接続する読み取り専用MVP。
+- D-0010 Weather Domain Model MVP。
+- WeatherForecastSnapshot / ObservedWeatherRecordの型、runtime guard、Factory、availability / missing reason / source metadata境界。
+- Weather Repository MVP。
+- Forecast / ObservedのRepository分離、別localStorage保存、schema-versioned envelope、読み込み時validation、不正レコード隔離。
 
 ## 設計状況
 
@@ -99,6 +103,12 @@ UnderstandingObjectPanel
 - `FormalUserModel` / `ResolvedFormalUserModel`
 - `LocalStorageFormalUserModelRepository`
 - `FormalUserModelReconciler` / `FormalUserModelResolver`
+- `WeatherForecastSnapshot` / `ObservedWeatherRecord`
+- Weather runtime guards / Weather Factory
+- `WeatherForecastSnapshotRepository`
+- `ObservedWeatherRecordRepository`
+- `LocalStorageWeatherForecastSnapshotRepository`
+- `LocalStorageObservedWeatherRecordRepository`
 - Analysis Framework / Understanding Candidate / Understanding Object / Formal UserModel検証スクリプト
 
 ## 互換性のため残っている旧系統
@@ -127,15 +137,40 @@ Understanding Object
 
 ## 次の実装対象
 
-D-0010の次段階として、Weather Repositoryが次の実装候補である。Weather Domain ModelではForecastとObservedの別型、runtime guard、Factory、availability / missing / sourceType境界を実装済みである。Conversationは未実装のままであり、Base Location、API Client、Analyzer、Prediction、Machine Learningもまだ実装しない。
+D-0010に基づくWeather Domain ModelとWeather Repository MVPは実装済みである。
+
+次の実装対象は、Weather API Clientへ進む前段階としてのBase Location境界設計である。
 
 ```text
-Weather Repository
-    ↓
-WeatherForecastSnapshot / ObservedWeatherRecord の保存境界
+Base Location Design
+        ↓
+Base Location Domain Model
+        ↓
+Base Location Repository
+        ↓
+Weather API Client
+        ↓
+Weather Forecast Fetching Application Service
 ```
 
-次の実装でも、旧UserModel migration、旧UserModel廃止、maturity昇格、Understanding履歴、LLM生成、Candidate Prioritizer、期限切れ、External Context、Predictionは別境界として慎重に扱う。
+Base Locationでは、Weather取得に必要な最小限の地域情報だけを扱う。
+
+設計時には、少なくとも次の点を明確にする。
+
+* Compassが保存する位置情報の粒度
+* 緯度・経度を直接保存するか
+* 市区町村などの地域単位へ丸めるか
+* 自宅住所を保存しない境界
+* Location未設定時の扱い
+* 通常の生活圏と旅行先など一時的な場所の区別
+* WeatherForecastSnapshotへ保存するLocation Snapshot
+* ユーザーによる確認、修正、削除の境界
+* 現在地の継続的な追跡を行わないこと
+* Base LocationからFormal UserModelを直接更新しないこと
+
+この段階では、Weather API Client、外部API通信、UI、Analyzer、Prediction、Machine Learningは実装しない。
+
+旧UserModel migration、旧UserModel廃止、maturity昇格、Understanding履歴、LLM生成、Candidate Prioritizer、期限切れ、Conversation接続も別境界として維持する。
 
 ## 2026-07-22 Formal UserModel Phase A実装状態
 
@@ -198,3 +233,32 @@ Legacy compatibility: 旧Hypothesis型UserModel、UserModelUpdateCandidate、Use
 Legacy compatibility: 旧`analyzeLogs(logs)`によるReflection Cardは削除せず、「Legacy / 即時フィードバック」と明示した別セクションへ移動した。旧ReflectionのフィードバックはFormal UserModel、Understanding Object、Understanding Candidate、Candidate Response、Evidence、DailyLog、旧Hypothesis型UserModel、旧Insightを更新しない。
 
 Formal Reflectionは永続化、Repository直接読み取り、新しいlocalStorage key、LLM生成、Analyzer追加、Formal UserModel編集、Understanding Object編集、Candidate回答、Evidence更新を行わない。Compass MapのResolvedFormalUserModel正式接続も引き続き実装済みである。Conversation接続、Character Expression、Prediction、External Context、Machine Learningは未実装のままである。
+
+## 2026-07-23 Weather Repository MVP実装状態
+
+実装済み:
+
+- Weather ForecastとObserved Weatherを別Repositoryとして管理する。
+- Forecast保存キーは `compass_weather_forecast_snapshots_v1`。
+- Observed保存キーは `compass_observed_weather_records_v1`。
+- 両Repositoryは `{ schemaVersion: 1, records: [...] }` 形式で保存する。
+- 読み込み時に既存のWeather runtime guardでレコードを検証する。
+- 不正なレコードはそれぞれの `*_invalid_v1` keyへ隔離する。
+- 同じ文字列IDでもForecastとObservedは互いを上書きしない。
+- 同一Repository内で同じIDを保存した場合のみ、そのRepository内のレコードを置換する。
+- `scripts/test-weather-repositories.ts` が `npm test` に含まれる。
+
+未実装として維持:
+
+- Base Location
+- Weather API Client
+- Weather Fetching Application Service
+- Weather UI
+- Weather Analyzer
+- DailyLog / SleepRecordとの結合
+- Prediction
+- Machine Learning
+- Conversation接続
+- Formal UserModelへの反映
+
+次の実装対象はBase Location境界の設計である。

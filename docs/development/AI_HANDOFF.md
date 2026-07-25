@@ -5,13 +5,13 @@ Every AI assistant must read this document before starting work and update it be
 
 ---
 
-**Last Updated:** 2026-07-23
+**Last Updated:** 2026-07-25
 
 ## Current Project Status
 
 - **Status:** Active Development
 - **Version:** v0.1.0-alpha
-- **Current phase:** Formal Analysis Framework, Understanding Candidate MVP, Understanding Object MVP, and Formal UserModel Phase A/B are implemented; Compass Map is connected to the Formal UserModel Resolver as a read-only MVP; Reflection and Conversation consumer connections are not implemented.
+- **Current phase:** Formal Analysis Framework、Understanding Candidate MVP、Understanding Object MVP、Formal UserModel Phase A〜D、Weather Domain Model MVP、Weather Repository MVPが実装済み。Compass MapとFormal ReflectionはResolvedFormalUserModelへ読み取り専用で接続済み。次の設計対象はBase Location境界。Conversation、Weather API Client、Analyzer、Prediction、Machine Learningは未実装。
 
 ## Current Architecture
 
@@ -24,7 +24,14 @@ src/
 │   ├── analysis/
 │   ├── compass-map/
 │   ├── daily-log/
+│   ├── external-context/
+│   │   └── weather/
+│   │       ├── repositories/
+│   │       ├── services/
+│   │       └── types/
+│   ├── formal-user-model/
 │   ├── home/
+│   ├── reflection/
 │   ├── sleep/
 │   └── understanding/
 └── shared/
@@ -52,6 +59,14 @@ src/
 - Understanding Candidate MVP: sleep-fatigue generator, localStorage Candidate/Response repositories, confirmation UI, and tests.
 - CI runs lint, build, and test.
 - `npm test` runs validation scripts for Insight deduplication, UserModel update candidates, UserModel update application, SleepRecord, and Analysis Framework.
+- Formal UserModel Phase A〜D。
+- ResolvedFormalUserModelを正式表示元とするCompass Map。
+- ResolvedFormalUserModelを正式表示元とするFormal Reflection。
+- Weather Domain Model MVP。
+- WeatherForecastSnapshot / ObservedWeatherRecordの分離。
+- Weather runtime guards / Factory。
+- Weather Repository MVP。
+- Forecast / Observedの別Repository、別localStorage key、不正レコード隔離。
 
 ## Accepted ADRs to Respect
 
@@ -81,7 +96,29 @@ Do not confuse `Understanding Candidate` with `UserModelUpdateCandidate`.
 
 ## Next Work
 
-D-0008 implements the separate boundary from answered Understanding Candidate to Understanding Object: AGREE creates/upserts an Object at Hypothesis maturity, while PARTIALLY_DISAGREE and UNSURE remove/do not keep Objects. D-0009 implements the Formal UserModel boundary as a reference-only aggregate: it stores only Long-term / Short-term Understanding IDs in `compass_formal_user_model_v1`, keeps UnderstandingObjectRepository as the content Source of Truth, and provides Resolver/Reconciler/orphan/migration rules. FormalUserModel TypeScript model, runtime guard, empty-model creation, repository interface, LocalStorage repository, storage, reconciler, resolver, ResolvedFormalUserModel, membership sync, orphan removal, layer repair, App startup reconcile, Object-change refresh, and read-only confirmation UI are implemented. Reflection / Conversation connection, legacy migration/removal, old-flow shutdown, maturity promotion, UserModel State, LLM generation, Candidate Prioritizer, External Context implementation, Prediction, and automatic expiry remain unimplemented unless explicitly requested. D-0010 accepts only the Weather storage boundary; Weather TypeScript types, Repository, API Client, and Analyzer are not implemented. The next External Context implementation target is Weather Domain Model. Conversation remains unimplemented.
+D-0008に基づくUnderstanding Object境界、D-0009に基づくFormal UserModel Phase A〜D、D-0010に基づくWeather Domain ModelとWeather Repository MVPは実装済みである。
+
+次の対象はBase Location境界の設計である。
+
+Base Locationは、Weather取得に必要な最小限の地域情報を表現するための境界であり、継続的な現在地追跡や詳細な自宅住所保存を目的としない。
+
+次の作業では、以下を設計する。
+
+- Base Locationの責務
+- 保存する位置情報の粒度
+- 緯度・経度と地域名の扱い
+- Location source
+- timezone
+- ユーザー確認状態
+- 未設定状態
+- 通常の生活圏と一時的なLocationの区別
+- 更新、削除、訂正の境界
+- WeatherForecastSnapshotのLocation Snapshotとの関係
+- Privacy boundary
+
+次の段階では、まだWeather API Client、外部API通信、Weather Analyzer、Prediction、Machine Learningを実装しない。
+
+Conversation接続、Character Expression、旧UserModel migration、旧UserModel廃止、maturity昇格、Understanding履歴、LLM生成、Candidate Prioritizer、自動期限切れも未実装として維持する。
 
 ## Known Issues / Technical Debt
 
@@ -148,3 +185,27 @@ D-0010 Weather Domain Model MVP is implemented under `src/features/external-cont
 ## 2026-07-23 Weather Repository MVP handoff
 
 D-0010 Weather Repository MVP is implemented under `src/features/external-context/weather/repositories`. Forecast and Observed records use separate repository interfaces and separate localStorage keys: `compass_weather_forecast_snapshots_v1` and `compass_observed_weather_records_v1`. Both stores use a schema-versioned envelope `{ schemaVersion: 1, records: [...] }`, validate loaded records with the existing Weather runtime guards, keep Forecast and Observed records isolated even when the same string ID is used, replace records only within the same repository when the same ID is saved again, and quarantine invalid loaded items to `*_invalid_v1` keys while rewriting the valid envelope. This PR intentionally does not add Weather API Client, fetching Application Service, Base Location, UI, Analyzer, DailyLog/Sleep joins, Prediction, Machine Learning, Conversation, or Formal UserModel updates. `npm test` now includes `scripts/test-weather-repositories.ts`.
+
+## 2026-07-25 Base Location Design Handoff
+
+Weather Domain Model MVP and Weather Repository MVP are implemented.
+
+The next architecture target is the Base Location boundary required before introducing a Weather API Client.
+
+Base Location must represent only the minimum location information required to obtain weather data. It must not become a continuous location-tracking system or store a detailed home address by default.
+
+The design must define:
+
+- Location granularity
+- Coordinates versus normalized region
+- Timezone ownership
+- Location source
+- User confirmation status
+- Missing / unset state
+- Temporary location versus normal living area
+- Correction and deletion
+- Privacy boundaries
+- Relationship with `WeatherLocationSnapshot`
+- Whether Base Location is mutable while Weather snapshots remain historical records
+
+Do not implement an API Client, external fetch, UI, Analyzer, Prediction, Machine Learning, Conversation integration, or Formal UserModel update as part of the Base Location design task.
