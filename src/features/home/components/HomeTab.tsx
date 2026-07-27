@@ -12,6 +12,7 @@ import { EvidencePanel } from '../../analysis/components/EvidencePanel';
 import { UnderstandingCandidatePanel } from '../../understanding/components/UnderstandingCandidatePanel';
 import { UnderstandingObjectPanel } from '../../understanding/components/UnderstandingObjectPanel';
 import { FormalUserModelPanel } from '../../formal-user-model/components';
+import { BaseLocationPanel } from '../../external-context/location/components/BaseLocationPanel';
 import type { Evidence } from '../../analysis/types/evidence.ts';
 import type { AnalyzerFailure } from '../../analysis/services/analysisService.ts';
 import type { UnderstandingCandidate, UnderstandingCandidateAnswer, UnderstandingCandidateResponse } from '../../understanding/types/understandingCandidate.ts';
@@ -111,6 +112,8 @@ export function HomeTab({
         model={resolvedFormalUserModel}
         onNavigateToCompassMap={onNavigateToCompassMap}
       />
+
+      <BaseLocationPanel />
 
       {/* Legacy Reflection Card */}
       <section className="home-section">

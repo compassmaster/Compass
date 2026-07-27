@@ -2,7 +2,7 @@
 status: Active
 dependsOn: []
 usedBy: []
-lastUpdated: "2026-07-25"
+lastUpdated: "2026-07-27"
 ---
 # Current State (現在のプロジェクト状況)
 
@@ -31,6 +31,7 @@ lastUpdated: "2026-07-25"
 - FormalUserModel TypeScript型、型ガード、createEmptyFormalUserModel、Repository interface、LocalStorageFormalUserModelRepository、`compass_formal_user_model_v1`保存、FormalUserModel Reconciler、FormalUserModel Resolver、ResolvedFormalUserModel型、membership同期、orphan除去、layer移動。
 - Formal UserModel Phase C: Compass Mapの正式表示元をResolvedFormalUserModelへ接続する読み取り専用MVP。
 - D-0010 Weather Domain Model MVP。
+- D-0011 Base Location設計およびBase Location MVP（Domain、validation、Factory、Repository、Application Service、Home設定UI、WeatherLocationSnapshot変換）。
 - WeatherForecastSnapshot / ObservedWeatherRecordの型、runtime guard、Factory、availability / missing reason / source metadata境界。
 - Weather Repository MVP。
 - Forecast / ObservedのRepository分離、別localStorage保存、schema-versioned envelope、読み込み時validation、不正レコード隔離。
@@ -47,11 +48,12 @@ lastUpdated: "2026-07-25"
 - Understanding Statusの概念設計と命名衝突のOpen Design Question。
 - D-0007によるFormal Understanding Pipeline。
 - D-0010によるExternal ContextとWeather Recordの保存境界。
+- D-0011によるユーザー確認済みBase Locationと履歴Location Snapshotの境界。
 
 ### 未実装
 
 - ConversationをFormal UserModel Resolverへ正式接続する新フロー。
-- LLM生成・Prompt Version管理・Candidate Prioritizer・External Context永続化・PredictionなどFuture Architecture項目。D-0010に基づくWeather Domain ModelとWeather Repository MVPは実装済みだが、Base Location、API Client、Analyzer、Prediction、Machine Learningは未実装。
+- LLM生成・Prompt Version管理・Candidate Prioritizer・External Context永続化・PredictionなどFuture Architecture項目。D-0010に基づくWeather Domain ModelとWeather Repository MVP、およびD-0011に基づくBase Location MVPは実装済みだが、Weather API Client、Analyzer、Prediction、Machine Learningは未実装。
 
 ## 実装済み項目
 
@@ -137,40 +139,9 @@ Understanding Object
 
 ## 次の設計対象
 
-D-0010に基づくWeather Domain ModelとWeather Repository MVPは実装済みである。
+Base Location MVPは実装済みであり、次の実装候補はWeather API Clientである。Base Locationは専用RepositoryをSource of Truthとするユーザー確認済みの通常地域設定1件で、WeatherLocationSnapshotは取得時にコピーする履歴である。変更・削除は過去snapshotを書き換えない。
 
-次の実装対象は、Weather API Clientへ進む前段階としてのBase Location境界設計である。
-
-```text
-Base Location Design
-        ↓
-Base Location Domain Model
-        ↓
-Base Location Repository
-        ↓
-Weather API Client
-        ↓
-Weather Forecast Fetching Application Service
-```
-
-Base Locationでは、Weather取得に必要な最小限の地域情報だけを扱う。
-
-設計時には、少なくとも次の点を明確にする。
-
-* Compassが保存する位置情報の粒度
-* 緯度・経度を直接保存するか
-* 市区町村などの地域単位へ丸めるか
-* 自宅住所を保存しない境界
-* Location未設定時の扱い
-* 通常の生活圏と旅行先など一時的な場所の区別
-* WeatherForecastSnapshotへ保存するLocation Snapshot
-* ユーザーによる確認、修正、削除の境界
-* 現在地の継続的な追跡を行わないこと
-* Base LocationからFormal UserModelを直接更新しないこと
-
-この段階では、Weather API Client、外部API通信、UI、Analyzer、Prediction、Machine Learningは実装しない。
-
-旧UserModel migration、旧UserModel廃止、maturity昇格、Understanding履歴、LLM生成、Candidate Prioritizer、期限切れ、Conversation接続も別境界として維持する。
+未実装として、常時GPS、Geolocation API、詳細住所、複数拠点、一時Location、現在地自動切替を維持する。Base LocationはExternal Context設定でありFormal UserModelを直接更新しない。Weather API ClientでもDailyLog本文等を送信せず、Weather API通信と失敗を独立した境界にする。
 
 ## 2026-07-22 Formal UserModel Phase A実装状態
 
