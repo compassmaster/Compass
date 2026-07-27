@@ -25,7 +25,7 @@ export function BaseLocationPanel() {
   };
   return <section className="home-section base-location-panel">
     <p className="section-eyebrow">External Context / Base Location</p><h2 className="section-title">天気情報取得のための地域設定</h2>
-    <p className="home-description">通常使う地域を1件、あなたの確認後に保存します。現在地の自動取得や常時位置追跡は行わず、詳細住所も必要ありません。Weather API通信はまだ行いません。</p>
+    <p className="home-description">通常使う地域を1件、あなたの確認後に保存します。現在地の自動取得や常時位置追跡は行わず、詳細住所も必要ありません。</p>
     <p className={configured ? 'base-location-status configured' : 'base-location-status'}>{message}</p>
     <div className="base-location-grid">
       <label>表示名<input value={form.displayName} onChange={(e) => change('displayName', e.target.value)} placeholder="例: 普段過ごす地域" /></label>

@@ -2,6 +2,7 @@ import type { WeatherForecastSnapshot, WeatherForecastSnapshotId } from '../type
 
 export interface WeatherForecastSnapshotRepository {
   save(snapshot: WeatherForecastSnapshot): void;
+  saveAll(snapshots: readonly WeatherForecastSnapshot[]): void;
   findById(id: WeatherForecastSnapshotId): WeatherForecastSnapshot | null;
   findByTargetDate(localDate: string, timezone?: string): readonly WeatherForecastSnapshot[];
   findAll(): readonly WeatherForecastSnapshot[];

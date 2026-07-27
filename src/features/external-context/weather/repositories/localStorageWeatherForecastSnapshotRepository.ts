@@ -24,6 +24,13 @@ export class LocalStorageWeatherForecastSnapshotRepository implements WeatherFor
     this.persist(next);
   }
 
+  saveAll(snapshots: readonly WeatherForecastSnapshot[]): void {
+    if (!snapshots.every(isWeatherForecastSnapshot)) throw new Error('Invalid WeatherForecastSnapshot batch');
+    const byId = new Map(this.load().map((item) => [item.id, item]));
+    snapshots.forEach((item) => byId.set(item.id, item));
+    this.persist([...byId.values()]);
+  }
+
   findById(id: WeatherForecastSnapshotId): WeatherForecastSnapshot | null {
     return this.load().find((item) => item.id === id) ?? null;
   }

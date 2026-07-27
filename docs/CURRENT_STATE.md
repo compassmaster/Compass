@@ -233,3 +233,10 @@ Formal Reflectionは永続化、Repository直接読み取り、新しいlocalSto
 - Formal UserModelへの反映
 
 次の実装対象はBase Location境界の設計である。
+
+## 2026-07-27 Weather Forecast Acquisition MVP
+
+- D-0012をAcceptedとし、Open-Meteo Forecast Client、URL builder、unknownレスポンスのruntime validation、10秒timeout、fetch注入を実装した。
+- Base Location未設定時は通信せず、設定済みの場合だけ7日の日次Forecastを取得する。Provider DTOは保存せず、既存WeatherForecastSnapshotへ正規化しatomic batchで履歴保存する。
+- Homeに最小取得UI、成功件数・期間・時刻、失敗表示、最新7件、privacy説明、Open-Meteo attributionを追加した。
+- 次の候補はObserved Weather AcquisitionまたはDailyLog / SleepRecord / Weather Join。Analyzer、Formal UserModel接続は未実装。
