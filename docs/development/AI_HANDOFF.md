@@ -231,3 +231,8 @@ Do not implement an API Client, external fetch, UI, Analyzer, Prediction, Machin
 - UIにWeather data by Open-Meteo attributionを表示。Free APIの非商用条件、CC BY 4.0、変更可能な上限・条件をD-0012に記録し、商用化前の再確認を必須とした。
 - `scripts/test-weather-forecast-acquisition.ts` は実通信なしでURL、Client failure、validation、null、正規化、ID、Location、Application Service保存境界を検証する。
 - Non-goals: Observed/Historical、Analyzer、join、Prediction、Formal UserModel、polling/retry、他Provider。
+
+### PR #26 review follow-up
+
+- `listLatest()` はRepository順に依存せず、対象日ごとに `source.fetchedAt` が最大のSnapshotを選ぶ。同時刻はIDの辞書順で決定論的に解決する。
+- Acquisition Serviceは進行中Promiseを共有して同時取得を1回へ集約し、UIも`useRef`の同期guardで同一イベントループ内の連打を防ぐ。mock Clientによる並行呼び出しテストを追加した。

@@ -37,6 +37,31 @@ const noLocation = new WeatherForecastAcquisitionService({ get: () => null, save
 assert.equal((await noLocation.acquireForecast()).status, 'LOCATION_NOT_CONFIGURED'); assert.equal(calls, 0);
 const service = new WeatherForecastAcquisitionService({ get: () => location, save() {}, delete() {} }, { async fetchDailyForecast() { calls++; return provider; } }, repository);
 assert.equal((await service.acquireForecast()).status, 'SUCCESS'); assert.equal(saved.length, 7);
+
+const older = normalizeWeatherForecast({ ...provider, fetchedAt: '2026-07-26T00:00:00.000Z', days: provider.days.slice(0, 1) }, location, () => 'older')[0];
+const newer = normalizeWeatherForecast({ ...provider, fetchedAt: '2026-07-28T00:00:00.000Z', days: provider.days.slice(0, 1) }, location, () => 'newer')[0];
+saved = [older, newer];
+assert.deepEqual(service.listLatest(), [newer], '日付ごとにRepository順に依存せず最新のfetchedAtを選ぶ');
+saved = [newer, older];
+assert.deepEqual(service.listLatest(), [newer], 'Repositoryの逆順でも最新Snapshotを選ぶ');
+const sameFetchedAtHigherId = { ...newer, id: `${newer.id}-z` as WeatherForecastSnapshot['id'] };
+saved = [sameFetchedAtHigherId, newer];
+assert.deepEqual(service.listLatest(), [sameFetchedAtHigherId], '同一fetchedAtはIDで決定論的に選ぶ');
+
+let releaseRequest: ((value: typeof provider) => void) | undefined;
+let concurrentCalls = 0;
+const deferredProvider = new Promise<typeof provider>((resolve) => { releaseRequest = resolve; });
+const exclusiveService = new WeatherForecastAcquisitionService(
+  { get: () => location, save() {}, delete() {} },
+  { async fetchDailyForecast() { concurrentCalls++; return deferredProvider; } },
+  repository,
+);
+const firstAcquisition = exclusiveService.acquireForecast();
+const secondAcquisition = exclusiveService.acquireForecast();
+assert.equal(concurrentCalls, 1, '連続呼び出し中はClientを一度だけ呼ぶ');
+releaseRequest?.(provider);
+assert.equal((await firstAcquisition).status, 'SUCCESS');
+assert.equal((await secondAcquisition).status, 'SUCCESS');
 const failed = new WeatherForecastAcquisitionService({ get: () => location, save() {}, delete() {} }, { async fetchDailyForecast() { throw new WeatherForecastClientError('REQUEST_FAILED', 'no'); } }, repository);
 saved = []; assert.equal((await failed.acquireForecast()).status, 'REQUEST_FAILED'); assert.equal(saved.length, 0);
 console.log('Weather forecast acquisition tests passed.');

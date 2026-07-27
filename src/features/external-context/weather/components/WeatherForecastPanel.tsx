@@ -1,14 +1,16 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { weatherForecastAcquisitionService } from '../services/compositionRoot.ts';
 import type { WeatherForecastSnapshot } from '../types/index.ts';
 import './WeatherForecastPanel.css';
 
 export function WeatherForecastPanel() {
+  const inFlightRef = useRef(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('Base Location設定後に7日予報を取得できます。');
   const [forecasts, setForecasts] = useState<readonly WeatherForecastSnapshot[]>(() => weatherForecastAcquisitionService.listLatest());
   const acquire = async () => {
-    if (loading) return;
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
     setLoading(true);
     try {
       const result = await weatherForecastAcquisitionService.acquireForecast();
@@ -18,7 +20,7 @@ export function WeatherForecastPanel() {
         setForecasts(weatherForecastAcquisitionService.listLatest());
       } else if (result.status === 'LOCATION_NOT_CONFIGURED') setMessage('Base Locationを先に設定してください。API通信は行っていません。');
       else setMessage(`取得できませんでした: ${result.reason}`);
-    } finally { setLoading(false); }
+    } finally { inFlightRef.current = false; setLoading(false); }
   };
   return <section className="home-section weather-forecast-panel">
     <p className="section-eyebrow">External Context / Forecast</p><h2 className="section-title">天気予報</h2>
