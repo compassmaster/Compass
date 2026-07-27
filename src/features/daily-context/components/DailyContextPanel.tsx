@@ -20,7 +20,7 @@ function value(value: number | null | undefined, unit = ''): string { return val
 function loadRecentContexts(timezone: string) {
   const endDate = localToday(timezone);
   return dailyContextQueryService.listByDateRange({ startDate: daysBefore(endDate, 6), endDate, timezone })
-    .filter((item) => item.metadata.completeness !== 'EMPTY')
+    .filter((item) => item.metadata.completeness !== 'EMPTY' || item.metadata.hasHistoricalWeather)
     .reverse();
 }
 
@@ -31,7 +31,7 @@ export function DailyContextPanel() {
   return <section className="home-section daily-context-panel">
     <p className="section-eyebrow">Daily Context / 読み取り専用</p>
     <h2 className="section-title">直近7日の記録と取得時点の予報</h2>
-    <p className="home-description">各保存元をローカル日付（{timezone}）で結合しています。予報は当日の実測値ではありません。</p>
+    <p className="home-description">各保存元をローカル日付（{timezone}）で結合しています。予報と過去データは別々に保持します。</p>
     <button className="daily-context-refresh" type="button" onClick={() => setContexts(loadRecentContexts(timezone))}>表示を更新</button>
     {contexts.length === 0 ? <p className="empty-text">直近7日に結合して表示できる記録はありません。</p> : <div className="daily-context-list">
       {contexts.map((context) => <article className="daily-context-card" key={context.localDate}>
@@ -42,6 +42,10 @@ export function DailyContextPanel() {
           <span> 最低 {value(context.forecast.forecastValues.dailyMinimumTemperature?.value, '℃')} / 最高 {value(context.forecast.forecastValues.dailyMaximumTemperature?.value, '℃')} / 降水確率 {value(context.forecast.forecastValues.precipitationProbability?.value, '%')}</span>
           <span className="forecast-meta">availability: {context.forecast.availability.status} / 取得: {context.forecast.source.fetchedAt}</span>
           {context.forecast.availability.status === 'UNAVAILABLE' && <span className="forecast-meta">欠損理由: {context.forecast.availability.reason}</span>}
+        </> : <span> —</span>}</div>
+        <div><b>過去の推定気象データ:</b> {context.historicalWeather ? <>
+          <span> 最低 {value(context.historicalWeather.observedValues.dailyMinimumTemperature?.value, '℃')} / 最高 {value(context.historicalWeather.observedValues.dailyMaximumTemperature?.value, '℃')} / 降水量 {value(context.historicalWeather.observedValues.precipitation?.value, 'mm')}</span>
+          <span className="forecast-meta">availability: {context.historicalWeather.availability.status} / 取得: {context.historicalWeather.source.fetchedAt} / dataset: {context.historicalWeather.source.dataset}</span>
         </> : <span> —</span>}</div>
       </article>)}
     </div>}

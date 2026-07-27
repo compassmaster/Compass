@@ -1,6 +1,6 @@
 import type { DailyLog, DateString } from '../../daily-log/types/log.ts';
 import type { SleepRecord } from '../../sleep/types/sleepRecord.ts';
-import type { WeatherForecastSnapshot } from '../../external-context/weather/types/index.ts';
+import type { ObservedWeatherRecord, WeatherForecastSnapshot } from '../../external-context/weather/types/index.ts';
 
 export type DailyContextCompleteness = 'COMPLETE' | 'PARTIAL' | 'EMPTY';
 
@@ -11,14 +11,17 @@ export interface DailyContextReadModel {
   readonly dailyLogs: readonly DailyLog[];
   readonly sleepRecord: SleepRecord | null;
   readonly forecast: WeatherForecastSnapshot | null;
+  readonly historicalWeather: ObservedWeatherRecord | null;
   readonly metadata: {
     readonly dailyLogCount: number;
     readonly sleepRecordCandidateCount: number;
     readonly forecastCandidateCount: number;
+    readonly historicalWeatherCandidateCount: number;
     readonly hasDailyLog: boolean;
     readonly hasSleepRecord: boolean;
     /** UNAVAILABLE snapshots remain inspectable, but do not count as available forecast data. */
     readonly hasForecast: boolean;
+    readonly hasHistoricalWeather: boolean;
     readonly completeness: DailyContextCompleteness;
   };
 }
