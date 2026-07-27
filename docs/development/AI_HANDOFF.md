@@ -220,3 +220,14 @@ Do not implement an API Client, external fetch, UI, Analyzer, Prediction, Machin
 - `scripts/test-base-location.ts` はDomain、Repository、Application Service、snapshot独立性、Weather保存キー非干渉を検証し、`npm test` に含まれる。
 - 次の候補はWeather API Client。今回のnon-goalsはAPI/fetch、GPS/Geolocation、詳細住所、複数・一時拠点、Weather Record生成、Analyzer、Formal UserModelおよびFormal Pipeline更新。
 - Base Location UIの座標文字列は純粋なparserで空欄・NaN・Infinityを拒否してからDomainへ渡す。UIはlocation servicesのcomposition rootで構成済みのApplication Serviceだけを利用し、Repositoryをimportしない。
+
+## 2026-07-27 Weather Forecast Acquisition MVP Handoff
+
+- Endpointは `https://api.open-meteo.com/v1/forecast`。dailyはtemperature_2m_min/max、precipitation_sum、precipitation_probability_max、weather_code、wind_speed_10m_max、sunshine_duration。単位はcelsius / mm / percent / code / m/s / seconds、forecast_days=7、timeformat=iso8601。
+- Open-Meteo adapterがunknown DTOを全配列同長までruntime validationし、Provider非依存resultへ変換する。fetchは注入可能、Client内timeoutは10秒。
+- composition rootはweather `services/compositionRoot.ts`。Source of TruthはBaseLocationRepositoryとWeatherForecastSnapshotRepositoryであり、UIは構成済みAcquisition Serviceだけを利用する。
+- APIへ送信するのは座標、timezone、日数、Weather変数、単位だけ。表示名、municipality、countryCode、DailyLog、睡眠、気分、理解情報、UserModelは送らない。
+- HTTP/network/timeout/JSON/validation失敗時は保存せず偽Snapshotを生成しない。失敗はUIに留まり、DailyLog、Observed Weather、Formal Pipelineへ影響しない。
+- UIにWeather data by Open-Meteo attributionを表示。Free APIの非商用条件、CC BY 4.0、変更可能な上限・条件をD-0012に記録し、商用化前の再確認を必須とした。
+- `scripts/test-weather-forecast-acquisition.ts` は実通信なしでURL、Client failure、validation、null、正規化、ID、Location、Application Service保存境界を検証する。
+- Non-goals: Observed/Historical、Analyzer、join、Prediction、Formal UserModel、polling/retry、他Provider。

@@ -1,0 +1,6 @@
+.weather-forecast-panel { border: 1px solid #bee3f8; background: #f7fbff; }
+.weather-forecast-panel button { padding: 10px 16px; border: 0; border-radius: 8px; color: white; background: #2b6cb0; cursor: pointer; }
+.weather-forecast-panel button:disabled { opacity: .6; cursor: wait; }
+.forecast-list { display: grid; gap: 8px; }
+.forecast-list article { display: flex; flex-wrap: wrap; gap: 8px 16px; padding: 10px; border-radius: 8px; background: white; }
+.weather-attribution { font-size: .9rem; }
