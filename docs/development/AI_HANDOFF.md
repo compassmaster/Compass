@@ -5,13 +5,13 @@ Every AI assistant must read this document before starting work and update it be
 
 ---
 
-**Last Updated:** 2026-07-25
+**Last Updated:** 2026-07-27
 
 ## Current Project Status
 
 - **Status:** Active Development
 - **Version:** v0.1.0-alpha
-- **Current phase:** Formal Analysis Framework、Understanding Candidate MVP、Understanding Object MVP、Formal UserModel Phase A〜D、Weather Domain Model MVP、Weather Repository MVPが実装済み。Compass MapとFormal ReflectionはResolvedFormalUserModelへ読み取り専用で接続済み。次の設計対象はBase Location境界。Conversation、Weather API Client、Analyzer、Prediction、Machine Learningは未実装。
+- **Current phase:** Formal Analysis Framework、Understanding Candidate MVP、Understanding Object MVP、Formal UserModel Phase A〜D、Weather Domain Model MVP、Weather Repository MVPが実装済み。Compass MapとFormal ReflectionはResolvedFormalUserModelへ読み取り専用で接続済み。Base Location MVPまで実装済み。次の実装候補はWeather API Client。Conversation、Weather API Client、Analyzer、Prediction、Machine Learningは未実装。
 
 ## Current Architecture
 
@@ -209,3 +209,14 @@ The design must define:
 - Whether Base Location is mutable while Weather snapshots remain historical records
 
 Do not implement an API Client, external fetch, UI, Analyzer, Prediction, Machine Learning, Conversation integration, or Formal UserModel update as part of the Base Location design task.
+
+
+## 2026-07-27 Base Location MVP Handoff
+
+- D-0011をAcceptedとし、BaseLocation型、runtime guard、Factory、Application Service、localStorage Repository、Homeの最小設定UI、WeatherLocationSnapshot変換を実装した。
+- 現在設定1件のSource of Truthは専用Repository。保存キーは `compass_base_location_v1`、不正データ隔離キーは `compass_base_location_invalid_v1`。schema-versioned envelopeを使う。
+- UIはHomeに配置し、登録・再表示・変更・確認付き削除、validation表示を提供する。Repositoryを直接操作しない。
+- Weather取得時には純粋関数で必要最小限をWeatherLocationSnapshotへ値コピーする。過去snapshotはBase Location変更・削除に追従しない。
+- `scripts/test-base-location.ts` はDomain、Repository、Application Service、snapshot独立性、Weather保存キー非干渉を検証し、`npm test` に含まれる。
+- 次の候補はWeather API Client。今回のnon-goalsはAPI/fetch、GPS/Geolocation、詳細住所、複数・一時拠点、Weather Record生成、Analyzer、Formal UserModelおよびFormal Pipeline更新。
+- Base Location UIの座標文字列は純粋なparserで空欄・NaN・Infinityを拒否してからDomainへ渡す。UIはlocation servicesのcomposition rootで構成済みのApplication Serviceだけを利用し、Repositoryをimportしない。
