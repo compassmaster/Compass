@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { BaseLocationApplicationService, LocalStorageBaseLocationRepository, BASE_LOCATION_INVALID_STORAGE_KEY,
   BASE_LOCATION_STORAGE_KEY, createBaseLocation, isBaseLocation, toWeatherLocationSnapshot,
-  type BaseLocationId } from '../src/features/external-context/location/index.ts';
+  parseBaseLocationFormInput, type BaseLocationId } from '../src/features/external-context/location/index.ts';
 
 class MemoryStorage implements Storage {
   private readonly values = new Map<string, string>(); get length() { return this.values.size; }
@@ -16,6 +16,11 @@ for (const invalid of [{ ...input, displayName: ' ' }, { ...input, municipality:
 assert.equal(isBaseLocation({ ...location, source: 'GPS' }), false);
 assert.equal(isBaseLocation({ ...location, confirmationStatus: 'PENDING' }), false);
 assert.equal(isBaseLocation({ ...location, createdAt: 'not-a-date' }), false);
+assert.throws(() => parseBaseLocationFormInput({ ...input, latitude: '', longitude: '139.7' }), /latitude/);
+assert.throws(() => parseBaseLocationFormInput({ ...input, latitude: '35.6', longitude: '   ' }), /longitude/);
+assert.throws(() => parseBaseLocationFormInput({ ...input, latitude: 'NaN', longitude: '139.7' }), /有限/);
+assert.throws(() => parseBaseLocationFormInput({ ...input, latitude: '35.6', longitude: 'Infinity' }), /有限/);
+assert.deepEqual(parseBaseLocationFormInput({ ...input, latitude: '35.6', longitude: '139.7' }).latitude, 35.6);
 
 const snapshot = toWeatherLocationSnapshot(location); const priorLabel = snapshot.label;
 const changed = createBaseLocation({ ...input, displayName: 'Changed' }, { id: location.id, createdAt: location.createdAt, now: '2026-07-27T01:00:00.000Z' });
@@ -32,5 +37,7 @@ storage.setItem(BASE_LOCATION_STORAGE_KEY, JSON.stringify({ schemaVersion: 1, lo
 const service = new BaseLocationApplicationService(repository); const first = service.setBaseLocation(input);
 const second = service.setBaseLocation({ ...input, displayName: 'Updated' });
 assert.equal(second.id, first.id); assert.equal(second.createdAt, first.createdAt); assert.equal(second.displayName, 'Updated'); assert.ok(Date.parse(second.updatedAt) >= Date.parse(first.updatedAt));
+assert.throws(() => service.setBaseLocation(parseBaseLocationFormInput({ ...input, latitude: '', longitude: '139.7' })));
+assert.deepEqual(service.getBaseLocation(), second);
 assert.equal(storage.getItem(weatherKey), 'untouched'); service.deleteBaseLocation(); assert.equal(service.getBaseLocation(), null);
 console.log('base location tests passed');

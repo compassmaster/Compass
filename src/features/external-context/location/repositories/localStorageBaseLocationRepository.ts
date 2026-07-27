@@ -6,8 +6,8 @@ export const BASE_LOCATION_STORAGE_KEY = 'compass_base_location_v1';
 export const BASE_LOCATION_INVALID_STORAGE_KEY = 'compass_base_location_invalid_v1';
 
 export class LocalStorageBaseLocationRepository implements BaseLocationRepository {
-  private readonly storage: Storage;
-  constructor(storage: Storage = localStorage) { this.storage = storage; }
+  private readonly providedStorage?: Storage;
+  constructor(storage?: Storage) { this.providedStorage = storage; }
   get(): BaseLocation | null {
     const raw = this.storage.getItem(BASE_LOCATION_STORAGE_KEY);
     if (raw === null) return null;
@@ -26,5 +26,6 @@ export class LocalStorageBaseLocationRepository implements BaseLocationRepositor
     this.storage.setItem(BASE_LOCATION_INVALID_STORAGE_KEY, raw);
     this.storage.removeItem(BASE_LOCATION_STORAGE_KEY);
   }
+  private get storage(): Storage { return this.providedStorage ?? globalThis.localStorage; }
 }
 function isRecord(value: unknown): value is Record<string, unknown> { return typeof value === 'object' && value !== null && !Array.isArray(value); }

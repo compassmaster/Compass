@@ -1,13 +1,11 @@
 import { useState } from 'react';
-import { BaseLocationApplicationService } from '../services/index.ts';
-import { LocalStorageBaseLocationRepository } from '../repositories/index.ts';
+import { baseLocationApplicationService, parseBaseLocationFormInput } from '../services/index.ts';
 import './BaseLocationPanel.css';
 
-const service = new BaseLocationApplicationService(new LocalStorageBaseLocationRepository());
 const empty = { displayName: '', municipality: '', countryCode: '', timezone: '', latitude: '', longitude: '' };
 
 export function BaseLocationPanel() {
-  const existing = service.getBaseLocation();
+  const existing = baseLocationApplicationService.getBaseLocation();
   const [form, setForm] = useState(existing ? { displayName: existing.displayName, municipality: existing.municipality,
     countryCode: existing.countryCode, timezone: existing.timezone, latitude: String(existing.coordinates.latitude), longitude: String(existing.coordinates.longitude) } : empty);
   const [configured, setConfigured] = useState(existing !== null);
@@ -17,13 +15,13 @@ export function BaseLocationPanel() {
   const save = () => {
     setError('');
     try {
-      service.setBaseLocation({ ...form, latitude: Number(form.latitude), longitude: Number(form.longitude) });
+      baseLocationApplicationService.setBaseLocation(parseBaseLocationFormInput(form));
       setConfigured(true); setMessage('Base Locationを保存しました。');
     } catch (reason) { setError(reason instanceof Error ? reason.message : '保存できませんでした。'); }
   };
   const remove = () => {
     if (!window.confirm('Base Locationを削除しますか？ 過去のWeather記録は変更されません。')) return;
-    service.deleteBaseLocation(); setForm(empty); setConfigured(false); setError(''); setMessage('Base Locationを削除しました。');
+    baseLocationApplicationService.deleteBaseLocation(); setForm(empty); setConfigured(false); setError(''); setMessage('Base Locationを削除しました。');
   };
   return <section className="home-section base-location-panel">
     <p className="section-eyebrow">External Context / Base Location</p><h2 className="section-title">天気情報取得のための地域設定</h2>
