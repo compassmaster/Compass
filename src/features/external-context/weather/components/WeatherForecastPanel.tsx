@@ -44,7 +44,7 @@ export function WeatherForecastPanel() {
     <hr/><p className="section-eyebrow">External Context / Historical</p><h3>過去の推定気象データ</h3>
     <p className="home-description">過去の推定気象データであり、観測所の純粋な実測値ではないデータです。Provider: Open-Meteo / dataset: historical-forecast-api</p>
     <button type="button" onClick={acquireHistorical} disabled={historicalLoading}>{historicalLoading?'取得中…':'昨日の過去気象データを取得'}</button><p role="status">{historicalMessage}</p>
-    {historical.length>0&&<div className="forecast-list">{historical.map(item=><article key={item.id}><strong>{item.observedPeriod.localDate}</strong><span>最低 {format(item.observedValues.dailyMinimumTemperature)}</span><span>最高 {format(item.observedValues.dailyMaximumTemperature)}</span><span>降水量 {format(item.observedValues.precipitation)}</span><span>code {format(item.observedValues.weatherCode)}</span><span>{item.availability.status} / {item.source.sourceType}</span></article>)}</div>}
+    {historical.length>0&&<div className="forecast-list">{historical.map(item=><article key={item.id}><strong>{item.observedPeriod.localDate}</strong><span>timezone: {item.observedPeriod.timezone}</span>{item.location?.label&&<span>location: {item.location.label}</span>}<span>最低 {format(item.observedValues.dailyMinimumTemperature)}</span><span>最高 {format(item.observedValues.dailyMaximumTemperature)}</span><span>降水量 {format(item.observedValues.precipitation)}</span><span>code {format(item.observedValues.weatherCode)}</span><span>{item.availability.status} / {item.source.sourceType}</span></article>)}</div>}
     <p className="weather-attribution">Historical weather data by <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">Open-Meteo</a></p>
   </section>;
 }

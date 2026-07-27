@@ -6,7 +6,8 @@ export const OPEN_METEO_HISTORICAL_ENDPOINT = 'https://historical-forecast-api.o
 export const OPEN_METEO_HISTORICAL_DAILY_VARIABLES = ['temperature_2m_min','temperature_2m_max','precipitation_sum','precipitation_probability_max','weather_code','wind_speed_10m_max','sunshine_duration'] as const;
 export function buildOpenMeteoHistoricalWeatherUrl(request: HistoricalWeatherRequest): URL {
   if (!Number.isFinite(request.latitude) || request.latitude < -90 || request.latitude > 90 || !Number.isFinite(request.longitude) || request.longitude < -180 || request.longitude > 180) throw new Error('Invalid coordinates.');
-  if (!request.timezone.trim() || !/^\d{4}-\d{2}-\d{2}$/.test(request.localDate)) throw new Error('Timezone and localDate are required.');
+  if (!request.timezone.trim()) throw new Error('Timezone is required.');
+  if (!isValidLocalDate(request.localDate)) throw new Error('localDate must be a valid YYYY-MM-DD date.');
   const url = new URL(OPEN_METEO_HISTORICAL_ENDPOINT);
   url.search = new URLSearchParams({ latitude:String(request.latitude), longitude:String(request.longitude), timezone:request.timezone, start_date:request.localDate, end_date:request.localDate,
     daily:OPEN_METEO_HISTORICAL_DAILY_VARIABLES.join(','), temperature_unit:'celsius', wind_speed_unit:'ms', precipitation_unit:'mm', timeformat:'iso8601' }).toString();
@@ -21,7 +22,7 @@ export class OpenMeteoHistoricalWeatherClient implements HistoricalWeatherClient
       const response = await this.fetchLike(buildOpenMeteoHistoricalWeatherUrl(request), { signal: controller.signal });
       let body: unknown; try { body = await response.json(); } catch { throw new HistoricalWeatherClientError('INVALID_PROVIDER_RESPONSE','Open-Meteo returned malformed JSON.'); }
       if (!response.ok) throw new HistoricalWeatherClientError('REQUEST_FAILED', record(body) && typeof body.reason === 'string' ? body.reason : `HTTP ${response.status}`);
-      try { return parseOpenMeteoHistoricalResponse(body, request.localDate, this.now()); }
+      try { return parseOpenMeteoHistoricalResponse(body, request.localDate, request.timezone, this.now()); }
       catch (error) { throw new HistoricalWeatherClientError('INVALID_PROVIDER_RESPONSE', error instanceof Error ? error.message : 'Invalid provider response.'); }
     } catch (error) {
       if (error instanceof HistoricalWeatherClientError) throw error;
@@ -31,3 +32,8 @@ export class OpenMeteoHistoricalWeatherClient implements HistoricalWeatherClient
   }
 }
 function record(v: unknown): v is Record<string, unknown> { return typeof v === 'object' && v !== null && !Array.isArray(v); }
+function isValidLocalDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(date.valueOf()) && date.toISOString().slice(0, 10) === value;
+}

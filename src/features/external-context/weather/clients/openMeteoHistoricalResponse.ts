@@ -1,10 +1,11 @@
 import type { HistoricalWeatherProviderResult } from './historicalWeatherClient.ts';
 
 const fields = ['temperature_2m_min', 'temperature_2m_max', 'precipitation_sum', 'precipitation_probability_max', 'weather_code', 'wind_speed_10m_max', 'sunshine_duration'] as const;
-export function parseOpenMeteoHistoricalResponse(value: unknown, requestedDate: string, fetchedAt: string): HistoricalWeatherProviderResult {
+export function parseOpenMeteoHistoricalResponse(value: unknown, requestedDate: string, requestedTimezone: string, fetchedAt: string): HistoricalWeatherProviderResult {
   if (!record(value)) throw new Error('Response root must be an object.');
   if (value.error === true) throw new Error(typeof value.reason === 'string' ? value.reason : 'Provider returned an error.');
   if (!finite(value.latitude) || !finite(value.longitude) || typeof value.timezone !== 'string' || !value.timezone.trim()) throw new Error('Invalid response metadata.');
+  if (value.timezone !== requestedTimezone) throw new Error('Provider timezone does not match requested timezone.');
   if (!record(value.daily)) throw new Error('Daily response must be an object.');
   const daily = value.daily;
   if (!Array.isArray(daily.time) || daily.time.length !== 1 || daily.time.some((v) => !validDate(v))) throw new Error('Expected exactly one valid daily date.');
