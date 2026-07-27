@@ -240,3 +240,11 @@ Formal Reflectionは永続化、Repository直接読み取り、新しいlocalSto
 - Base Location未設定時は通信せず、設定済みの場合だけ7日の日次Forecastを取得する。Provider DTOは保存せず、既存WeatherForecastSnapshotへ正規化しatomic batchで履歴保存する。
 - Homeに最小取得UI、成功件数・期間・時刻、失敗表示、最新7件、privacy説明、Open-Meteo attributionを追加した。
 - 次の候補はObserved Weather AcquisitionまたはDailyLog / SleepRecord / Weather Join。Analyzer、Formal UserModel接続は未実装。
+
+## 2026-07-27 Daily Context Read Model MVP
+
+- D-0013をAcceptedとし、RepositoryをSource of Truthのまま、`DailyContextReadModel`と読み取り専用`DailyContextQueryService`を追加した。Read ModelはlocalStorageへ永続化しない。
+- join keyはユーザーlocal dateで、DailyLogは全件を決定論的に保持し、SleepRecordは最新updatedAt、Forecastは最新fetchedAt（各tie-breakあり）を選ぶ。ISO日時は文字列表現ではなく`Date.parse()`の実時刻で比較し、候補数をmetadataに保持する。
+- Forecastは要求timezone、DAILY、FORECASTに限定する。UNAVAILABLE recordは参照可能だがcompleteness上は利用可能と数えない。
+- Homeに直近7日の読み取り専用UIを追加し、複数DailyLog、睡眠時間、最低/最高気温、降水確率、availability、取得日時、completenessを表示する。「表示を更新」でQuery Serviceから再取得できる。Forecastは「取得時点の予報」と明記し実測扱いしない。
+- 次の候補はObserved Weather Acquisition。Weather × Fatigue Analyzerへ進む前に、予報ではなくObserved Weatherが必要かを明示的に判断する。

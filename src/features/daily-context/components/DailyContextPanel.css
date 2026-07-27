@@ -1,0 +1,11 @@
+.daily-context-list { display: grid; gap: 0.75rem; }
+.daily-context-card { border: 1px solid rgba(70, 90, 100, 0.2); border-radius: 12px; padding: 1rem; background: rgba(255, 255, 255, 0.6); }
+.daily-context-card header { display: flex; justify-content: space-between; gap: 1rem; margin-bottom: 0.65rem; }
+.daily-context-card p { margin: 0.55rem 0; }
+.daily-context-card ul { margin: 0.4rem 0 0.65rem; padding-left: 1.4rem; }
+.context-status { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; border-radius: 999px; padding: 0.2rem 0.55rem; }
+.context-complete { background: #d7f2e3; color: #245b3c; }
+.context-partial { background: #fff0c9; color: #74551a; }
+.forecast-meta { display: block; margin-top: 0.3rem; color: #5d6870; font-size: 0.82rem; overflow-wrap: anywhere; }
+.daily-context-refresh { margin: 0 0 0.9rem; border: 1px solid #778890; border-radius: 8px; padding: 0.45rem 0.8rem; background: transparent; color: inherit; cursor: pointer; }
+.daily-context-refresh:hover { background: rgba(70, 90, 100, 0.08); }
