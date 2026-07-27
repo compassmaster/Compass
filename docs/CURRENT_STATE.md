@@ -248,3 +248,10 @@ Formal Reflectionは永続化、Repository直接読み取り、新しいlocalSto
 - Forecastは要求timezone、DAILY、FORECASTに限定する。UNAVAILABLE recordは参照可能だがcompleteness上は利用可能と数えない。
 - Homeに直近7日の読み取り専用UIを追加し、複数DailyLog、睡眠時間、最低/最高気温、降水確率、availability、取得日時、completenessを表示する。「表示を更新」でQuery Serviceから再取得できる。Forecastは「取得時点の予報」と明記し実測扱いしない。
 - 次の候補はObserved Weather Acquisition。Weather × Fatigue Analyzerへ進む前に、予報ではなくObserved Weatherが必要かを明示的に判断する。
+
+## Historical Weather Acquisition MVP (D-0014)
+- Base Location timezoneのカレンダー上の昨日1日を、Open-Meteo Historical Forecast APIから手動取得する専用ClientとApplication Serviceを追加した。
+- Provider DTOは検証後に`ObservedWeatherRecord`へ正規化し、`sourceType: HISTORICAL`、dataset `historical-forecast-api`として履歴保存する。欠損は0に補完しない。
+- UIでは「過去の推定気象データ」と明示し、モデル・解析データを観測所の純粋な実測値と断定しない。自動取得、期間バックフィル、Formal Pipeline接続は行わない。
+- Daily ContextはForecastとは別に最新Historical recordを結合し、`hasHistoricalWeather`を提供する。既存3項目completenessの定義は維持する。
+- 次の設計候補は Historical Weather × Fatigue Analyzer Design。ただし人格理解へ直ちに反映しない。

@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
-import { weatherForecastAcquisitionService } from '../services/compositionRoot.ts';
-import type { WeatherForecastSnapshot } from '../types/index.ts';
+import { historicalWeatherAcquisitionService, weatherForecastAcquisitionService } from '../services/compositionRoot.ts';
+import type { ObservedWeatherRecord, WeatherForecastSnapshot } from '../types/index.ts';
 import './WeatherForecastPanel.css';
 
 export function WeatherForecastPanel() {
@@ -8,6 +8,13 @@ export function WeatherForecastPanel() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('Base Location設定後に7日予報を取得できます。');
   const [forecasts, setForecasts] = useState<readonly WeatherForecastSnapshot[]>(() => weatherForecastAcquisitionService.listLatest());
+  const [historicalLoading,setHistoricalLoading]=useState(false);
+  const [historicalMessage,setHistoricalMessage]=useState('Base Locationのtimezoneで昨日を決定します。');
+  const [historical,setHistorical]=useState<readonly ObservedWeatherRecord[]>(()=>historicalWeatherAcquisitionService.listLatest());
+  const acquireHistorical=async()=>{ if(inFlightRef.current)return; inFlightRef.current=true; setHistoricalLoading(true); try { const result=await historicalWeatherAcquisitionService.acquirePreviousDay();
+    if(result.status==='SUCCESS'){setHistoricalMessage(`${result.record.observedPeriod.localDate}を保存しました。最終取得時刻: ${new Date(result.record.source.fetchedAt).toLocaleString()}`);setHistorical(historicalWeatherAcquisitionService.listLatest());}
+    else if(result.status==='LOCATION_NOT_CONFIGURED')setHistoricalMessage('Base Locationを先に設定してください。API通信は行っていません。'); else setHistoricalMessage(`取得できませんでした: ${result.reason}`);
+  } finally {inFlightRef.current=false;setHistoricalLoading(false);} };
   const acquire = async () => {
     if (inFlightRef.current) return;
     inFlightRef.current = true;
@@ -34,6 +41,11 @@ export function WeatherForecastPanel() {
       <span>code {format(item.forecastValues.weatherCode)}</span>
     </article>)}</div>}
     <p className="weather-attribution">Weather data by <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">Open-Meteo</a></p>
+    <hr/><p className="section-eyebrow">External Context / Historical</p><h3>過去の推定気象データ</h3>
+    <p className="home-description">過去の推定気象データであり、観測所の純粋な実測値ではないデータです。Provider: Open-Meteo / dataset: historical-forecast-api</p>
+    <button type="button" onClick={acquireHistorical} disabled={historicalLoading}>{historicalLoading?'取得中…':'昨日の過去気象データを取得'}</button><p role="status">{historicalMessage}</p>
+    {historical.length>0&&<div className="forecast-list">{historical.map(item=><article key={item.id}><strong>{item.observedPeriod.localDate}</strong><span>timezone: {item.observedPeriod.timezone}</span>{item.location?.label&&<span>location: {item.location.label}</span>}<span>最低 {format(item.observedValues.dailyMinimumTemperature)}</span><span>最高 {format(item.observedValues.dailyMaximumTemperature)}</span><span>降水量 {format(item.observedValues.precipitation)}</span><span>code {format(item.observedValues.weatherCode)}</span><span>{item.availability.status} / {item.source.sourceType}</span></article>)}</div>}
+    <p className="weather-attribution">Historical weather data by <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">Open-Meteo</a></p>
   </section>;
 }
 function format(value: { readonly value: number | null; readonly unit?: string } | undefined): string { return value?.value === null || value === undefined ? '欠損' : `${value.value}${value.unit ?? ''}`; }

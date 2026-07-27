@@ -246,3 +246,13 @@ Do not implement an API Client, external fetch, UI, Analyzer, Prediction, Machin
 - composition rootは`src/features/daily-context/services/compositionRoot.ts`、UIはHomeの`DailyContextPanel`で、Repositoryを直接構成しない。UIの「表示を更新」はQuery Serviceだけを再実行する。
 - `scripts/test-daily-context-read-model.ts`はjoin、timezone/granularity除外、複数候補、tie-break、missing/completeness、calendar range、read-onlyを検証する。
 - Non-goals: Observed/Historical取得、Analyzer、Evidence、Understanding、Formal UserModel、Reflection、Prediction、会話、background処理。
+
+## Historical Weather Acquisition MVP (D-0014)
+- Endpoint: `https://historical-forecast-api.open-meteo.com/v1/forecast`、dataset: `historical-forecast-api`。公式Historical Forecast API仕様に合わせ、座標、timezone、同一の`start_date`/`end_date`、daily variables、明示単位だけを送る。`precipitation_probability_max`は公式daily variableとして要求する。
+- 対象はBase Location timezoneのカレンダー上の昨日1日のみ。`now`注入可能な純粋関数で決め、UTCから24時間を引く方法には依存しない。
+- unknown responseについてroot/error/座標/timezone/daily/date/配列長/number-or-nullを検証する。Provider timezoneは要求timezoneとの完全一致を必須とし、HTTP、JSON、network、10秒timeout、要求日不一致は保存前に失敗する。URL builderも正規表現だけでなく実在するカレンダー日付を検証する。
+- 正規化後だけ`ObservedWeatherRecordRepository.save()`し、`sourceType: HISTORICAL`を付ける。Provider DTOは保存せずnullを推測しない。
+- UI表記は「過去の推定気象データ」。一覧は現在のBase Locationと同じtimezoneに限定し、snapshotに座標があれば現在地との一致も必須とする。`timezone + localDate`単位の最新選択は`Date.parse(source.fetchedAt)`、`Date.parse(createdAt)`、IDの順で、最大7日を表示する。
+- Daily Contextのjoinは同日・同timezone・DAILY・HISTORICALだけ。Forecastと別枠で保持し、既存completenessは変更しない。
+- `scripts/test-historical-weather-acquisition.ts`は実通信せずdate、URL、client failures、normalization、排他、未設定境界を確認する。
+- Non-goals: 任意期間取得、自動実行、retry、分析・Evidence・Understanding・Formal UserModel更新。
