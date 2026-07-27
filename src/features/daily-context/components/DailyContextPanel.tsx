@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useState } from 'react';
 import type { DateString } from '../../daily-log/types/log.ts';
 import { dailyContextQueryService } from '../services/index.ts';
 import './DailyContextPanel.css';
@@ -17,18 +17,22 @@ function daysBefore(date: DateString, days: number): DateString {
 
 function value(value: number | null | undefined, unit = ''): string { return value === null || value === undefined ? '—' : `${value}${unit}`; }
 
+function loadRecentContexts(timezone: string) {
+  const endDate = localToday(timezone);
+  return dailyContextQueryService.listByDateRange({ startDate: daysBefore(endDate, 6), endDate, timezone })
+    .filter((item) => item.metadata.completeness !== 'EMPTY')
+    .reverse();
+}
+
 export function DailyContextPanel() {
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-  const contexts = useMemo(() => {
-    const endDate = localToday(timezone);
-    // Enumerating local calendar strings avoids treating UTC midnight as the user's day boundary.
-    return dailyContextQueryService.listByDateRange({ startDate: daysBefore(endDate, 6), endDate, timezone }).filter((item) => item.metadata.completeness !== 'EMPTY').reverse();
-  }, [timezone]);
+  const [contexts, setContexts] = useState(() => loadRecentContexts(timezone));
 
   return <section className="home-section daily-context-panel">
     <p className="section-eyebrow">Daily Context / 読み取り専用</p>
     <h2 className="section-title">直近7日の記録と取得時点の予報</h2>
     <p className="home-description">各保存元をローカル日付（{timezone}）で結合しています。予報は当日の実測値ではありません。</p>
+    <button className="daily-context-refresh" type="button" onClick={() => setContexts(loadRecentContexts(timezone))}>表示を更新</button>
     {contexts.length === 0 ? <p className="empty-text">直近7日に結合して表示できる記録はありません。</p> : <div className="daily-context-list">
       {contexts.map((context) => <article className="daily-context-card" key={context.localDate}>
         <header><strong>{context.localDate}</strong><span className={`context-status context-${context.metadata.completeness.toLowerCase()}`}>{context.metadata.completeness}</span></header>

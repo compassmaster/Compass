@@ -239,10 +239,10 @@ Do not implement an API Client, external fetch, UI, Analyzer, Prediction, Machin
 
 ## 2026-07-27 Daily Context Read Model MVP Handoff
 
-- D-0013: `DailyLog.date` / `SleepRecord.sleepDate` / Forecast `targetPeriod.localDate`をlocal `YYYY-MM-DD`で結合する。
+- D-0013: `DailyLog.date` / `SleepRecord.sleepDate` / Forecast `targetPeriod.localDate`をlocal `YYYY-MM-DD`で結合する。日時の順序は異なるISO offsetでも正しくなるよう`Date.parse()`の実時刻で比較する。
 - Forecastはrequested timezone一致、`DAILY`、`FORECAST`のみ。最新`fetchedAt`→`createdAt`→IDの決定論的順序で選ぶ。SleepRecordは最新`updatedAt`→`createdAt`→ID。DailyLogは全件を`createdAt`→ID昇順で保持する。
 - metadataは候補数とcompletenessを公開する。UNAVAILABLE Forecastはrecordと欠損理由を保持するが`hasForecast=false`。欠損は空配列/nullで、補完しない。
 - Source of Truthは各Repository。Read Modelは永続化せず、Query Serviceはwrite/API/Analyzer/Formal UserModelに接続しない。
-- composition rootは`src/features/daily-context/services/compositionRoot.ts`、UIはHomeの`DailyContextPanel`で、Repositoryを直接構成しない。
+- composition rootは`src/features/daily-context/services/compositionRoot.ts`、UIはHomeの`DailyContextPanel`で、Repositoryを直接構成しない。UIの「表示を更新」はQuery Serviceだけを再実行する。
 - `scripts/test-daily-context-read-model.ts`はjoin、timezone/granularity除外、複数候補、tie-break、missing/completeness、calendar range、read-onlyを検証する。
 - Non-goals: Observed/Historical取得、Analyzer、Evidence、Understanding、Formal UserModel、Reflection、Prediction、会話、background処理。

@@ -7,3 +7,5 @@
 .context-complete { background: #d7f2e3; color: #245b3c; }
 .context-partial { background: #fff0c9; color: #74551a; }
 .forecast-meta { display: block; margin-top: 0.3rem; color: #5d6870; font-size: 0.82rem; overflow-wrap: anywhere; }
+.daily-context-refresh { margin: 0 0 0.9rem; border: 1px solid #778890; border-radius: 8px; padding: 0.45rem 0.8rem; background: transparent; color: inherit; cursor: pointer; }
+.daily-context-refresh:hover { background: rgba(70, 90, 100, 0.08); }

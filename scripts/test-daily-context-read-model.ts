@@ -28,6 +28,21 @@ assert.equal(result.metadata.sleepRecordCandidateCount, 3);
 assert.equal(result.forecast?.id, 'z');
 assert.equal(result.metadata.forecastCandidateCount, 3);
 assert.equal(result.metadata.completeness, 'COMPLETE');
+const offsetResult = new DailyContextQueryService(
+  new Logs([log('utc-newer', date, '2026-07-27T02:00:00Z'), log('offset-older', date, '2026-07-27T10:00:00+09:00')]),
+  new Sleeps([sleep('offset-older', '2026-07-27T10:00:00+09:00'), sleep('utc-newer', '2026-07-27T02:00:00Z')]),
+  new Forecasts([forecast('offset-older', '2026-07-27T10:00:00+09:00'), forecast('utc-newer', '2026-07-27T02:00:00Z')]),
+).getByDate(date, 'Asia/Tokyo');
+assert.deepEqual(offsetResult.dailyLogs.map((item) => item.id), ['offset-older', 'utc-newer']);
+assert.equal(offsetResult.sleepRecord?.id, 'utc-newer');
+assert.equal(offsetResult.forecast?.id, 'utc-newer');
+const secondaryTimeResult = new DailyContextQueryService(
+  new Logs([]),
+  new Sleeps([sleep('offset-created-older', '2026-07-27T03:00:00Z', '2026-07-27T10:00:00+09:00'), sleep('utc-created-newer', '2026-07-27T03:00:00Z', '2026-07-27T02:00:00Z')]),
+  new Forecasts([forecast('offset-created-older', '2026-07-27T03:00:00Z', { createdAt: '2026-07-27T10:00:00+09:00' }), forecast('utc-created-newer', '2026-07-27T03:00:00Z', { createdAt: '2026-07-27T02:00:00Z' })]),
+).getByDate(date, 'Asia/Tokyo');
+assert.equal(secondaryTimeResult.sleepRecord?.id, 'utc-created-newer');
+assert.equal(secondaryTimeResult.forecast?.id, 'utc-created-newer');
 assert.equal(new DailyContextQueryService(new Logs([]),new Sleeps([]),new Forecasts([])).getByDate(date,'UTC').metadata.completeness,'EMPTY');
 const unavailable = new DailyContextQueryService(new Logs([log('a')]),new Sleeps([]),new Forecasts([forecast('none','2026-07-27T09:00:00Z',{availability:{status:'UNAVAILABLE',reason:'PROVIDER_VALUE_MISSING'}})])).getByDate(date,'Asia/Tokyo');
 assert.equal(unavailable.forecast?.availability.status, 'UNAVAILABLE');
