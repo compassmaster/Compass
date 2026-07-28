@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { WeatherFatigueObservationQueryService } from '../src/features/weather-fatigue-observation/services/weatherFatigueObservationQueryService.ts';
-import { formatAverageFatigue } from '../src/features/weather-fatigue-observation/components/weatherFatigueObservationPresentation.ts';
+import { formatAverageFatigue, formatObservationPeriod } from '../src/features/weather-fatigue-observation/components/weatherFatigueObservationPresentation.ts';
 import type { BaseLocation } from '../src/features/external-context/location/types/index.ts';
 import type { DailyLog, DateString, EntryId, Scale } from '../src/features/daily-log/types/log.ts';
 import type { ObservedWeatherRecord, ObservedWeatherRecordId } from '../src/features/external-context/weather/types/index.ts';
@@ -39,10 +39,13 @@ const reordered = query([...logs].reverse(), [...records].reverse());
 assert.deepEqual(reordered.includedDailyLogIds, observed.includedDailyLogIds, 'DailyLog ID order is independent of repository order');
 assert.deepEqual(reordered.includedWeatherRecordIds, observed.includedWeatherRecordIds, 'Weather ID order is independent of repository order');
 assert.equal(formatAverageFatigue(observed.rainyAverageFatigue), '4.7', 'only the UI presentation rounds to one decimal place');
+assert.equal(formatObservationPeriod(observed.matchedDates), '2026-07-01 〜 2026-07-04');
+assert.equal(formatObservationPeriod([]), '—', 'an empty matched period has an explicit placeholder');
 
 assert.equal(query(logs, records, null).status, 'LOCATION_NOT_CONFIGURED');
 assert.equal(query(logs, []).status, 'NO_MATCHED_DAYS');
-assert.equal(query(logs, records.slice(0, 2)).status, 'INSUFFICIENT_SAMPLE');
+assert.equal(query(logs, [records[0], records[2], records[3], records[4]]).status, 'INSUFFICIENT_SAMPLE', 'one selected rainy day is insufficient');
+assert.equal(query(logs, [records[0], records[1], records[2]]).status, 'INSUFFICIENT_SAMPLE', 'one selected dry day is insufficient');
 assert.equal(query(logs.map((item) => ({ ...item, fatigue: 3 })), records).status, 'NO_MEANINGFUL_DIFFERENCE');
 const excluded = [weather('wrong-tz', '2026-07-01', 1, { timezone: 'UTC' }), weather('forecast', '2026-07-02', 1, { sourceType: 'FORECAST' }), weather('hourly', '2026-07-03', 1, { granularity: 'HOURLY' }), weather('missing', '2026-07-04', null)];
 assert.equal(query(logs, excluded).status, 'NO_MATCHED_DAYS', 'timezone, Forecast, non-DAILY and missing precipitation are excluded');

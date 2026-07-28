@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { weatherFatigueObservationQueryService } from '../services/compositionRoot.ts';
 import type { WeatherFatigueObservation } from '../types/weatherFatigueObservation.ts';
-import { formatAverageFatigue } from './weatherFatigueObservationPresentation.ts';
+import { formatAverageFatigue, formatObservationPeriod } from './weatherFatigueObservationPresentation.ts';
 import './WeatherFatigueObservationPanel.css';
 
 export function WeatherFatigueObservationPanel() {
@@ -13,7 +13,7 @@ export function WeatherFatigueObservationPanel() {
     <button type="button" onClick={() => setObservation(weatherFatigueObservationQueryService.getObservation())}>表示を更新</button>
     <p className="observation-status" role="status" data-status={observation.status}>{label(observation.status)}</p>
     <p>{observation.message}</p>
-    <dl><div><dt>対象timezone</dt><dd>{observation.timezone ?? '未設定'}</dd></div><div><dt>結合できた日</dt><dd>{observation.matchedDayCount}日</dd></div><div><dt>雨の日（降水量 &gt; 0）</dt><dd>{format(observation.rainyDayCount, observation.rainyAverageFatigue)}</dd></div><div><dt>雨でない日</dt><dd>{format(observation.dryDayCount, observation.dryAverageFatigue)}</dd></div></dl>
+    <dl><div><dt>対象期間</dt><dd>{formatObservationPeriod(observation.matchedDates)}</dd></div><div><dt>対象timezone</dt><dd>{observation.timezone ?? '未設定'}</dd></div><div><dt>結合できた日</dt><dd>{observation.matchedDayCount}日</dd></div><div><dt>雨の日（降水量 &gt; 0）</dt><dd>{format(observation.rainyDayCount, observation.rainyAverageFatigue)}</dd></div><div><dt>雨でない日</dt><dd>{format(observation.dryDayCount, observation.dryAverageFatigue)}</dd></div></dl>
     <p className="home-description">これは関連の観測であり、因果関係・診断・人格の判断ではありません。</p>
   </section>;
 }
