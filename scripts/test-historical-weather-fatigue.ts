@@ -1,28 +1,38 @@
 import assert from 'node:assert/strict';
-import { historicalWeatherFatigueAnalyzer } from '../src/features/analysis/analyzers/historicalWeatherFatigueAnalyzer.ts';
+import { WeatherFatigueObservationQueryService } from '../src/features/weather-fatigue-observation/services/weatherFatigueObservationQueryService.ts';
+import type { BaseLocation } from '../src/features/external-context/location/types/index.ts';
 import type { DailyLog, DateString, EntryId, Scale } from '../src/features/daily-log/types/log.ts';
 import type { ObservedWeatherRecord, ObservedWeatherRecordId } from '../src/features/external-context/weather/types/index.ts';
 
 const date = (value: string) => value as DateString;
-const log = (value: string, day: string, fatigue: Scale): DailyLog => ({ id: value as EntryId, date: date(day), createdAt: `${day}T12:00:00.000Z`, updatedAt: `${day}T12:00:00.000Z`, schemaVersion: 1, mood: 3, fatigue, sleepHours: null, note: '', events: [] });
-const weather = (value: string, day: string, precipitation: number | null, fetchedAt = `${day}T18:00:00.000Z`, sourceType: 'HISTORICAL' | 'OBSERVED' = 'HISTORICAL'): ObservedWeatherRecord => ({
-  id: value as ObservedWeatherRecordId, schemaVersion: 1, kind: 'OBSERVED_WEATHER_RECORD', observedPeriod: { localDate: day, timezone: 'Asia/Tokyo', granularity: 'DAILY' },
-  observedValues: { precipitation: precipitation === null ? { value: null, unit: 'mm', missingReason: 'PROVIDER_VALUE_MISSING' } : { value: precipitation, unit: 'mm' } },
-  location: { timezone: 'Asia/Tokyo', precision: 'COARSE', latitude: 35, longitude: 139 }, source: { provider: 'Open-Meteo', sourceType, fetchedAt, dataset: 'historical-forecast-api' }, availability: precipitation === null ? { status: 'UNAVAILABLE', reason: 'PROVIDER_VALUE_MISSING' } : { status: 'AVAILABLE' }, createdAt: fetchedAt,
-});
+const location = { schemaVersion: 1, id: 'location' as BaseLocation['id'], displayName: 'Tokyo', municipality: 'Tokyo', countryCode: 'JP', timezone: 'Asia/Tokyo', coordinates: { latitude: 35, longitude: 139 }, source: 'USER_CONFIRMED', confirmationStatus: 'CONFIRMED', createdAt: '2026-07-01T00:00:00Z', updatedAt: '2026-07-01T00:00:00Z' } as const;
+const log = (id: string, day: string, fatigue: Scale): DailyLog => ({ id: id as EntryId, date: date(day), createdAt: `${day}T12:00:00Z`, updatedAt: `${day}T12:00:00Z`, schemaVersion: 1, mood: 3, fatigue, sleepHours: null, note: '', events: [] });
+const weather = (id: string, day: string, precipitation: number | null, options: { timezone?: string; sourceType?: string; granularity?: string; fetchedAt?: string } = {}): ObservedWeatherRecord => ({ id: id as ObservedWeatherRecordId, schemaVersion: 1, kind: 'OBSERVED_WEATHER_RECORD', observedPeriod: { localDate: day, timezone: options.timezone ?? 'Asia/Tokyo', granularity: options.granularity ?? 'DAILY' }, observedValues: { precipitation: precipitation === null ? { value: null, missingReason: 'PROVIDER_VALUE_MISSING' } : { value: precipitation, unit: 'mm' } }, location: { timezone: options.timezone ?? 'Asia/Tokyo', precision: 'COARSE' }, source: { provider: 'test', sourceType: options.sourceType ?? 'HISTORICAL', fetchedAt: options.fetchedAt ?? `${day}T18:00:00Z` }, availability: precipitation === null ? { status: 'PARTIAL', missingReasons: ['PROVIDER_VALUE_MISSING'] } : { status: 'AVAILABLE' }, createdAt: options.fetchedAt ?? `${day}T18:00:00Z` } as ObservedWeatherRecord);
 
-const logs = [log('l1', '2026-07-01', 5), log('l2', '2026-07-02', 4), log('l3', '2026-07-03', 2), log('l4', '2026-07-04', 2)];
-const records = [weather('w1', '2026-07-01', 5), weather('w2-old', '2026-07-02', 0, '2026-07-02T17:00:00.000Z'), weather('w2', '2026-07-02', 2), weather('w3', '2026-07-03', 0), weather('w4', '2026-07-04', 0), weather('ignored-observed', '2026-07-01', 0, '2026-07-01T20:00:00.000Z', 'OBSERVED')];
-const context = { dailyLogs: logs, sleepRecords: [], historicalWeatherRecords: records, period: { from: date('2026-07-01'), to: date('2026-07-04') } };
-const [result] = historicalWeatherFatigueAnalyzer.analyze(context);
-assert.ok(result);
-assert.equal(result.type, 'HISTORICAL_WEATHER_FATIGUE_OBSERVATION');
-assert.equal(result.sampleSize, 4);
-assert.equal(result.metadata?.rainyAverageFatigue, 4.5);
-assert.equal(result.metadata?.dryAverageFatigue, 2);
-assert.equal(result.sourceReferences.filter((ref) => ref.sourceType === 'historical_weather').length, 4);
-assert.match(result.message, /原因だとは判断しません/);
-assert.equal(historicalWeatherFatigueAnalyzer.analyze({ ...context, historicalWeatherRecords: records.slice(0, 3) }).length, 0);
-assert.equal(historicalWeatherFatigueAnalyzer.analyze({ ...context, dailyLogs: logs.map((item) => ({ ...item, fatigue: 3 })) }).length, 0);
-assert.equal(historicalWeatherFatigueAnalyzer.analyze({ ...context, historicalWeatherRecords: records.map((item) => ({ ...item, source: { ...item.source, sourceType: 'OBSERVED' } })) }).length, 0);
-console.log('historical weather fatigue tests passed');
+function query(logs: DailyLog[], records: ObservedWeatherRecord[], base: BaseLocation | null = location) {
+  let writes = 0;
+  const locations = { get: () => base, save: () => { writes += 1; }, delete: () => { writes += 1; } };
+  const logRepo = { getAll: () => logs, getByDate: () => [], getById: () => null, getByRange: () => [], save: () => { writes += 1; }, update: () => { writes += 1; }, delete: () => { writes += 1; }, exportAll: () => '', importAll: () => { writes += 1; } };
+  const weatherRepo = { findAll: () => records, findById: () => null, findByObservedDate: () => [], save: () => { writes += 1; }, deleteAll: () => { writes += 1; } };
+  const result = new WeatherFatigueObservationQueryService(locations, logRepo, weatherRepo).getObservation();
+  assert.equal(writes, 0, 'query must not write to any repository');
+  return result;
+}
+
+const logs = [log('l1', '2026-07-01', 5), log('l1b', '2026-07-01', 3), log('l2', '2026-07-02', 5), log('l3', '2026-07-03', 2), log('l4', '2026-07-04', 2)];
+const records = [weather('rain-trace', '2026-07-01', 0.1), weather('old-dry', '2026-07-02', 0, { fetchedAt: '2026-07-02T17:00:00Z' }), weather('new-rain', '2026-07-02', 3), weather('dry-1', '2026-07-03', 0), weather('dry-2', '2026-07-04', 0)];
+const observed = query(logs, records);
+assert.equal(observed.status, 'OBSERVATION_AVAILABLE');
+assert.equal(observed.rainyDayCount, 2, 'any precipitation > 0 is rainy');
+assert.equal(observed.dryDayCount, 2);
+assert.equal(observed.rainyAverageFatigue, 4.5, 'multiple daily logs use their arithmetic mean');
+assert.equal(observed.dryAverageFatigue, 2);
+assert.deepEqual(observed.matchedDates, ['2026-07-01', '2026-07-02', '2026-07-03', '2026-07-04']);
+
+assert.equal(query(logs, records, null).status, 'LOCATION_NOT_CONFIGURED');
+assert.equal(query(logs, []).status, 'NO_MATCHED_DAYS');
+assert.equal(query(logs, records.slice(0, 2)).status, 'INSUFFICIENT_SAMPLE');
+assert.equal(query(logs.map((item) => ({ ...item, fatigue: 3 })), records).status, 'NO_MEANINGFUL_DIFFERENCE');
+const excluded = [weather('wrong-tz', '2026-07-01', 1, { timezone: 'UTC' }), weather('forecast', '2026-07-02', 1, { sourceType: 'FORECAST' }), weather('hourly', '2026-07-03', 1, { granularity: 'HOURLY' }), weather('missing', '2026-07-04', null)];
+assert.equal(query(logs, excluded).status, 'NO_MATCHED_DAYS', 'timezone, Forecast, non-DAILY and missing precipitation are excluded');
+console.log('historical weather fatigue observation tests passed');

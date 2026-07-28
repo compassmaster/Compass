@@ -10,4 +10,3 @@ export const weatherForecastAcquisitionService = new WeatherForecastAcquisitionS
 export const historicalWeatherAcquisitionService = new HistoricalWeatherAcquisitionService(
   new LocalStorageBaseLocationRepository(), new OpenMeteoHistoricalWeatherClient(), new LocalStorageObservedWeatherRecordRepository(),
 );
-export const observedWeatherRecordRepository = new LocalStorageObservedWeatherRecordRepository();

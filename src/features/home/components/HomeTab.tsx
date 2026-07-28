@@ -15,6 +15,7 @@ import { FormalUserModelPanel } from '../../formal-user-model/components';
 import { BaseLocationPanel } from '../../external-context/location/components/BaseLocationPanel';
 import { WeatherForecastPanel } from '../../external-context/weather/components/WeatherForecastPanel.tsx';
 import { DailyContextPanel } from '../../daily-context/components/DailyContextPanel.tsx';
+import { WeatherFatigueObservationPanel } from '../../weather-fatigue-observation/components/WeatherFatigueObservationPanel.tsx';
 import type { Evidence } from '../../analysis/types/evidence.ts';
 import type { AnalyzerFailure } from '../../analysis/services/analysisService.ts';
 import type { UnderstandingCandidate, UnderstandingCandidateAnswer, UnderstandingCandidateResponse } from '../../understanding/types/understandingCandidate.ts';
@@ -118,6 +119,7 @@ export function HomeTab({
       <BaseLocationPanel />
       <WeatherForecastPanel />
       <DailyContextPanel />
+      <WeatherFatigueObservationPanel />
 
       {/* Legacy Reflection Card */}
       <section className="home-section">

@@ -1,13 +1,11 @@
 import type { DateString, EntryId } from '../../daily-log/types/log.ts';
 import type { SleepRecordId } from '../../sleep/types/sleepRecord.ts';
-import type { ObservedWeatherRecordId } from '../../external-context/weather/types/index.ts';
 
 export type EvidenceId = string & { readonly __brand: 'EvidenceId' };
-export type EvidenceType = 'SLEEP_FATIGUE_OBSERVATION' | 'HISTORICAL_WEATHER_FATIGUE_OBSERVATION';
+export type EvidenceType = 'SLEEP_FATIGUE_OBSERVATION';
 export type EvidenceSourceReference =
   | { readonly sourceType: 'daily_log'; readonly id: EntryId; readonly date: DateString }
-  | { readonly sourceType: 'sleep_record'; readonly id: SleepRecordId; readonly date: DateString }
-  | { readonly sourceType: 'historical_weather'; readonly id: ObservedWeatherRecordId; readonly date: DateString };
+  | { readonly sourceType: 'sleep_record'; readonly id: SleepRecordId; readonly date: DateString };
 
 export interface AnalysisPeriod {
   readonly from: DateString;
