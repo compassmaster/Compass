@@ -59,6 +59,8 @@ export function HomeTab({
   onUnderstandingCandidateRespond,
 }: HomeTabProps) {
 
+  const [forecastAcquisitionRequestId, setForecastAcquisitionRequestId] = useState(0);
+
   // 永続化されたInsight
   const [insights, setInsights] = useState<Insight[]>(() =>
     insightRepository.getByStatus('NEW')
@@ -116,8 +118,8 @@ export function HomeTab({
         onNavigateToCompassMap={onNavigateToCompassMap}
       />
 
-      <BaseLocationPanel />
-      <WeatherForecastPanel />
+      <BaseLocationPanel onSaved={() => setForecastAcquisitionRequestId((current) => current + 1)} />
+      <WeatherForecastPanel acquisitionRequestId={forecastAcquisitionRequestId} />
       <DailyContextPanel />
       <WeatherFatigueObservationPanel />
 

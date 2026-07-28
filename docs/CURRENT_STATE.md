@@ -2,7 +2,7 @@
 status: Active
 dependsOn: []
 usedBy: []
-lastUpdated: "2026-07-27"
+lastUpdated: "2026-07-28"
 ---
 # Current State (現在のプロジェクト状況)
 
@@ -261,3 +261,10 @@ Formal Reflectionは永続化、Repository直接読み取り、新しいlocalSto
 - 最新Historical recordを決定論的に選び、欠損、UNAVAILABLE、Forecast、OBSERVEDは分析対象にせず、値を推測・補完しない。採用した全DailyLog IDと最新Weather Record IDを決定論的な順序で返し、計算値は丸めず保持する。
 - Homeの専用最小UIからRepositoryを読み、対象期間（空なら`—`）とtimezone、および観測あり・サンプル不足・差が小さい・データなし・場所未設定を状態として表示する。外部通信や保存は行わない。
 - Evidence Repository、Analysis、Understanding Candidate/Object、Formal UserModel、Reflection、Predictionへ接続しない。次の候補は、十分な実データで閾値と説明文を評価してから分析軸の拡張を設計すること。
+
+## 地域設定・7日予報導線 (Issue #31)
+
+- Homeの地域設定は日本語の国内13代表地域（佐世保市を含む）選択式になり、地域保存を契機にOpen-Meteoの7日予報取得を開始する。
+- HomeがLocationの保存通知とWeatherの取得要求をrequest IDで仲介し、Location featureはWeather featureへ直接依存しない。
+- Forecast / HistoricalのWMO Weather Codeは日本語表示へ変換し、未知コードと欠損を区別する。
+- Base LocationとWeatherの既存Domain Model、Repository、Application Service、保存形式は変更していない。既存手入力形式の保存データも読み込み・削除できる。

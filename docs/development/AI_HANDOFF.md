@@ -5,7 +5,7 @@ Every AI assistant must read this document before starting work and update it be
 
 ---
 
-**Last Updated:** 2026-07-27
+**Last Updated:** 2026-07-28
 
 ## Current Project Status
 
@@ -264,3 +264,12 @@ Do not implement an API Client, external fetch, UI, Analyzer, Prediction, Machin
 - Homeの専用PanelからQuery Serviceを再実行でき、`matchedDates`の先頭・末尾を対象期間として表示する（空なら`—`）。Weather取得、Repository書き込み、Evidence保存は行わない。
 - Analysis/Evidenceの型やServiceには登録せず、Formal Pipelineには接続しない。サンプル不足や差が小さい場合も明示的な状態を返す。
 - `scripts/test-historical-weather-fatigue.ts`でjoin、最新選択、`> 0`境界、群閾値、差分閾値、timezone / source / granularity / 欠損filter、各状態、読み取り専用境界を検証する。
+
+## 2026-07-28 地域設定・予報導線改善 (Issue #31)
+
+- 地域設定UIを日本語化し、座標等の手入力から佐世保市を含む国内13代表地域の選択方式へ変更した。presetはUIに留め、既存Base Location Domain / Factory / Repository / Application Serviceの契約は変更していない。
+- 既存の手入力形式で保存されたBase Locationは読み込み・削除可能なまま維持する。
+- 地域保存後はHomeがrequest IDを仲介してWeather Forecast Panelへ取得要求を渡し、Open-Meteoの7日予報取得を開始する。Location featureからWeather featureへの直接importは追加していない。
+- WMO Weather Codeの表示用日本語変換を追加し、ForecastとHistoricalの表示に適用した。未知コードと欠損にも明示的なfallbackを持つ。
+- `scripts/test-location-weather-presentation.ts`で地域presetの一意性・Domain input妥当性とWeather Code日本語変換を検証し、`npm test`へ追加した。
+- 残課題: 国内13代表地域以外の追加、都道府県全件や検索・ジオコーディング対応は未実装。座標をProviderへ送る既存privacy境界、手動再取得、既存location/weather DomainとServiceは維持する。
