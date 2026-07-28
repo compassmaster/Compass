@@ -23,6 +23,7 @@ import type { UnderstandingObject } from '../features/understanding/types/unders
 import type { ResolvedFormalUserModel } from '../features/formal-user-model/types/formalUserModel.ts';
 import { LogTab } from '../features/daily-log/components/LogTab';
 import { MapTab } from '../features/compass-map/components/MapTab';
+import { observedWeatherRecordRepository } from '../features/external-context/weather/services/compositionRoot.ts';
 
 import './App.css';
 
@@ -147,7 +148,8 @@ export function App() {
   const handleRunAnalysis = () => {
     const allLogs = logRepository.getAll();
     const sleepRecords = sleepRecordApplicationService.list();
-    const dates = [...allLogs.map((log) => log.date), ...sleepRecords.map((record) => record.sleepDate)].sort();
+    const historicalWeatherRecords = observedWeatherRecordRepository.findAll();
+    const dates = [...allLogs.map((log) => log.date), ...sleepRecords.map((record) => record.sleepDate), ...historicalWeatherRecords.map((record) => record.observedPeriod.localDate as DailyLog['date'])].sort();
     if (dates.length === 0) {
       setAnalysisEvidence(analysisApplicationService.listEvidence());
       setAnalysisFailures([]);
@@ -157,6 +159,7 @@ export function App() {
     const result = analysisApplicationService.runAndSave({
       dailyLogs: allLogs,
       sleepRecords,
+      historicalWeatherRecords,
       period: { from: dates[0], to: dates[dates.length - 1] },
     });
     understandingCandidateApplicationService.generateAndSaveFromEvidence(result.evidence);

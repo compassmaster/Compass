@@ -10,7 +10,7 @@ export function EvidencePanel({ evidence, failures, onRunAnalysis }: EvidencePan
   return (
     <section className="home-section">
       <h2 className="section-title">🔎 Analysis Evidence</h2>
-      <p className="empty-text">AnalysisはDaily Log / Sleep Recordから観測可能なEvidenceだけを生成し、User Modelは更新しません。</p>
+      <p className="empty-text">AnalysisはDaily Log / Sleep Record / 過去の推定気象データから観測可能なEvidenceだけを生成し、User Modelは更新しません。気象との関連は因果関係や人格の判断ではありません。</p>
       <button type="button" className="record-button" onClick={onRunAnalysis}>分析を実行</button>
       {failures.length > 0 && <p className="status-text">一部Analyzerが失敗しました: {failures.map((item) => item.analyzerId).join(', ')}</p>}
       {evidence.length === 0 ? (

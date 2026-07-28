@@ -256,3 +256,11 @@ Do not implement an API Client, external fetch, UI, Analyzer, Prediction, Machin
 - Daily Contextのjoinは同日・同timezone・DAILY・HISTORICALだけ。Forecastと別枠で保持し、既存completenessは変更しない。
 - `scripts/test-historical-weather-acquisition.ts`は実通信せずdate、URL、client failures、normalization、排他、未設定境界を確認する。
 - Non-goals: 任意期間取得、自動実行、retry、分析・Evidence・Understanding・Formal UserModel更新。
+
+## Historical Weather × Fatigue Observation MVP (D-0015)
+- `historicalWeatherFatigueAnalyzer`は`AnalysisContext.historicalWeatherRecords`を任意入力として受け、`HISTORICAL` / `DAILY`だけをlocal dateでDailyLogと結合する。
+- 降水量1mmを群境界とし、各群最低2日、疲労平均差0.5以上でEvidenceを1件生成する。複数DailyLogは日次平均、複数Weatherは`fetchedAt`→`createdAt`→IDで最新を採用する。
+- Evidence source referenceはDailyLogとHistorical Weather recordの両方を保持する。文言は関連のみを示し、因果、診断、人格を断定しない。
+- Composition rootのObserved Weather RepositoryをAnalysis実行時に読むだけで、Weather取得や保存は行わない。既存Sleep analyzerはWeatherなしでも動作する。
+- `HISTORICAL_WEATHER_FATIGUE_OBSERVATION`はUnderstanding Candidate generatorの対象外であり、Formal Pipelineには接続しない。
+- `scripts/test-historical-weather-fatigue.ts`でjoin、最新選択、群閾値、差分閾値、source filtering、参照を検証する。

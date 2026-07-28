@@ -6,6 +6,7 @@ import { AnalysisService } from './analysisService';
 import { AnalysisApplicationService } from './analysisApplicationService';
 import { LocalStorageEvidenceRepository } from './localStorageEvidenceRepository';
 import { sleepFatigueAnalyzer } from '../analyzers/sleepFatigueAnalyzer';
+import { historicalWeatherFatigueAnalyzer } from '../analyzers/historicalWeatherFatigueAnalyzer.ts';
 import { logRepository } from '../../daily-log/services';
 import { sleepRecordRepository } from '../../sleep/services';
 
@@ -29,5 +30,5 @@ export const reflectionService = new ReflectionService(insightGeneratorService);
 export const sleepDailyLogJoinService = new SleepDailyLogJoinService(sleepRecordRepository, logRepository);
 
 export const evidenceRepository = new LocalStorageEvidenceRepository();
-export const analysisService = new AnalysisService([sleepFatigueAnalyzer]);
+export const analysisService = new AnalysisService([sleepFatigueAnalyzer, historicalWeatherFatigueAnalyzer]);
 export const analysisApplicationService = new AnalysisApplicationService(analysisService, evidenceRepository);

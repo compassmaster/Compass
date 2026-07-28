@@ -255,3 +255,9 @@ Formal Reflectionは永続化、Repository直接読み取り、新しいlocalSto
 - UIでは「過去の推定気象データ」と明示し、モデル・解析データを観測所の純粋な実測値と断定しない。自動取得、期間バックフィル、Formal Pipeline接続は行わない。
 - Daily ContextはForecastとは別に最新Historical recordを結合し、`hasHistoricalWeather`を提供する。既存3項目completenessの定義は維持する。
 - 次の設計候補は Historical Weather × Fatigue Analyzer Design。ただし人格理解へ直ちに反映しない。
+
+## Historical Weather × Fatigue Observation MVP (D-0015)
+- Historicalの日次降水量と同日のDailyLog疲労度を結合し、1mm以上/未満の各群2日以上、平均差0.5以上の場合だけ説明可能なEvidenceを生成する。
+- 最新Historical recordを決定論的に選び、欠損、UNAVAILABLE、Forecast、OBSERVEDは分析対象にせず、値を推測・補完しない。
+- Analysis実行時にRepositoryからWeather recordを読み、Evidence UIでは「過去の推定気象データ」と因果関係ではないことを明示する。外部通信は行わない。
+- Weather EvidenceからUnderstanding Candidate/Object、Formal UserModel、Reflection、Predictionは生成しない。次の候補は、十分な実データで閾値と説明文を評価してから分析軸の拡張を設計すること。

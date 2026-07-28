@@ -2,6 +2,7 @@ import { activityPatternAnalyzer } from './activityPatternAnalyzer.ts';
 import { notePatternRule } from './notePatternRule.ts';
 import type { Analyzer } from '../types/analysis';
 export { sleepFatigueAnalyzer } from './sleepFatigueAnalyzer.ts';
+export { historicalWeatherFatigueAnalyzer } from './historicalWeatherFatigueAnalyzer.ts';
 
 /**
  * Reflectionで使用するAnalyzer一覧。
