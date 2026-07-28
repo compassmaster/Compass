@@ -34,6 +34,7 @@ export const JAPANESE_REGION_OPTIONS: readonly JapaneseRegionOption[] = [
   region('hiroshima', '広島市', 34.385, 132.455),
   region('takamatsu', '高松市', 34.342, 134.047),
   region('fukuoka', '福岡市', 33.59, 130.402),
+  region('sasebo', '佐世保市', 33.1799, 129.7151),
   region('kagoshima', '鹿児島市', 31.596, 130.557),
   region('naha', '那覇市', 26.212, 127.681),
 ];

@@ -267,9 +267,9 @@ Do not implement an API Client, external fetch, UI, Analyzer, Prediction, Machin
 
 ## 2026-07-28 地域設定・予報導線改善 (Issue #31)
 
-- 地域設定UIを日本語化し、座標等の手入力から国内12代表地域の選択方式へ変更した。presetはUIに留め、既存Base Location Domain / Factory / Repository / Application Serviceの契約は変更していない。
+- 地域設定UIを日本語化し、座標等の手入力から佐世保市を含む国内13代表地域の選択方式へ変更した。presetはUIに留め、既存Base Location Domain / Factory / Repository / Application Serviceの契約は変更していない。
 - 既存の手入力形式で保存されたBase Locationは読み込み・削除可能なまま維持する。
 - 地域保存後はHomeがrequest IDを仲介してWeather Forecast Panelへ取得要求を渡し、Open-Meteoの7日予報取得を開始する。Location featureからWeather featureへの直接importは追加していない。
 - WMO Weather Codeの表示用日本語変換を追加し、ForecastとHistoricalの表示に適用した。未知コードと欠損にも明示的なfallbackを持つ。
 - `scripts/test-location-weather-presentation.ts`で地域presetの一意性・Domain input妥当性とWeather Code日本語変換を検証し、`npm test`へ追加した。
-- 残課題: 国内12代表地域以外の追加、都道府県全件や検索・ジオコーディング対応は未実装。座標をProviderへ送る既存privacy境界、手動再取得、既存location/weather DomainとServiceは維持する。
+- 残課題: 国内13代表地域以外の追加、都道府県全件や検索・ジオコーディング対応は未実装。座標をProviderへ送る既存privacy境界、手動再取得、既存location/weather DomainとServiceは維持する。

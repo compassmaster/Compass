@@ -13,3 +13,8 @@ export function getWeatherCodeLabel(code: number | null): string {
   };
   return labels[code] ?? `不明な天気（コード: ${code}）`;
 }
+
+/** IANA timezoneを利用者向けの名称へ変換し、未知値も技術値だと分かる形で表示する。 */
+export function getTimezoneLabel(timezone: string): string {
+  return timezone === 'Asia/Tokyo' ? '日本標準時' : `タイムゾーン: ${timezone}`;
+}

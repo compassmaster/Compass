@@ -264,7 +264,7 @@ Formal Reflectionは永続化、Repository直接読み取り、新しいlocalSto
 
 ## 地域設定・7日予報導線 (Issue #31)
 
-- Homeの地域設定は日本語の国内12代表地域選択式になり、地域保存を契機にOpen-Meteoの7日予報取得を開始する。
+- Homeの地域設定は日本語の国内13代表地域（佐世保市を含む）選択式になり、地域保存を契機にOpen-Meteoの7日予報取得を開始する。
 - HomeがLocationの保存通知とWeatherの取得要求をrequest IDで仲介し、Location featureはWeather featureへ直接依存しない。
 - Forecast / HistoricalのWMO Weather Codeは日本語表示へ変換し、未知コードと欠損を区別する。
 - Base LocationとWeatherの既存Domain Model、Repository、Application Service、保存形式は変更していない。既存手入力形式の保存データも読み込み・削除できる。
