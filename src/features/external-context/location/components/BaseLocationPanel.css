@@ -1,10 +1,10 @@
 .base-location-panel { padding: 20px; border: 1px solid #bee3f8; border-radius: 12px; background: #f7fbff; }
 .base-location-status { color: #718096; font-weight: 700; }
 .base-location-status.configured { color: #2f855a; }
-.base-location-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; }
-.base-location-grid label { display: flex; flex-direction: column; gap: 6px; color: #4a5568; font-weight: 700; }
-.base-location-grid input { padding: 10px; border: 1px solid #cbd5e0; border-radius: 8px; font: inherit; }
+.base-location-select { display: flex; max-width: 420px; flex-direction: column; gap: 6px; color: #4a5568; font-weight: 700; }
+.base-location-select select { padding: 10px; border: 1px solid #cbd5e0; border-radius: 8px; background: white; font: inherit; }
 .base-location-actions { display: flex; gap: 10px; margin-top: 16px; }
 .base-location-actions button { padding: 9px 15px; border: 0; border-radius: 8px; color: white; background: #2b6cb0; cursor: pointer; }
+.base-location-actions button:disabled { background: #a0aec0; cursor: not-allowed; }
 .base-location-actions .delete { background: #c53030; }
 .base-location-error { color: #c53030; font-weight: 700; }
