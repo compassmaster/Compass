@@ -1,0 +1,7 @@
+.weather-fatigue-observation { border: 1px solid #c6f6d5; background: #f7fff9; }
+.weather-fatigue-observation button { padding: 10px 16px; border: 0; border-radius: 8px; color: white; background: #2f855a; cursor: pointer; }
+.weather-fatigue-observation dl { display: grid; gap: 8px; }
+.weather-fatigue-observation dl div { display: flex; justify-content: space-between; gap: 16px; padding: 8px 10px; border-radius: 8px; background: white; }
+.weather-fatigue-observation dt { font-weight: 600; }
+.weather-fatigue-observation dd { margin: 0; text-align: right; }
+.observation-status { display: inline-block; padding: 4px 10px; border-radius: 999px; background: #e6fffa; font-weight: 600; }
