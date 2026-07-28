@@ -29,7 +29,7 @@ export class WeatherFatigueObservationQueryService {
     const matched = [...selected.entries()].flatMap(([date, record]) => {
       const averageFatigue = fatigue.get(date);
       const precipitation = record.observedValues.precipitation?.value;
-      return averageFatigue === undefined || typeof precipitation !== 'number' ? [] : [{ date, averageFatigue, rainy: precipitation > 0 }];
+      return averageFatigue === undefined || typeof precipitation !== 'number' ? [] : [{ date, averageFatigue: averageFatigue.average, dailyLogIds: averageFatigue.ids, weatherRecordId: record.id, rainy: precipitation > 0 }];
     });
     const rainy = matched.filter((day) => day.rainy);
     const dry = matched.filter((day) => !day.rainy);
@@ -45,16 +45,17 @@ export class WeatherFatigueObservationQueryService {
   }
 }
 
-interface MatchedDay { readonly date: DateString; readonly averageFatigue: number; readonly rainy: boolean }
+interface MatchedDay { readonly date: DateString; readonly averageFatigue: number; readonly dailyLogIds: readonly DailyLog['id'][]; readonly weatherRecordId: ObservedWeatherRecord['id']; readonly rainy: boolean }
 function result(status: WeatherFatigueObservation['status'], timezone: string | null, rainy: readonly MatchedDay[], dry: readonly MatchedDay[], message: string): WeatherFatigueObservation {
   const rainyAverage = rainy.length ? average(rainy.map((day) => day.averageFatigue)) : null;
   const dryAverage = dry.length ? average(dry.map((day) => day.averageFatigue)) : null;
-  return { status, timezone, matchedDayCount: rainy.length + dry.length, rainyDayCount: rainy.length, dryDayCount: dry.length, rainyAverageFatigue: round(rainyAverage), dryAverageFatigue: round(dryAverage), fatigueDifference: rainyAverage === null || dryAverage === null ? null : round(rainyAverage - dryAverage), matchedDates: [...rainy, ...dry].map((day) => day.date).sort(), message };
+  const matched = [...rainy, ...dry];
+  return { status, timezone, matchedDayCount: matched.length, rainyDayCount: rainy.length, dryDayCount: dry.length, rainyAverageFatigue: rainyAverage, dryAverageFatigue: dryAverage, fatigueDifference: rainyAverage === null || dryAverage === null ? null : rainyAverage - dryAverage, matchedDates: matched.map((day) => day.date).sort(), includedDailyLogIds: matched.flatMap((day) => day.dailyLogIds).sort((a, b) => a.localeCompare(b)), includedWeatherRecordIds: matched.map((day) => day.weatherRecordId).sort((a, b) => a.localeCompare(b)), message };
 }
 function aggregateFatigue(logs: readonly DailyLog[]) {
-  const grouped = new Map<DateString, number[]>();
-  for (const log of logs) grouped.set(log.date, [...(grouped.get(log.date) ?? []), log.fatigue]);
-  return new Map([...grouped].map(([date, values]) => [date, average(values)]));
+  const grouped = new Map<DateString, DailyLog[]>();
+  for (const log of logs) grouped.set(log.date, [...(grouped.get(log.date) ?? []), log]);
+  return new Map([...grouped].map(([date, values]) => [date, { average: average(values.map((value) => value.fatigue)), ids: values.map((value) => value.id).sort((a, b) => a.localeCompare(b)) }]));
 }
 function selectLatestHistorical(records: readonly ObservedWeatherRecord[], timezone: string) {
   const selected = new Map<DateString, ObservedWeatherRecord>();
@@ -69,4 +70,3 @@ function selectLatestHistorical(records: readonly ObservedWeatherRecord[], timez
 }
 function compare(a: ObservedWeatherRecord, b: ObservedWeatherRecord) { return Date.parse(a.source.fetchedAt) - Date.parse(b.source.fetchedAt) || Date.parse(a.createdAt) - Date.parse(b.createdAt) || a.id.localeCompare(b.id); }
 function average(values: readonly number[]) { return values.reduce((sum, value) => sum + value, 0) / values.length; }
-function round(value: number | null) { return value === null ? null : Number(value.toFixed(2)); }

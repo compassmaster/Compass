@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { weatherFatigueObservationQueryService } from '../services/compositionRoot.ts';
 import type { WeatherFatigueObservation } from '../types/weatherFatigueObservation.ts';
+import { formatAverageFatigue } from './weatherFatigueObservationPresentation.ts';
 import './WeatherFatigueObservationPanel.css';
 
 export function WeatherFatigueObservationPanel() {
@@ -17,4 +18,4 @@ export function WeatherFatigueObservationPanel() {
   </section>;
 }
 function label(status: WeatherFatigueObservation['status']) { return ({ LOCATION_NOT_CONFIGURED: '場所が未設定です', NO_MATCHED_DAYS: '結合できるデータがありません', INSUFFICIENT_SAMPLE: 'サンプル不足です', NO_MEANINGFUL_DIFFERENCE: '表示基準以上の差はありません', OBSERVATION_AVAILABLE: '観測結果があります' })[status]; }
-function format(count: number, average: number | null) { return `${count}日 / 平均疲労度 ${average === null ? '—' : average.toFixed(1)}`; }
+function format(count: number, average: number | null) { return `${count}日 / 平均疲労度 ${formatAverageFatigue(average)}`; }

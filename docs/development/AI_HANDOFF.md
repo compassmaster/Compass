@@ -260,7 +260,7 @@ Do not implement an API Client, external fetch, UI, Analyzer, Prediction, Machin
 ## Historical Weather × Fatigue Observation MVP (D-0015)
 - `WeatherFatigueObservationQueryService`はBase Location、DailyLog、Observed WeatherのRepositoryを読み取るだけで、`HISTORICAL` / `DAILY` / Base Locationと同じtimezoneだけをlocal dateで結合する。
 - 降水量`> 0`を雨の日とし、各群最低2日、疲労平均差0.5以上で観測状態を返す。複数DailyLogは日次平均、複数Weatherは`fetchedAt`→`createdAt`→IDで最新を採用する。
-- 結果は入力record IDを永続化しない読み取り専用projectionである。文言は関連のみを示し、因果、診断、人格を断定しない。
+- 結果は採用した全DailyLog IDと実際に選択した最新Weather Record IDをソートして保持する、永続化しない読み取り専用projectionである。平均と差は生のnumberを保持し、丸めはUI表示だけで行う。文言は関連のみを示し、因果、診断、人格を断定しない。
 - Homeの専用PanelからQuery Serviceを再実行できる。Weather取得、Repository書き込み、Evidence保存は行わない。
 - Analysis/Evidenceの型やServiceには登録せず、Formal Pipelineには接続しない。サンプル不足や差が小さい場合も明示的な状態を返す。
 - `scripts/test-historical-weather-fatigue.ts`でjoin、最新選択、`> 0`境界、群閾値、差分閾値、timezone / source / granularity / 欠損filter、各状態、読み取り専用境界を検証する。
