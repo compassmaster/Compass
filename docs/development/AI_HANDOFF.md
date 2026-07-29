@@ -277,3 +277,28 @@ Do not implement an API Client, external fetch, UI, Analyzer, Prediction, Machin
 ## 2026-07-29 Issue #33 handoff
 
 前日Historical Weatherは、Home起動時に既存`HistoricalWeatherAcquisitionService.acquirePreviousDayIfNeeded()`からbest-effortで自動取得する。保存済み判定は前日のlocalDate、Base Location timezone、全Location Snapshotフィールド、sourceType `HISTORICAL`、granularity `DAILY`の一致が必須である。singleton serviceは自動取得中Promiseを共有するためStrictModeでも重複通信・保存しない。手動取得は別操作として維持し、自動取得の失敗はWeather UI内で通知するだけで、Evidence / Analysis / Understanding / Reflection / Conversation / Formal Pipelineへは接続しない。
+
+## 2026-07-29 Relationship Explorer MVP (Issue #35)
+
+- 独立した「関係」タブと`relationship-explorer` featureを追加し、「睡眠時間と疲労」「雨と疲労」の2カードを常に表示する。
+- 専用Query Serviceは既存Daily Context Query ServiceとWeather Fatigue Observation Query Serviceを再利用する。UIはRepositoryをimportせず、結果は永続化しない。
+- データ信頼度は採用日数（High: 合計8日以上かつ各群3日以上、Medium: 合計4日以上かつ各群2日以上、それ以外Low）、分析信頼度は差と群数（関係ありのうち各群4日以上かつ差1.0以上High、その他Medium、関係未検出時Low）として別々に提示する。
+- Read Modelは平均と差の計算精度を保持し、UIだけが小数1桁へ丸める。採用したDailyLog / Sleep / Weather Record IDを追跡できる。
+- 入力配列を変更せず、日付・IDを決定的に扱う。設定不足・データ不足・差が小さい場合も状態付きカードを維持する。
+- Evidence、Analysis、Understanding、UserModel、Reflection、Prediction、ConversationおよびFormal Pipelineへの保存・自動接続は行わない。
+
+### PR #36 review follow-up
+
+- 各カードのRead Modelに対象期間、使用データ種別、カード固有の注意事項を追加した。対象日がなければ期間は`null`、UIは`—`を表示する。
+- Rain Relationshipは`matchedDates`、DailyLog ID、Weather Record IDをQuery境界で辞書順にcopy-sortし、Observation Serviceの返却順に依存しない。
+- Sleep RelationshipがDaily Contextを読むtimezoneは固定UTCを廃止し、Base Locationを反映したWeather Observationのtimezoneを使用する。Location未設定時だけ実行環境のIANA timezoneへfallbackする。
+- 状態全種、データ信頼度Low/Medium/High、分析信頼度Low/Medium/High、timezone伝播、期間、入力不変、決定的ID sortの境界テストを追加した。
+- Query経路へwrite監視付きRepositoryを注入し、Relationship取得時にDailyLog / Sleep / Forecast / Observed Weather / Base Locationの全Repository write methodが呼ばれないことを明示的にテストした。Issue #35の最終変更内容は`docs/変更履歴.md`にも同期した。
+
+## 2026-07-29 Prediction MVP (Issue #37)
+
+- D-0016をAcceptedとし、`prediction` feature、Prediction Query Service、独立した「明日の見通し」タブを追加した。
+- 入力はBase Location timezoneの翌日に一致する保存済み最新Forecast SnapshotとRain × Fatigue Relationshipのみ。睡眠は未来入力にせず、Predictionからfetch/acquisitionを実行しない。
+- 雨はForecastの降水量が数値かつ`> 0mm`で判定する。降水確率で補完しない。5状態を返し、Relationship成立時だけ条件付き表現を表示する。
+- データ信頼度とPrediction信頼度を分離し、Prediction信頼度は的中確率でないとUIに明記した。疲労の確定値、診断、因果、行動指示は表示しない。
+- 結果は永続化せず、Evidence / Analysis / Understanding / UserModel / Reflection / Conversation / Formal Pipelineへ接続しない。採用Forecast IDとRelationshipのDailyLog / Weather Record IDを追跡する。
