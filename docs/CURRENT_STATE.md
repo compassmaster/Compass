@@ -20,6 +20,7 @@ lastUpdated: "2026-07-28"
 - DailyLog保存境界とImmediate Response / Reflectionの分離。
 - 旧Insight中心MVPループ（Insight確認、UserModelUpdateCandidate、UserModel適用境界、Compass Map表示）。
 - SleepRecord基盤。
+- Issue #44: DailyLog保存から完全に分離したSleepRecord入力と、起床日降順の一覧・編集・削除。睡眠の変更は既存の分析成果物を自動更新しない。
 - Formal Analysis Framework。
 - SleepFatigueAnalyzer。
 - Evidence保存とEvidencePanelによる確認UI。

@@ -18,12 +18,18 @@ export class LocalStorageSleepRecordRepository implements ISleepRecordRepository
     this.storage = storage;
   }
 
+  getById(id: SleepRecordId): SleepRecord | null {
+    const record = this.load().find((item) => item.id === id);
+    return record ? { ...record } : null;
+  }
+
   getByDate(date: DateString): SleepRecord | null {
-    return this.load().find((record) => record.sleepDate === date) ?? null;
+    const record = this.load().find((item) => item.sleepDate === date);
+    return record ? { ...record } : null;
   }
 
   getAll(): SleepRecord[] {
-    return this.load();
+    return this.load().map((record) => ({ ...record }));
   }
 
   save(record: SleepRecord): void {
@@ -34,7 +40,7 @@ export class LocalStorageSleepRecordRepository implements ISleepRecordRepository
     this.persist([...records, record]);
   }
 
-  update(record: SleepRecord): void {
+  update(record: SleepRecord): boolean {
     const records = this.load();
     const duplicate = records.find((item) => item.sleepDate === record.sleepDate && item.id !== record.id);
     if (duplicate) {
@@ -43,16 +49,20 @@ export class LocalStorageSleepRecordRepository implements ISleepRecordRepository
 
     const index = records.findIndex((item) => item.id === record.id);
     if (index === -1) {
-      console.warn(`[Compass] SleepRecord not found for update: ${record.id}`);
-      return;
+      return false;
     }
 
-    records[index] = { ...record, updatedAt: new Date().toISOString() };
+    records[index] = { ...record };
     this.persist(records);
+    return true;
   }
 
-  delete(id: SleepRecordId): void {
-    this.persist(this.load().filter((record) => record.id !== id));
+  delete(id: SleepRecordId): boolean {
+    const records = this.load();
+    const next = records.filter((record) => record.id !== id);
+    if (next.length === records.length) return false;
+    this.persist(next);
+    return true;
   }
 
   private load(): SleepRecord[] {
@@ -61,7 +71,8 @@ export class LocalStorageSleepRecordRepository implements ISleepRecordRepository
       if (!raw) return [];
       const data = JSON.parse(raw);
       if (!Array.isArray(data)) return [];
-      return (data as SleepRecord[]).sort((a, b) => b.sleepDate.localeCompare(a.sleepDate));
+      return (data as SleepRecord[]).map((record) => ({ ...record })).sort((a, b) =>
+        b.sleepDate.localeCompare(a.sleepDate) || a.id.localeCompare(b.id));
     } catch (e) {
       console.error('[Compass] Failed to load SleepRecords from localStorage:', e);
       return [];
@@ -69,7 +80,8 @@ export class LocalStorageSleepRecordRepository implements ISleepRecordRepository
   }
 
   private persist(records: SleepRecord[]): void {
-    const sorted = [...records].sort((a, b) => b.sleepDate.localeCompare(a.sleepDate));
+    const sorted = records.map((record) => ({ ...record })).sort((a, b) =>
+      b.sleepDate.localeCompare(a.sleepDate) || a.id.localeCompare(b.id));
     this.storage.setItem(STORAGE_KEY, JSON.stringify(sorted));
   }
 }

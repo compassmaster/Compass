@@ -1,0 +1,11 @@
+.sleep-management { display: grid; gap: 24px; margin-bottom: 24px; }
+.sleep-entry,.sleep-list { background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:25px; }
+.sleep-entry label,.sleep-edit label { display:grid; gap:6px; font-weight:600; margin:14px 0; }
+.sleep-entry input,.sleep-edit input { box-sizing:border-box; width:100%; padding:10px; border:1px solid #cbd5e0; border-radius:4px; }
+.sleep-save { width:100%; padding:12px; border:0; border-radius:6px; background:#4f46e5; color:white; font-weight:700; }
+.sleep-duration,.sleep-message { color:#4b5563; font-weight:600; }
+.sleep-card { border:1px solid #e2e8f0; border-radius:8px; padding:16px; margin-top:12px; }
+.sleep-card dl,.sleep-dialog dl { display:grid; gap:8px; }.sleep-card dl div,.sleep-dialog dl div { display:grid; grid-template-columns:7rem 1fr; }.sleep-card dd,.sleep-dialog dd { margin:0; }
+.sleep-actions { display:flex; gap:10px; margin-top:14px; }.sleep-actions button { padding:8px 14px; }.sleep-actions .danger { background:#c53030; color:white; border:0; border-radius:4px; }
+.analysis-notice { color:#92400e; background:#fffbeb; padding:10px; border-radius:6px; }
+.sleep-dialog-backdrop { position:fixed; inset:0; background:#0008; display:grid; place-items:center; z-index:20; padding:20px; }.sleep-dialog { max-width:520px; background:white; padding:24px; border-radius:10px; }

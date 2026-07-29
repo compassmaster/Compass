@@ -46,6 +46,7 @@ src/
 - Hypothesis-based UserModel from D-0002.
 - Compass Map and Home display of current understanding and evidence details.
 - SleepRecord foundation.
+- SleepRecord management (Issue #44): Recordタブ内の独立入力、起床日1日1件制約、一覧・編集・削除をApplication Service経由で提供。DailyLog保存とは相互に書き込まず、編集・削除時も分析系成果物は自動変更しない。
 - SleepDailyLogJoinService.
 - Formal Analysis Framework:
   - AnalysisContext
