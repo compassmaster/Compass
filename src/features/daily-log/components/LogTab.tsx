@@ -11,6 +11,7 @@ import {
   type DailyLogDraft,
   type Scale,
 } from '../types/log';
+import { DailyLogList } from './DailyLogList';
 import './LogTab.css';
 
 /**
@@ -29,6 +30,7 @@ export function LogTab({ onSaveSuccess }: { onSaveSuccess: () => void }) {
   const [sleepMessage, setSleepMessage] = useState(existingSleepRecord ? 'その日の睡眠は保存済みです。必要なら修正できます。' : '');
   const [note, setNote] = useState('');
   const [events, setEvents] = useState('');
+  const [listRevision, setListRevision] = useState(0);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -87,10 +89,12 @@ export function LogTab({ onSaveSuccess }: { onSaveSuccess: () => void }) {
 
     alert(immediateResponse.message);
 
+    setListRevision((value) => value + 1);
     onSaveSuccess();
   };
 
   return (
+    <>
     <form onSubmit={handleSubmit} className="log-form">
       <h2>今日を記録する</h2>
 
@@ -233,5 +237,7 @@ export function LogTab({ onSaveSuccess }: { onSaveSuccess: () => void }) {
       </button>
 
     </form>
+    <DailyLogList revision={listRevision} onChanged={onSaveSuccess} />
+    </>
   );
 }

@@ -287,3 +287,10 @@ Relationshipカードは対象期間、使用データ種別、カード別注�
 ## Prediction MVP (Issue #37)
 
 独立した「明日の見通し」タブは、現在地に一致する保存済み翌日Forecast Snapshotと既存Rain × Fatigue Relationshipだけを読み取る。5状態と雨・非雨双方の条件付き見通しを返し、結果の保存、Repository write、外部API取得、未来睡眠入力、Formal Pipeline接続を行わない。選択はBase Location timezone・日付・Location Snapshotを照合し、fetchedAt / createdAt / IDで決定的に行う。Read Modelは精度と使用Record IDを保持し、UIだけが小数1桁へ丸める。
+
+## DailyLog 一覧・編集・削除 (Issue #42)
+
+- 「今日の記録」タブに、対象日降順・同日createdAt降順・ID tie-breakの保存済みDailyLog一覧を追加した。対象日、記録時刻、気分、疲労、メモ、イベント、空状態、疲労スケール説明を表示する。
+- 編集は対象日、気分、疲労、メモ、イベントに限定し、`id`、`createdAt`、`schemaVersion`、互換用`DailyLog.sleepHours`を維持して`updatedAt`のみ現在時刻へ更新する。削除は対象日・気分・疲労を示す確認UIを必須とする。
+- UIの一覧・取得・更新・削除はすべて`DailyLogApplicationService`を通る。Serviceは入力不正、対象なし、成功をResultで区別し、Repository由来の値と入力を変更しない。
+- 編集・削除は既存のEvidence、Insight、Understanding、UserModel、Reflection、Prediction、Formal Pipelineを自動更新・削除しない。UIで、生成済み分析は次回分析時に更新される旨を説明する。
