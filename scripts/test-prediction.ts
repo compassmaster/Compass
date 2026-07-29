@@ -1,0 +1,26 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import assert from 'node:assert/strict';
+import { PredictionQueryService, selectForecast, tomorrowInTimezone } from '../src/features/prediction/services/predictionQueryService.ts';
+import { isRainWeatherCode } from '../src/features/external-context/weather/services/weatherCodeLabel.ts';
+import { formatPredictionNumber } from '../src/features/prediction/components/predictionPresentation.ts';
+const location={schemaVersion:1,id:'loc',displayName:'Tokyo',municipality:'千代田区',countryCode:'JP',timezone:'Asia/Tokyo',coordinates:{latitude:35,longitude:139},source:'USER_CONFIRMED',confirmationStatus:'CONFIRMED',createdAt:'2026-01-01T00:00:00Z',updatedAt:'2026-01-01T00:00:00Z'} as any;
+const forecast=(id='f',values:any={precipitationProbability:{value:50}},over:any={})=>({id,schemaVersion:1,kind:'WEATHER_FORECAST_SNAPSHOT',targetPeriod:{localDate:'2026-01-02',timezone:'Asia/Tokyo',granularity:'DAILY'},forecastValues:values,location:{timezone:'Asia/Tokyo',precision:'EXACT',latitude:35,longitude:139,locality:'千代田区',countryCode:'JP'},source:{provider:'saved',sourceType:'FORECAST',fetchedAt:'2026-01-01T01:00:00Z'},availability:{status:'AVAILABLE'},createdAt:'2026-01-01T01:00:00Z',...over}) as any;
+const relationship=(over:any={})=>({kind:'RAIN_FATIGUE',status:'RELATIONSHIP_FOUND',dataConfidence:'MEDIUM',matchedDayCount:4,firstGroup:{label:'雨の日',dayCount:2,averageFatigue:4.12345},secondGroup:{label:'雨でない日',dayCount:2,averageFatigue:2.98765},fatigueDifference:1.1358,sourceRecordIds:{dailyLogIds:['d2','d1'],sleepRecordIds:[],weatherRecordIds:['w2','w1']},...over});
+const service=(loc:any=location,fs:any[]=[forecast()],rel:any=relationship())=>new PredictionQueryService({get:()=>loc,save(){throw Error('write')},delete(){throw Error('write')}} as any,{findAll:()=>fs,save(){throw Error('write')},saveAll(){throw Error('write')},deleteAll(){throw Error('write')}} as any,{getRelationships:()=>({cards:[{},rel]})} as any,()=>new Date('2026-01-01T12:00:00Z'));
+assert.equal(service(null).getTomorrowOutlook().status,'SETTING_REQUIRED');
+assert.equal(service(location,[]).getTomorrowOutlook().status,'FORECAST_UNAVAILABLE');
+assert.equal(service(location,[forecast()],relationship({status:'INSUFFICIENT_DATA'})).getTomorrowOutlook().status,'RELATIONSHIP_UNAVAILABLE');
+assert.equal(service(location,[forecast()],relationship({dataConfidence:'LOW'})).getTomorrowOutlook().status,'INSUFFICIENT_CONFIDENCE');
+assert.equal(service().getTomorrowOutlook().status,'OUTLOOK_AVAILABLE');
+for(const [values,rain] of [[{precipitationProbability:{value:49}},false],[{precipitationProbability:{value:50}},true],[{precipitation:{value:0}},false],[{precipitation:{value:.001}},true],[{weatherCode:{value:61}},true],[{weatherCode:{value:3}},false]] as const) assert.equal(service(location,[forecast('x',values)]).getTomorrowOutlook().forecastCondition,rain?'RAIN_EXPECTED':'RAIN_NOT_EXPECTED');
+assert.equal(isRainWeatherCode(80),true); assert.equal(isRainWeatherCode(71),false);
+assert.equal(service(location,[forecast()],relationship({fatigueDifference:-1})).getTomorrowOutlook().outlookDirection,'LOWER_POSSIBLE');
+assert.equal(service(location,[forecast()],relationship({fatigueDifference:.49,status:'NO_CLEAR_DIFFERENCE'})).getTomorrowOutlook().outlookDirection,'NO_CLEAR_DIFFERENCE');
+assert.equal(service(location,[forecast('dry',{precipitation:{value:0}})]).getTomorrowOutlook().outlookDirection,'LOWER_POSSIBLE');
+assert.equal(service(location,[forecast()],relationship({dataConfidence:'HIGH'})).getTomorrowOutlook().predictionConfidence,'HIGH');
+assert.equal(service(location,[forecast()],relationship({matchedDayCount:3})).getTomorrowOutlook().status,'INSUFFICIENT_CONFIDENCE');
+assert.equal(tomorrowInTimezone(new Date('2026-01-01T15:30:00Z'),'Asia/Tokyo'),'2026-01-03');
+const latest=forecast('z',{}, {source:{provider:'x',sourceType:'FORECAST',fetchedAt:'2026-01-01T02:00:00Z'}}); const wrong=forecast('wrong',{}, {targetPeriod:{localDate:'2026-01-02',timezone:'UTC',granularity:'DAILY'}}); assert.equal(selectForecast([wrong,forecast('a'),latest],location,'2026-01-02')?.id,'z'); assert.equal(selectForecast([latest,forecast('a'),wrong],location,'2026-01-02')?.id,'z');
+const input=[latest,forecast('a')]; const before=JSON.stringify(input); const a=service(location,input).getTomorrowOutlook(); const b=service(location,[...input].reverse()).getTomorrowOutlook(); assert.equal(JSON.stringify({...a,generatedAt:''}),JSON.stringify({...b,generatedAt:''})); assert.equal(JSON.stringify(input),before); assert.deepEqual(a.relationshipDailyLogIds,['d2','d1']); assert.equal(a.forecastSnapshotId,'z');
+assert.equal(a.comparisonAverageFatigue,2.98765); assert.equal(formatPredictionNumber(a.comparisonAverageFatigue),'3.0');
+console.log('Prediction MVP tests passed: states, rain boundaries, selection, confidence, provenance, purity, precision.');

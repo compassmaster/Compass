@@ -24,11 +24,12 @@ import type { ResolvedFormalUserModel } from '../features/formal-user-model/type
 import { LogTab } from '../features/daily-log/components/LogTab';
 import { MapTab } from '../features/compass-map/components/MapTab';
 import { RelationshipExplorerTab } from '../features/relationship-explorer/components/RelationshipExplorerTab.tsx';
+import { PredictionTab } from '../features/prediction/components/PredictionTab.tsx';
 
 import './App.css';
 
 
-type AppTab = 'home' | 'log' | 'relationships' | 'compassMap';
+type AppTab = 'home' | 'log' | 'relationships' | 'prediction' | 'compassMap';
 
 
 function loadInitialUnderstandingCandidates(): UnderstandingCandidate[] {
@@ -207,6 +208,7 @@ export function App() {
         <button className={`tab-button ${activeTab === 'relationships' ? 'active-tab' : ''}`} onClick={() => setActiveTab('relationships')}>
           🔎 関係
         </button>
+        <button className={`tab-button ${activeTab === 'prediction' ? 'active-tab' : ''}`} onClick={() => setActiveTab('prediction')}>☂️ 明日の見通し</button>
         <button 
           className={`tab-button ${activeTab === 'compassMap' ? 'active-tab' : ''}`} 
           onClick={() => {
@@ -245,6 +247,7 @@ export function App() {
         )}
         {activeTab === 'log' && <LogTab onSaveSuccess={refreshLogs} />}
         {activeTab === 'relationships' && <RelationshipExplorerTab />}
+        {activeTab === 'prediction' && <PredictionTab />}
         {activeTab === 'compassMap' && (
           <MapTab
             resolvedFormalUserModel={resolvedFormalUserModel}

@@ -283,3 +283,7 @@ Formal Reflectionは永続化、Repository直接読み取り、新しいlocalSto
 ### PR #36 review follow-up
 
 Relationshipカードは対象期間、使用データ種別、カード別注意事項を表示する。Rainの日時・Record IDは決定的にsortし、Sleep joinは固定UTCではなく設定timezone（未設定時は実行環境timezone）を利用する。状態・信頼度の境界は自動テストで固定した。
+
+## Prediction MVP (Issue #37)
+
+独立した「明日の見通し」タブは、現在地に一致する保存済み翌日Forecast Snapshotと既存Rain × Fatigue Relationshipだけを読み取る。5状態と雨・非雨双方の条件付き見通しを返し、結果の保存、Repository write、外部API取得、未来睡眠入力、Formal Pipeline接続を行わない。選択はBase Location timezone・日付・Location Snapshotを照合し、fetchedAt / createdAt / IDで決定的に行う。Read Modelは精度と使用Record IDを保持し、UIだけが小数1桁へ丸める。

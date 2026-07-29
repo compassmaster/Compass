@@ -294,3 +294,7 @@ Do not implement an API Client, external fetch, UI, Analyzer, Prediction, Machin
 - Sleep RelationshipがDaily Contextを読むtimezoneは固定UTCを廃止し、Base Locationを反映したWeather Observationのtimezoneを使用する。Location未設定時だけ実行環境のIANA timezoneへfallbackする。
 - 状態全種、データ信頼度Low/Medium/High、分析信頼度Low/Medium/High、timezone伝播、期間、入力不変、決定的ID sortの境界テストを追加した。
 - Query経路へwrite監視付きRepositoryを注入し、Relationship取得時にDailyLog / Sleep / Forecast / Observed Weather / Base Locationの全Repository write methodが呼ばれないことを明示的にテストした。Issue #35の最終変更内容は`docs/変更履歴.md`にも同期した。
+
+## 2026-07-29 Prediction MVP (Issue #37)
+
+`prediction` featureのQuery Serviceは保存済み翌日DAILY Forecastと既存Rain × Fatigue Relationshipを依存注入で読み、5状態の非永続Read Modelを返す。雨判定は降水確率50%以上、降水量0超、雨系Weather Code。Relationship利用にはstatus、Medium以上、合計4日・各群2日、非null差が必要である。ForecastはBase Locationのtimezone・座標・地域Snapshotを完全照合し、fetchedAt、createdAt、IDの順で選ぶ。外部取得やwriteを追加せず、Formal Pipelineほかの知識系機能には非接続のままにする。
