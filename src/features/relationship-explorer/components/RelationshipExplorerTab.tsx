@@ -6,7 +6,7 @@ import './RelationshipExplorerTab.css';
 export function RelationshipExplorerTab() {
   const [model, setModel] = useState<RelationshipExplorerReadModel>(() => relationshipExplorerQueryService.getRelationships());
   return <section className="relationship-explorer">
-    <header className="relationship-header"><p className="relationship-eyebrow">記録から見えること</p><h2>生活データの関係</h2><p>端末にある記録を読み取り、生活の中の関係を見比べます。ここでの結果は保存されず、原因や診断を示すものではありません。</p><button type="button" onClick={() => setModel(relationshipExplorerQueryService.getRelationships())}>記録を読み直す</button></header>
+    <header className="relationship-header"><p className="relationship-eyebrow">記録から見えること</p><h2>生活データの関係</h2><p>端末にある記録を読み取り、生活の中の関係を見比べます。ここでの結果は保存されず、因果関係を示すものではありません。また、医療上または心理上の診断ではありません。</p><button type="button" onClick={() => setModel(relationshipExplorerQueryService.getRelationships())}>記録を読み直す</button></header>
     <div className="relationship-grid">{model.cards.map((card) => <RelationshipCard key={card.kind} card={card} />)}</div>
   </section>;
 }

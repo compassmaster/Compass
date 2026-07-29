@@ -40,7 +40,7 @@ export class RelationshipExplorerQueryService {
       fatigueDifference: difference,
       matchedDates, period: periodOf(matchedDates), usedDataLabels: ['日々の疲労記録', '睡眠時間の記録'],
       caution: '睡眠時間と疲労の関係だけを比べています。体調や活動など、ほかの影響は考慮していません。',
-      sourceRecordIds: { dailyLogIds: matched.flatMap((day) => day.logIds).sort((a, b) => a.localeCompare(b)), sleepRecordIds: matched.map((day) => day.sleepId).sort((a, b) => a.localeCompare(b)), weatherRecordIds: [] },
+      sourceRecordIds: { dailyLogIds: copySort(matched.flatMap((day) => day.logIds)), sleepRecordIds: copySort(matched.map((day) => day.sleepId)), weatherRecordIds: [] },
     };
   }
 
@@ -57,7 +57,7 @@ export class RelationshipExplorerQueryService {
       secondGroup: { label: '雨でない日', dayCount: value.dryDayCount, averageFatigue: value.dryAverageFatigue },
       fatigueDifference: value.fatigueDifference, matchedDates, period: periodOf(matchedDates), usedDataLabels: ['日々の疲労記録', '過去の推定降水量'],
       caution: '雨と疲労の関連を示す観測です。天気が疲労の原因だとは判断せず、予報データも使用しません。',
-      sourceRecordIds: { dailyLogIds: [...value.includedDailyLogIds].sort((a, b) => a.localeCompare(b)), sleepRecordIds: [], weatherRecordIds: [...value.includedWeatherRecordIds].sort((a, b) => a.localeCompare(b)) },
+      sourceRecordIds: { dailyLogIds: copySort(value.includedDailyLogIds), sleepRecordIds: [], weatherRecordIds: copySort(value.includedWeatherRecordIds) },
     };
     return { card, status, timezone: value.timezone ?? resolvedLocalTimezone() };
   }
@@ -72,3 +72,4 @@ function sleepSummary(status: RelationshipStatus, difference: number | null) { i
 function average(values: readonly number[]) { return values.reduce((sum, value) => sum + value, 0) / values.length; }
 function periodOf(dates: readonly DailyContextReadModel['localDate'][]) { return { from: dates[0] ?? null, to: dates[dates.length - 1] ?? null }; }
 function resolvedLocalTimezone() { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'Etc/UTC'; }
+function copySort<T extends string>(values: readonly T[]): T[] { return [...values].sort((a, b) => a.localeCompare(b)); }

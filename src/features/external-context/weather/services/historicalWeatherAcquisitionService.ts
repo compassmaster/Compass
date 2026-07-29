@@ -43,7 +43,8 @@ export class HistoricalWeatherAcquisitionService {
     } catch (error) { if (error instanceof HistoricalWeatherClientError) return { status:error.code, reason:error.message }; return { status:'INVALID_PROVIDER_RESPONSE', reason:error instanceof Error ? error.message : 'Historical weather acquisition failed.' }; }
   }
   listLatest(limit=7): readonly ObservedWeatherRecord[] { const location = this.locations.get(); if (!location) return [];
-    const latest = new Map<string,ObservedWeatherRecord>(); for (const item of this.records.findAll().filter((r) => isRecordForLocation(r, location.timezone, location.coordinates.latitude, location.coordinates.longitude))) {
+    const locationSnapshot = toWeatherLocationSnapshot(location);
+    const latest = new Map<string,ObservedWeatherRecord>(); for (const item of this.records.findAll().filter((record) => isRecordForLocation(record, locationSnapshot))) {
     const key = `${item.observedPeriod.timezone}\u0000${item.observedPeriod.localDate}`;
     const current=latest.get(key); if (!current || compareHistoricalWeatherRecency(item,current)>0) latest.set(key,item); }
     return [...latest.values()].sort((a,b)=>b.observedPeriod.localDate.localeCompare(a.observedPeriod.localDate)).slice(0,limit); }
@@ -53,8 +54,9 @@ function sameLocationSnapshot(a: ObservedWeatherRecord['location'], b: NonNullab
     && a.locality === b.locality && a.countryCode === b.countryCode && a.latitude === b.latitude && a.longitude === b.longitude;
 }
 export function compareHistoricalWeatherRecency(a:ObservedWeatherRecord,b:ObservedWeatherRecord):number { return Date.parse(a.source.fetchedAt)-Date.parse(b.source.fetchedAt) || Date.parse(a.createdAt)-Date.parse(b.createdAt) || a.id.localeCompare(b.id); }
-function isRecordForLocation(record: ObservedWeatherRecord, timezone: string, latitude: number, longitude: number): boolean {
-  if (record.source.sourceType !== 'HISTORICAL' || record.observedPeriod.granularity !== 'DAILY' || record.observedPeriod.timezone !== timezone) return false;
-  if (record.location?.latitude === undefined || record.location.longitude === undefined) return true;
-  return record.location.latitude === latitude && record.location.longitude === longitude;
+function isRecordForLocation(record: ObservedWeatherRecord, location: NonNullable<ObservedWeatherRecord['location']>): boolean {
+  return record.source.sourceType === 'HISTORICAL'
+    && record.observedPeriod.granularity === 'DAILY'
+    && record.observedPeriod.timezone === location.timezone
+    && sameLocationSnapshot(record.location, location);
 }

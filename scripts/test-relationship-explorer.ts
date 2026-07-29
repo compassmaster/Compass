@@ -18,7 +18,7 @@ const inputs = [day('2026-01-04', 480, 2), day('2026-01-01', 300, 5), day('2026-
 const originalOrder = inputs.map((value) => value.localDate);
 const byDate = new Map(inputs.map((value) => [value.localDate, value]));
 const dailyContext = { listSleepAndLogDates: () => [...originalOrder], getByDate: (date: DateString) => byDate.get(date)! } as unknown as DailyContextQueryService;
-const weatherValue: WeatherFatigueObservation = { status: 'OBSERVATION_AVAILABLE', timezone: 'Asia/Tokyo', matchedDayCount: 4, rainyDayCount: 2, dryDayCount: 2, rainyAverageFatigue: 4.25, dryAverageFatigue: 2.5, fatigueDifference: 1.75, matchedDates: ['2026-01-01', '2026-01-02', '2026-01-03', '2026-01-04'] as DateString[], includedDailyLogIds: ['weather-log-b', 'weather-log-a'] as EntryId[], includedWeatherRecordIds: ['weather-b', 'weather-a'] as ObservedWeatherRecordId[], message: '雨の日に疲労が高い傾向です。' };
+const weatherValue: WeatherFatigueObservation = { status: 'OBSERVATION_AVAILABLE', timezone: 'Asia/Tokyo', matchedDayCount: 4, rainyDayCount: 2, dryDayCount: 2, rainyAverageFatigue: 4.25, dryAverageFatigue: 2.5, fatigueDifference: 1.75, matchedDates: Object.freeze(['2026-01-04', '2026-01-01', '2026-01-03', '2026-01-02']) as readonly DateString[], includedDailyLogIds: Object.freeze(['weather-log-b', 'weather-log-a']) as readonly EntryId[], includedWeatherRecordIds: Object.freeze(['weather-b', 'weather-a']) as readonly ObservedWeatherRecordId[], message: '雨の日に疲労が高い傾向です。' };
 const weather = { getObservation: () => weatherValue } as unknown as WeatherFatigueObservationQueryService;
 const model = new RelationshipExplorerQueryService(dailyContext, weather).getRelationships();
 assert.deepEqual(model.cards.map((card) => card.kind), ['SLEEP_FATIGUE', 'RAIN_FATIGUE']);
@@ -28,6 +28,8 @@ assert.deepEqual(model.cards[0].sourceRecordIds.dailyLogIds, ['log-2026-01-01', 
 assert.deepEqual(model.cards[0].sourceRecordIds.sleepRecordIds, ['sleep-2026-01-01', 'sleep-2026-01-02', 'sleep-2026-01-03', 'sleep-2026-01-04']);
 assert.deepEqual(inputs.map((value) => value.localDate), originalOrder, 'input records are unchanged');
 assert.deepEqual(model.cards[1].sourceRecordIds.weatherRecordIds, ['weather-a', 'weather-b'], 'rain sources are sorted deterministically');
+assert.deepEqual(weatherValue.includedWeatherRecordIds, ['weather-b', 'weather-a'], 'Repository由来のRecord ID配列を変更しない');
+assert.deepEqual(weatherValue.matchedDates, ['2026-01-04', '2026-01-01', '2026-01-03', '2026-01-02'], 'Repository由来の日付配列を変更しない');
 assert.deepEqual(model.cards[0].period, { from: '2026-01-01', to: '2026-01-04' });
 assert.deepEqual(model.cards[1].period, { from: '2026-01-01', to: '2026-01-04' });
 assert.deepEqual(model.cards[0].usedDataLabels, ['日々の疲労記録', '睡眠時間の記録']);

@@ -27,6 +27,23 @@ const sameDateOtherTimezone=normalizeHistoricalWeather({...result,fetchedAt:'202
 const sameDateOtherCoordinates=normalizeHistoricalWeather({...result,fetchedAt:'2026-07-27T03:00:00Z'},otherCoordinatesLocation,()=> 'osaka');
 saved.push(sameDateOtherTimezone,sameDateOtherCoordinates);
 assert.deepEqual(service.listLatest().map((item)=>item.id),[saved[0].id]);
+for (const locationMismatch of [
+  { ...saved[0].location!, timezone: 'UTC' },
+  { ...saved[0].location!, precision: 'EXACT' as const },
+  { ...saved[0].location!, label: '別の地域' },
+  { ...saved[0].location!, locality: '別の市区町村' },
+  { ...saved[0].location!, countryCode: 'US' },
+  { ...saved[0].location!, latitude: 34.69 },
+  { ...saved[0].location!, longitude: 135.5 },
+]) {
+  const mismatched = { ...saved[0], location: locationMismatch };
+  const mismatchListService = new HistoricalWeatherAcquisitionService(
+    { get: () => location } as never,
+    { fetchDailyHistoricalWeather: async () => result },
+    { ...repo, findAll: () => [mismatched] },
+  );
+  assert.deepEqual(mismatchListService.listLatest(), [], 'Location Snapshotの全識別フィールドが一致するRecordだけを表示する');
+}
 const nonMatchingRecords=[
   {...saved[0],id:'forecast' as ObservedWeatherRecord['id'],source:{...saved[0].source,sourceType:'FORECAST' as const}},
   {...saved[0],id:'observed' as ObservedWeatherRecord['id'],source:{...saved[0].source,sourceType:'OBSERVED' as const}},
