@@ -312,3 +312,7 @@ Do not implement an API Client, external fetch, UI, Analyzer, Prediction, Machin
 - 更新時はid、createdAt、schemaVersion、既存sleepHoursを維持し、updatedAtのみServiceの現在時刻へ更新する。配列とeventsは防御的にコピーし、一覧順はdate降順、createdAt降順、ID昇順tie-breakで決定的にする。
 - 編集・削除は分析系の再生成や削除を行わない。Evidence、Insight、Understanding、UserModel、Reflection、Prediction、Formal Pipelineは次回の明示的な分析まで既存状態を維持する。
 - `scripts/test-daily-log-management.ts`がServiceの成功/不正/対象なし/不変性/日付変更とUI境界・表示契約を検証する。
+
+### PR #43 review follow-up
+
+DailyLogの編集・削除成功時は`DailyLogList`の`onChanged`から`LogTab`の`onSaveSuccess`を呼び、Appが保持するlogsもApplication Serviceから再読込する。再読込はタブを変更しないため、利用者は「記録」タブに留まる。テストは各編集フィールド、更新後の再取得と日付変更後の再ソート、親再読込コールバック接続を明示的に検証する。

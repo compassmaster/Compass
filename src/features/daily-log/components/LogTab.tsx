@@ -237,7 +237,7 @@ export function LogTab({ onSaveSuccess }: { onSaveSuccess: () => void }) {
       </button>
 
     </form>
-    <DailyLogList revision={listRevision} />
+    <DailyLogList revision={listRevision} onChanged={onSaveSuccess} />
     </>
   );
 }
