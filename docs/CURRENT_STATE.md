@@ -287,3 +287,5 @@ Relationshipカードは対象期間、使用データ種別、カード別注�
 ## Prediction MVP (Issue #37, 2026-07-29)
 
 独立した「明日の見通し」タブとPrediction Query Serviceを追加した。Base Location timezoneの翌日に一致する保存済みForecastとRain × Fatigue Relationshipだけを読み、雨量`> 0mm`かつRelationship成立時に限って条件付きの疲労見通しを表示する。5状態、データ信頼度とPrediction信頼度、入力Record IDをRead Modelに保持する。Predictionは取得、write、永続化、Formal Pipeline接続を行わない。
+
+PR #38レビュー反映後は、Forecast選択に現在のBase Location座標snapshot一致を必須とし、Rain Relationshipの疲労差が`> 0`の場合だけ高めの見通しへ利用する。Read ModelとUIは雨判定、Forecast取得時刻、Relationship状態・分析信頼度も追跡する。
