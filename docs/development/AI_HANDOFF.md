@@ -293,3 +293,4 @@ Do not implement an API Client, external fetch, UI, Analyzer, Prediction, Machin
 - Rain Relationshipは`matchedDates`、DailyLog ID、Weather Record IDをQuery境界で辞書順にcopy-sortし、Observation Serviceの返却順に依存しない。
 - Sleep RelationshipがDaily Contextを読むtimezoneは固定UTCを廃止し、Base Locationを反映したWeather Observationのtimezoneを使用する。Location未設定時だけ実行環境のIANA timezoneへfallbackする。
 - 状態全種、データ信頼度Low/Medium/High、分析信頼度Low/Medium/High、timezone伝播、期間、入力不変、決定的ID sortの境界テストを追加した。
+- Query経路へwrite監視付きRepositoryを注入し、Relationship取得時にDailyLog / Sleep / Forecast / Observed Weather / Base Locationの全Repository write methodが呼ばれないことを明示的にテストした。Issue #35の最終変更内容は`docs/変更履歴.md`にも同期した。

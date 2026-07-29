@@ -7,6 +7,12 @@ import type { WeatherFatigueObservation } from '../src/features/weather-fatigue-
 import type { DateString, EntryId } from '../src/features/daily-log/types/log.ts';
 import type { SleepRecordId } from '../src/features/sleep/types/sleepRecord.ts';
 import type { ObservedWeatherRecordId } from '../src/features/external-context/weather/types/index.ts';
+import { DailyContextQueryService } from '../src/features/daily-context/services/dailyContextQueryService.ts';
+import { WeatherFatigueObservationQueryService } from '../src/features/weather-fatigue-observation/services/weatherFatigueObservationQueryService.ts';
+import type { ILogRepository } from '../src/features/daily-log/services/logRepository.ts';
+import type { ISleepRecordRepository } from '../src/features/sleep/services/sleepRecordRepository.ts';
+import type { WeatherForecastSnapshotRepository, ObservedWeatherRecordRepository } from '../src/features/external-context/weather/repositories/index.ts';
+import type { BaseLocationRepository } from '../src/features/external-context/location/repositories/index.ts';
 
 const inputs = [day('2026-01-04', 480, 2), day('2026-01-01', 300, 5), day('2026-01-03', 420, 2), day('2026-01-02', 330, 4)];
 const originalOrder = inputs.map((value) => value.localDate);
@@ -57,6 +63,20 @@ for (const [observationStatus, expectedStatus, expectedAnalysis] of [
   assert.equal(card.analysisConfidence, expectedAnalysis);
   assert.equal(card.dataConfidence, 'MEDIUM');
 }
+
+let writeOperations = 0;
+const logRepository = {
+  getAll: () => [], getByDate: () => [], getById: () => null, getByRange: () => [], exportAll: () => '[]',
+  save: () => { writeOperations += 1; }, update: () => { writeOperations += 1; }, delete: () => { writeOperations += 1; }, importAll: () => { writeOperations += 1; },
+} as ILogRepository;
+const sleepRepository = { getByDate: () => null, getAll: () => [], save: () => { writeOperations += 1; }, update: () => { writeOperations += 1; }, delete: () => { writeOperations += 1; } } as ISleepRecordRepository;
+const forecastRepository = { findById: () => null, findByTargetDate: () => [], findAll: () => [], save: () => { writeOperations += 1; }, saveAll: () => { writeOperations += 1; }, deleteAll: () => { writeOperations += 1; } } as WeatherForecastSnapshotRepository;
+const observedRepository = { findById: () => null, findByObservedDate: () => [], findAll: () => [], save: () => { writeOperations += 1; }, deleteAll: () => { writeOperations += 1; } } as ObservedWeatherRecordRepository;
+const locationRepository = { get: () => null, save: () => { writeOperations += 1; }, delete: () => { writeOperations += 1; } } as BaseLocationRepository;
+const readOnlyDailyContext = new DailyContextQueryService(logRepository, sleepRepository, forecastRepository, observedRepository);
+const readOnlyWeatherObservation = new WeatherFatigueObservationQueryService(locationRepository, logRepository, observedRepository);
+new RelationshipExplorerQueryService(readOnlyDailyContext, readOnlyWeatherObservation).getRelationships();
+assert.equal(writeOperations, 0, 'Relationship Explorer query path must not call any repository write method');
 console.log('Relationship Explorer tests passed');
 
 function day(date: string, durationMinutes: number, fatigue: number): DailyContextReadModel {
