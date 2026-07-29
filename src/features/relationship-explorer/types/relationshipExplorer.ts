@@ -19,6 +19,9 @@ export interface RelationshipCardReadModel {
   /** Full precision is retained here. Presentation code alone rounds it. */
   readonly fatigueDifference: number | null;
   readonly matchedDates: readonly DateString[];
+  readonly period: { readonly from: DateString | null; readonly to: DateString | null };
+  readonly usedDataLabels: readonly string[];
+  readonly caution: string;
   readonly sourceRecordIds: {
     readonly dailyLogIds: readonly EntryId[];
     readonly sleepRecordIds: readonly SleepRecordId[];

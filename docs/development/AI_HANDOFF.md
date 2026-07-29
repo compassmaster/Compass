@@ -286,3 +286,10 @@ Do not implement an API Client, external fetch, UI, Analyzer, Prediction, Machin
 - Read Modelは平均と差の計算精度を保持し、UIだけが小数1桁へ丸める。採用したDailyLog / Sleep / Weather Record IDを追跡できる。
 - 入力配列を変更せず、日付・IDを決定的に扱う。設定不足・データ不足・差が小さい場合も状態付きカードを維持する。
 - Evidence、Analysis、Understanding、UserModel、Reflection、Prediction、ConversationおよびFormal Pipelineへの保存・自動接続は行わない。
+
+### PR #36 review follow-up
+
+- 各カードのRead Modelに対象期間、使用データ種別、カード固有の注意事項を追加した。対象日がなければ期間は`null`、UIは`—`を表示する。
+- Rain Relationshipは`matchedDates`、DailyLog ID、Weather Record IDをQuery境界で辞書順にcopy-sortし、Observation Serviceの返却順に依存しない。
+- Sleep RelationshipがDaily Contextを読むtimezoneは固定UTCを廃止し、Base Locationを反映したWeather Observationのtimezoneを使用する。Location未設定時だけ実行環境のIANA timezoneへfallbackする。
+- 状態全種、データ信頼度Low/Medium/High、分析信頼度Low/Medium/High、timezone伝播、期間、入力不変、決定的ID sortの境界テストを追加した。

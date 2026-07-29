@@ -279,3 +279,7 @@ Formal Reflectionは永続化、Repository直接読み取り、新しいlocalSto
 ## Relationship Explorer MVP (2026-07-29)
 
 独立した「関係」タブで睡眠×疲労と雨×疲労の読み取り専用Relationshipを一覧表示する。既存Query / Observation Serviceを再利用し、結果は永続化せずFormal Pipelineへ接続しない。
+
+### PR #36 review follow-up
+
+Relationshipカードは対象期間、使用データ種別、カード別注意事項を表示する。Rainの日時・Record IDは決定的にsortし、Sleep joinは固定UTCではなく設定timezone（未設定時は実行環境timezone）を利用する。状態・信頼度の境界は自動テストで固定した。

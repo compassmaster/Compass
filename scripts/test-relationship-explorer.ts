@@ -21,10 +21,42 @@ assert.equal(model.cards[0].fatigueDifference, 2.5, 'read model keeps unrounded 
 assert.deepEqual(model.cards[0].sourceRecordIds.dailyLogIds, ['log-2026-01-01', 'log-2026-01-02', 'log-2026-01-03', 'log-2026-01-04']);
 assert.deepEqual(model.cards[0].sourceRecordIds.sleepRecordIds, ['sleep-2026-01-01', 'sleep-2026-01-02', 'sleep-2026-01-03', 'sleep-2026-01-04']);
 assert.deepEqual(inputs.map((value) => value.localDate), originalOrder, 'input records are unchanged');
-assert.deepEqual(model.cards[1].sourceRecordIds.weatherRecordIds, ['weather-b', 'weather-a']);
+assert.deepEqual(model.cards[1].sourceRecordIds.weatherRecordIds, ['weather-a', 'weather-b'], 'rain sources are sorted deterministically');
+assert.deepEqual(model.cards[0].period, { from: '2026-01-01', to: '2026-01-04' });
+assert.deepEqual(model.cards[1].period, { from: '2026-01-01', to: '2026-01-04' });
+assert.deepEqual(model.cards[0].usedDataLabels, ['日々の疲労記録', '睡眠時間の記録']);
+assert.match(model.cards[1].caution, /原因だとは判断せず/);
 const emptyDaily = { listSleepAndLogDates: () => [], getByDate: () => { throw new Error('not called'); } } as unknown as DailyContextQueryService;
 const missingWeather = { getObservation: () => ({ ...weatherValue, status: 'LOCATION_NOT_CONFIGURED', matchedDayCount: 0, rainyDayCount: 0, dryDayCount: 0, rainyAverageFatigue: null, dryAverageFatigue: null, fatigueDifference: null, matchedDates: [], includedDailyLogIds: [], includedWeatherRecordIds: [], timezone: null }) } as unknown as WeatherFatigueObservationQueryService;
 assert.deepEqual(new RelationshipExplorerQueryService(emptyDaily, missingWeather).getRelationships().cards.map((card) => card.status), ['NO_MATCHED_DATA', 'SETTING_REQUIRED']);
+assert.deepEqual(new RelationshipExplorerQueryService(emptyDaily, missingWeather).getRelationships().cards[0].period, { from: null, to: null });
+
+const boundaryCases = [
+  { days: [day('2026-02-01', 300, 4), day('2026-02-02', 420, 2), day('2026-02-03', 420, 2)], status: 'INSUFFICIENT_DATA', data: 'LOW', analysis: 'LOW' },
+  { days: [day('2026-02-01', 300, 3), day('2026-02-02', 330, 3), day('2026-02-03', 420, 2.6), day('2026-02-04', 450, 2.6)], status: 'NO_CLEAR_DIFFERENCE', data: 'MEDIUM', analysis: 'LOW' },
+  { days: [day('2026-02-01', 300, 4), day('2026-02-02', 330, 4), day('2026-02-03', 420, 2), day('2026-02-04', 450, 2)], status: 'RELATIONSHIP_FOUND', data: 'MEDIUM', analysis: 'MEDIUM' },
+  { days: [day('2026-02-01', 300, 4), day('2026-02-02', 310, 4), day('2026-02-03', 320, 4), day('2026-02-04', 330, 4), day('2026-02-05', 420, 2), day('2026-02-06', 430, 2), day('2026-02-07', 440, 2), day('2026-02-08', 450, 2)], status: 'RELATIONSHIP_FOUND', data: 'HIGH', analysis: 'HIGH' },
+] as const;
+for (const expected of boundaryCases) {
+  const records = new Map(expected.days.map((value) => [value.localDate, value]));
+  let requestedTimezone = '';
+  const context = { listSleepAndLogDates: () => expected.days.map((value) => value.localDate).reverse(), getByDate: (date: DateString, timezone: string) => { requestedTimezone = timezone; return records.get(date)!; } } as unknown as DailyContextQueryService;
+  const card = new RelationshipExplorerQueryService(context, weather).getRelationships().cards[0];
+  assert.deepEqual([card.status, card.dataConfidence, card.analysisConfidence], [expected.status, expected.data, expected.analysis]);
+  assert.equal(requestedTimezone, 'Asia/Tokyo', 'sleep projection uses the configured observation timezone instead of fixed UTC');
+}
+for (const [observationStatus, expectedStatus, expectedAnalysis] of [
+  ['NO_MATCHED_DAYS', 'NO_MATCHED_DATA', 'LOW'],
+  ['INSUFFICIENT_SAMPLE', 'INSUFFICIENT_DATA', 'LOW'],
+  ['NO_MEANINGFUL_DIFFERENCE', 'NO_CLEAR_DIFFERENCE', 'LOW'],
+  ['OBSERVATION_AVAILABLE', 'RELATIONSHIP_FOUND', 'MEDIUM'],
+] as const) {
+  const observation = { getObservation: () => ({ ...weatherValue, status: observationStatus }) } as unknown as WeatherFatigueObservationQueryService;
+  const card = new RelationshipExplorerQueryService(emptyDaily, observation).getRelationships().cards[1];
+  assert.equal(card.status, expectedStatus);
+  assert.equal(card.analysisConfidence, expectedAnalysis);
+  assert.equal(card.dataConfidence, 'MEDIUM');
+}
 console.log('Relationship Explorer tests passed');
 
 function day(date: string, durationMinutes: number, fatigue: number): DailyContextReadModel {
