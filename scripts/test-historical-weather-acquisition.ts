@@ -20,11 +20,19 @@ const location={schemaVersion:1,id:'location' as BaseLocation['id'],displayName:
 const record=normalizeHistoricalWeather(result,location,()=> 'one');assert.equal(record.kind,'OBSERVED_WEATHER_RECORD');assert.equal(record.source.sourceType,'HISTORICAL');assert.equal(record.availability.status,'PARTIAL');assert.equal(record.observedValues.precipitation?.value,null);
 const allNull={...result,dailyMinimumTemperature:null,dailyMaximumTemperature:null,precipitation:null,precipitationProbability:null,weatherCode:null,windSpeed:null,sunshineDuration:null};assert.equal(normalizeHistoricalWeather(allNull,location).availability.status,'UNAVAILABLE');assert.deepEqual(normalizeHistoricalWeather(allNull,location).observedValues,{});assert.notEqual(normalizeHistoricalWeather(result,location,()=> 'a').id,normalizeHistoricalWeather(result,location,()=> 'b').id);
 let calls=0;const saved:ObservedWeatherRecord[]=[];const repo={save:(r:ObservedWeatherRecord)=>saved.push(r),findById:()=>null,findByObservedDate:()=>[],findAll:()=>saved,deleteAll:()=>undefined};const service=new HistoricalWeatherAcquisitionService({get:()=>location} as never,{fetchDailyHistoricalWeather:async()=>{calls++;await Promise.resolve();return result;}},repo,()=>new Date('2026-07-27T00:00:00Z'));await Promise.all([service.acquirePreviousDay(),service.acquirePreviousDay()]);assert.equal(calls,1);assert.equal(saved.length,1);
+const automaticResults=await Promise.all([service.acquirePreviousDayIfNeeded(),service.acquirePreviousDayIfNeeded()]);assert.equal(automaticResults[0].status,'ALREADY_ACQUIRED');assert.equal(calls,1);assert.equal(saved.length,1);
 const otherTimezoneLocation={...location,id:'new-york' as BaseLocation['id'],displayName:'New York',timezone:'America/New_York',coordinates:{latitude:40.71,longitude:-74.01}};
 const otherCoordinatesLocation={...location,id:'osaka' as BaseLocation['id'],displayName:'Osaka',coordinates:{latitude:34.69,longitude:135.5}};
 const sameDateOtherTimezone=normalizeHistoricalWeather({...result,fetchedAt:'2026-07-27T02:00:00Z'},otherTimezoneLocation,()=> 'new-york');
 const sameDateOtherCoordinates=normalizeHistoricalWeather({...result,fetchedAt:'2026-07-27T03:00:00Z'},otherCoordinatesLocation,()=> 'osaka');
 saved.push(sameDateOtherTimezone,sameDateOtherCoordinates);
 assert.deepEqual(service.listLatest().map((item)=>item.id),[saved[0].id]);
+const nonMatchingRecords=[
+  {...saved[0],id:'forecast' as ObservedWeatherRecord['id'],source:{...saved[0].source,sourceType:'FORECAST' as const}},
+  {...saved[0],id:'observed' as ObservedWeatherRecord['id'],source:{...saved[0].source,sourceType:'OBSERVED' as const}},
+  {...saved[0],id:'hourly' as ObservedWeatherRecord['id'],observedPeriod:{...saved[0].observedPeriod,granularity:'HOURLY' as const}},
+  sameDateOtherTimezone,sameDateOtherCoordinates,
+];
+let unmatchedCalls=0;const unmatchedRepo={...repo,findAll:()=>nonMatchingRecords,save:()=>undefined};const unmatchedService=new HistoricalWeatherAcquisitionService({get:()=>location} as never,{fetchDailyHistoricalWeather:async()=>{unmatchedCalls++;return result;}},unmatchedRepo,()=>new Date('2026-07-27T00:00:00Z'));assert.equal((await unmatchedService.acquirePreviousDayIfNeeded()).status,'SUCCESS');assert.equal(unmatchedCalls,1);
 let absentCalls=0;const absent=new HistoricalWeatherAcquisitionService({get:()=>null} as never,{fetchDailyHistoricalWeather:async()=>{absentCalls++;return result;}},repo);assert.equal((await absent.acquirePreviousDay()).status,'LOCATION_NOT_CONFIGURED');assert.equal(absentCalls,0);
 console.log('historical weather acquisition tests passed');

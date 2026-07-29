@@ -7,20 +7,21 @@ import './WeatherForecastPanel.css';
 interface WeatherForecastPanelProps { readonly acquisitionRequestId?: number }
 
 export function WeatherForecastPanel({ acquisitionRequestId = 0 }: WeatherForecastPanelProps) {
-  const inFlightRef = useRef(false);
+  const forecastInFlightRef = useRef(false);
+  const historicalInFlightRef = useRef(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('地域設定後に7日予報を取得できます。');
   const [forecasts, setForecasts] = useState<readonly WeatherForecastSnapshot[]>(() => weatherForecastAcquisitionService.listLatest());
   const [historicalLoading,setHistoricalLoading]=useState(false);
   const [historicalMessage,setHistoricalMessage]=useState('設定した地域の日本標準時を基準に昨日を決定します。');
   const [historical,setHistorical]=useState<readonly ObservedWeatherRecord[]>(()=>historicalWeatherAcquisitionService.listLatest());
-  const acquireHistorical=async()=>{ if(inFlightRef.current)return; inFlightRef.current=true; setHistoricalLoading(true); try { const result=await historicalWeatherAcquisitionService.acquirePreviousDay();
+  const acquireHistorical=async()=>{ if(historicalInFlightRef.current)return; historicalInFlightRef.current=true; setHistoricalLoading(true); try { const result=await historicalWeatherAcquisitionService.acquirePreviousDay();
     if(result.status==='SUCCESS'){setHistoricalMessage(`${result.record.observedPeriod.localDate}を保存しました。最終取得時刻: ${new Date(result.record.source.fetchedAt).toLocaleString()}`);setHistorical(historicalWeatherAcquisitionService.listLatest());}
     else if(result.status==='LOCATION_NOT_CONFIGURED')setHistoricalMessage('先に地域を設定してください。天気情報の取得は行っていません。'); else setHistoricalMessage(`取得できませんでした: ${result.reason}`);
-  } finally {inFlightRef.current=false;setHistoricalLoading(false);} };
+  } finally {historicalInFlightRef.current=false;setHistoricalLoading(false);} };
   const acquire = useCallback(async () => {
-    if (inFlightRef.current) return;
-    inFlightRef.current = true;
+    if (forecastInFlightRef.current) return;
+    forecastInFlightRef.current = true;
     setLoading(true);
     try {
       const result = await weatherForecastAcquisitionService.acquireForecast();
@@ -30,7 +31,7 @@ export function WeatherForecastPanel({ acquisitionRequestId = 0 }: WeatherForeca
         setForecasts(weatherForecastAcquisitionService.listLatest());
       } else if (result.status === 'LOCATION_NOT_CONFIGURED') setMessage('先に地域を設定してください。天気情報の取得は行っていません。');
       else setMessage(`取得できませんでした: ${result.reason}`);
-    } finally { inFlightRef.current = false; setLoading(false); }
+    } finally { forecastInFlightRef.current = false; setLoading(false); }
   }, []);
   const handledRequestRef = useRef(acquisitionRequestId);
   useEffect(() => {
@@ -38,6 +39,20 @@ export function WeatherForecastPanel({ acquisitionRequestId = 0 }: WeatherForeca
     handledRequestRef.current = acquisitionRequestId;
     void acquire();
   }, [acquire, acquisitionRequestId]);
+  useEffect(() => {
+    let active = true;
+    void historicalWeatherAcquisitionService.acquirePreviousDayIfNeeded().then((result) => {
+      if (!active) return;
+      if (result.status === 'SUCCESS') setHistoricalMessage(`${result.record.observedPeriod.localDate}の過去気象データを自動で保存しました。`);
+      else if (result.status === 'ALREADY_ACQUIRED') setHistoricalMessage(`${result.record.observedPeriod.localDate}の過去気象データは保存済みです。`);
+      else if (result.status === 'LOCATION_NOT_CONFIGURED') setHistoricalMessage('地域を設定すると、起動時に昨日の過去気象データを自動取得します。');
+      else setHistoricalMessage('昨日の過去気象データを自動取得できませんでした。必要な場合は、もう一度取得してください。');
+      setHistorical(historicalWeatherAcquisitionService.listLatest());
+    }).catch(() => {
+      if (active) setHistoricalMessage('昨日の過去気象データを自動取得できませんでした。ほかの機能は引き続き利用できます。');
+    });
+    return () => { active = false; };
+  }, []);
   return <section className="home-section weather-forecast-panel">
     <p className="section-eyebrow">外部コンテキスト / 予報</p><h2 className="section-title">天気予報</h2>
     <p className="home-description">提供元: Open-Meteo。天気情報の取得時に送信するのは、地域の代表座標、タイムゾーン、予報日数、必要な天気項目だけです。</p>

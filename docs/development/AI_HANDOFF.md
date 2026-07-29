@@ -273,3 +273,7 @@ Do not implement an API Client, external fetch, UI, Analyzer, Prediction, Machin
 - WMO Weather Codeの表示用日本語変換を追加し、ForecastとHistoricalの表示に適用した。未知コードと欠損にも明示的なfallbackを持つ。
 - `scripts/test-location-weather-presentation.ts`で地域presetの一意性・Domain input妥当性とWeather Code日本語変換を検証し、`npm test`へ追加した。
 - 残課題: 国内13代表地域以外の追加、都道府県全件や検索・ジオコーディング対応は未実装。座標をProviderへ送る既存privacy境界、手動再取得、既存location/weather DomainとServiceは維持する。
+
+## 2026-07-29 Issue #33 handoff
+
+前日Historical Weatherは、Home起動時に既存`HistoricalWeatherAcquisitionService.acquirePreviousDayIfNeeded()`からbest-effortで自動取得する。保存済み判定は前日のlocalDate、Base Location timezone、全Location Snapshotフィールド、sourceType `HISTORICAL`、granularity `DAILY`の一致が必須である。singleton serviceは自動取得中Promiseを共有するためStrictModeでも重複通信・保存しない。手動取得は別操作として維持し、自動取得の失敗はWeather UI内で通知するだけで、Evidence / Analysis / Understanding / Reflection / Conversation / Formal Pipelineへは接続しない。
