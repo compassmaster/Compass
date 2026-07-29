@@ -7,6 +7,7 @@ import type { WeatherFatigueObservation } from '../src/features/weather-fatigue-
 import type { DateString, EntryId } from '../src/features/daily-log/types/log.ts';
 import type { SleepRecordId } from '../src/features/sleep/types/sleepRecord.ts';
 import type { ObservedWeatherRecordId } from '../src/features/external-context/weather/types/index.ts';
+import type { ObservedWeatherRecord } from '../src/features/external-context/weather/types/weather.ts';
 import { DailyContextQueryService } from '../src/features/daily-context/services/dailyContextQueryService.ts';
 import { WeatherFatigueObservationQueryService } from '../src/features/weather-fatigue-observation/services/weatherFatigueObservationQueryService.ts';
 import { CARD_READING_GUIDE, FATIGUE_SCALE_NOTE } from '../src/features/relationship-explorer/components/relationshipExplorerPresentation.ts';
@@ -43,6 +44,36 @@ assert.match(FATIGUE_SCALE_NOTE, /高いほど疲れている/);
 assert.ok(CARD_READING_GUIDE.some((line) => line.includes('平均疲労')));
 assert.ok(CARD_READING_GUIDE.some((line) => line.includes('平均の差')));
 assert.ok(CARD_READING_GUIDE.some((line) => line.includes('原因だとは断定しません')));
+
+const multipleLogsDay = day('2026-03-01', 390, 2);
+const firstLog = multipleLogsDay.dailyLogs[0];
+const multipleLogsContext = { ...multipleLogsDay, dailyLogs: [
+  { ...firstLog, id: 'log-z' as EntryId, fatigue: 2 },
+  { ...firstLog, id: 'log-a' as EntryId, fatigue: 4 },
+] };
+const multipleLogsInput = structuredClone(multipleLogsContext);
+const multipleLogsDaily = { listSleepAndLogDates: () => [multipleLogsDay.localDate], getByDate: () => multipleLogsContext } as unknown as DailyContextQueryService;
+const multipleLogsCard = new RelationshipExplorerQueryService(multipleLogsDaily, missingWeatherForTests()).getRelationships().cards[0];
+assert.deepEqual(multipleLogsCard.sourceSummaries.filter((source) => source.kind === 'DAILY_LOG').map((source) => [source.recordId, source.summary]), [
+  ['log-a', '2026-03-01 / 疲労 4'], ['log-z', '2026-03-01 / 疲労 2'],
+], 'each DailyLog summary uses the fatigue value belonging to its own ID');
+assert.deepEqual(multipleLogsContext, multipleLogsInput, 'sleep source presentation does not mutate input records');
+
+const rainDates = ['2026-04-01', '2026-04-02'] as DateString[];
+const rainContexts = [rainDay(rainDates[1], [['log-z', 4], ['log-a', 2]], 'weather-z', 0), rainDay(rainDates[0], [['log-b', 5]], 'weather-a', 1.2)];
+const rainInput = structuredClone(rainContexts);
+const rainObservation = { getObservation: () => ({ ...weatherValue, matchedDayCount: 2, rainyDayCount: 1, dryDayCount: 1, matchedDates: [...rainDates].reverse(), includedDailyLogIds: ['log-z', 'log-b', 'log-a'] as EntryId[], includedWeatherRecordIds: ['weather-z', 'weather-a'] as ObservedWeatherRecordId[] }) } as unknown as WeatherFatigueObservationQueryService;
+const rainProjection = (contexts: readonly DailyContextReadModel[]) => new RelationshipExplorerQueryService({ listSleepAndLogDates: () => [], getByDate: (date: DateString) => contexts.find((context) => context.localDate === date)! } as unknown as DailyContextQueryService, rainObservation).getRelationships().cards[1].sourceSummaries;
+const rainSummaries = rainProjection(rainContexts);
+assert.deepEqual(rainSummaries.map((source) => [source.date, source.kind, source.recordId, source.summary]), [
+  ['2026-04-01', 'DAILY_LOG', 'log-b', '2026-04-01 / 疲労 5'],
+  ['2026-04-01', 'WEATHER', 'weather-a', '2026-04-01 / 雨あり'],
+  ['2026-04-02', 'DAILY_LOG', 'log-a', '2026-04-02 / 疲労 2'],
+  ['2026-04-02', 'DAILY_LOG', 'log-z', '2026-04-02 / 疲労 4'],
+  ['2026-04-02', 'WEATHER', 'weather-z', '2026-04-02 / 雨なし'],
+], 'rain summaries show actual log values and precipitation labels in date, kind, ID order');
+assert.deepEqual(rainProjection([...rainContexts].reverse().map((context) => ({ ...context, dailyLogs: [...context.dailyLogs].reverse() }))), rainSummaries, 'rain summary order does not depend on input order');
+assert.deepEqual(rainContexts, rainInput, 'rain source presentation does not mutate input records');
 const emptyDaily = { listSleepAndLogDates: () => [], getByDate: (date: DateString, timezone: string) => emptyDay(date, timezone) } as unknown as DailyContextQueryService;
 const missingWeather = { getObservation: () => ({ ...weatherValue, status: 'LOCATION_NOT_CONFIGURED', matchedDayCount: 0, rainyDayCount: 0, dryDayCount: 0, rainyAverageFatigue: null, dryAverageFatigue: null, fatigueDifference: null, matchedDates: [], includedDailyLogIds: [], includedWeatherRecordIds: [], timezone: null }) } as unknown as WeatherFatigueObservationQueryService;
 assert.deepEqual(new RelationshipExplorerQueryService(emptyDaily, missingWeather).getRelationships().cards.map((card) => card.status), ['NO_MATCHED_DATA', 'SETTING_REQUIRED']);
@@ -97,4 +128,14 @@ function day(date: string, durationMinutes: number, fatigue: number): DailyConte
 
 function emptyDay(localDate: DateString, timezone: string): DailyContextReadModel {
   return { localDate, timezone, dailyLogs: [], sleepRecord: null, forecast: null, historicalWeather: null, metadata: { dailyLogCount: 0, sleepRecordCandidateCount: 0, forecastCandidateCount: 0, historicalWeatherCandidateCount: 0, hasDailyLog: false, hasSleepRecord: false, hasForecast: false, hasHistoricalWeather: false, completeness: 'EMPTY' } };
+}
+
+function missingWeatherForTests(): WeatherFatigueObservationQueryService {
+  return { getObservation: () => ({ ...weatherValue, status: 'LOCATION_NOT_CONFIGURED', matchedDayCount: 0, rainyDayCount: 0, dryDayCount: 0, rainyAverageFatigue: null, dryAverageFatigue: null, fatigueDifference: null, matchedDates: [], includedDailyLogIds: [], includedWeatherRecordIds: [], timezone: null }) } as unknown as WeatherFatigueObservationQueryService;
+}
+
+function rainDay(localDate: DateString, logs: readonly (readonly [string, number])[], weatherId: string, precipitation: number): DailyContextReadModel {
+  const base = day(localDate, 420, logs[0][1]);
+  const historicalWeather: ObservedWeatherRecord = { id: weatherId as ObservedWeatherRecordId, schemaVersion: 1, kind: 'OBSERVED_WEATHER_RECORD', observedPeriod: { localDate, timezone: 'Asia/Tokyo', granularity: 'DAILY' }, observedValues: { precipitation: { value: precipitation, unit: 'mm' } }, location: { timezone: 'Asia/Tokyo', precision: 'COARSE' }, source: { provider: 'test', sourceType: 'HISTORICAL', fetchedAt: `${localDate}T18:00:00Z` }, availability: { status: 'AVAILABLE' }, createdAt: `${localDate}T18:00:00Z` };
+  return { ...base, dailyLogs: logs.map(([id, fatigue]) => ({ ...base.dailyLogs[0], id: id as EntryId, fatigue })), historicalWeather, metadata: { ...base.metadata, historicalWeatherCandidateCount: 1, hasHistoricalWeather: true } };
 }

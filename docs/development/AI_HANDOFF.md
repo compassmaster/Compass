@@ -299,6 +299,7 @@ Do not implement an API Client, external fetch, UI, Analyzer, Prediction, Machin
 
 - 睡眠・雨カードの双方へ「疲労は高いほど疲れている」ことを常時表示し、平均疲労、平均の差、因果を断定しないことを説明する折りたたみガイドを追加した。
 - 使用Recordは件数と日付・値を含む一時的な表示用要約に変換し、内部IDは入れ子の折りたたみに隠した。要約は決定的にcopy-sortされ、Repository write、入力変更、知識系Pipelineへの接続は追加していない。
+- PR #41 review対応として、Sleep側は日次平均ではなく各DailyLog IDに対応する実際の疲労値を表示する。Rain側を含め、同日複数Log、降水量と雨表示、日付・種別・ID順、入力順非依存、入力不変を自動テストで固定した。
 
 ## 2026-07-29 Prediction MVP (Issue #37)
 

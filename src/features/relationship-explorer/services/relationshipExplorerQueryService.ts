@@ -41,7 +41,7 @@ export class RelationshipExplorerQueryService {
       matchedDates, period: periodOf(matchedDates), usedDataLabels: ['日々の疲労記録', '睡眠時間の記録'],
       caution: '睡眠時間と疲労の関係だけを比べています。体調や活動など、ほかの影響は考慮していません。',
       sourceSummaries: sleepSourceSummaries(matched),
-      sourceRecordIds: { dailyLogIds: matched.flatMap((day) => day.logIds).sort((a, b) => a.localeCompare(b)), sleepRecordIds: matched.map((day) => day.sleepId).sort((a, b) => a.localeCompare(b)), weatherRecordIds: [] },
+      sourceRecordIds: { dailyLogIds: matched.flatMap((day) => day.logs.map((log) => log.id)).sort((a, b) => a.localeCompare(b)), sleepRecordIds: matched.map((day) => day.sleepId).sort((a, b) => a.localeCompare(b)), weatherRecordIds: [] },
     };
   }
 
@@ -66,8 +66,8 @@ export class RelationshipExplorerQueryService {
   }
 }
 
-interface SleepDay { date: DailyContextReadModel['localDate']; fatigue: number; durationMinutes: number; logIds: DailyContextReadModel['dailyLogs'][number]['id'][]; sleepId: NonNullable<DailyContextReadModel['sleepRecord']>['id'] }
-function toSleepDay(day: DailyContextReadModel): SleepDay[] { if (!day.sleepRecord || day.dailyLogs.length === 0 || day.sleepRecord.durationMinutes <= 0) return []; return [{ date: day.localDate, fatigue: average(day.dailyLogs.map((log) => log.fatigue)), durationMinutes: day.sleepRecord.durationMinutes, logIds: day.dailyLogs.map((log) => log.id), sleepId: day.sleepRecord.id }]; }
+interface SleepDay { date: DailyContextReadModel['localDate']; fatigue: number; durationMinutes: number; logs: readonly Pick<DailyContextReadModel['dailyLogs'][number], 'id' | 'fatigue'>[]; sleepId: NonNullable<DailyContextReadModel['sleepRecord']>['id'] }
+function toSleepDay(day: DailyContextReadModel): SleepDay[] { if (!day.sleepRecord || day.dailyLogs.length === 0 || day.sleepRecord.durationMinutes <= 0) return []; return [{ date: day.localDate, fatigue: average(day.dailyLogs.map((log) => log.fatigue)), durationMinutes: day.sleepRecord.durationMinutes, logs: day.dailyLogs.map(({ id, fatigue }) => ({ id, fatigue })), sleepId: day.sleepRecord.id }]; }
 function relationshipStatus(total: number, a: number, b: number, difference: number | null): RelationshipStatus { if (!total) return 'NO_MATCHED_DATA'; if (a < MIN_GROUP_DAYS || b < MIN_GROUP_DAYS) return 'INSUFFICIENT_DATA'; if (difference === null || Math.abs(difference) < MEANINGFUL_DIFFERENCE) return 'NO_CLEAR_DIFFERENCE'; return 'RELATIONSHIP_FOUND'; }
 function dataConfidence(total: number, a: number, b: number): ConfidenceLevel { return total >= 8 && a >= 3 && b >= 3 ? 'HIGH' : total >= 4 && a >= 2 && b >= 2 ? 'MEDIUM' : 'LOW'; }
 function analysisConfidence(status: RelationshipStatus, difference: number | null, a: number, b: number): ConfidenceLevel { if (status !== 'RELATIONSHIP_FOUND' || difference === null) return 'LOW'; return a >= 4 && b >= 4 && Math.abs(difference) >= 1 ? 'HIGH' : 'MEDIUM'; }
@@ -78,7 +78,7 @@ function resolvedLocalTimezone() { return Intl.DateTimeFormat().resolvedOptions(
 
 function sleepSourceSummaries(days: readonly SleepDay[]): RelationshipSourceSummary[] {
   return days.flatMap((day) => [
-    ...day.logIds.map((recordId) => ({ kind: 'DAILY_LOG' as const, recordId, date: day.date, summary: `${day.date} / 疲労 ${formatNumber(day.fatigue)}` })),
+    ...day.logs.map((log) => ({ kind: 'DAILY_LOG' as const, recordId: log.id, date: day.date, summary: `${day.date} / 疲労 ${log.fatigue}` })),
     { kind: 'SLEEP' as const, recordId: day.sleepId, date: day.date, summary: `${day.date} / ${formatHours(day.durationMinutes)}時間` },
   ]).sort(compareSourceSummary);
 }
@@ -93,5 +93,4 @@ function rainSourceSummaries(contexts: readonly DailyContextReadModel[], dailyLo
 }
 function compareSourceSummary(a: RelationshipSourceSummary, b: RelationshipSourceSummary) { return a.date.localeCompare(b.date) || a.kind.localeCompare(b.kind) || a.recordId.localeCompare(b.recordId); }
 function formatHours(minutes: number) { return Number.isInteger(minutes / 60) ? String(minutes / 60) : (minutes / 60).toFixed(1); }
-function formatNumber(value: number) { return Number.isInteger(value) ? String(value) : value.toFixed(1); }
 function rainLabel(precipitationMm: number | null | undefined) { return precipitationMm !== null && precipitationMm !== undefined && precipitationMm > 0 ? '雨あり' : '雨なし'; }
