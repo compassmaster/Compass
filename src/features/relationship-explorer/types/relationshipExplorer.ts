@@ -5,6 +5,15 @@ import type { ObservedWeatherRecordId } from '../../external-context/weather/typ
 export type RelationshipKind = 'SLEEP_FATIGUE' | 'RAIN_FATIGUE';
 export type RelationshipStatus = 'SETTING_REQUIRED' | 'NO_MATCHED_DATA' | 'INSUFFICIENT_DATA' | 'NO_CLEAR_DIFFERENCE' | 'RELATIONSHIP_FOUND';
 export type ConfidenceLevel = 'LOW' | 'MEDIUM' | 'HIGH';
+export type RelationshipSourceKind = 'DAILY_LOG' | 'SLEEP' | 'WEATHER';
+
+/** Human-readable, transient source information for the disclosure UI. */
+export interface RelationshipSourceSummary {
+  readonly kind: RelationshipSourceKind;
+  readonly recordId: string;
+  readonly date: DateString;
+  readonly summary: string;
+}
 
 export interface RelationshipCardReadModel {
   readonly kind: RelationshipKind;
@@ -22,6 +31,7 @@ export interface RelationshipCardReadModel {
   readonly period: { readonly from: DateString | null; readonly to: DateString | null };
   readonly usedDataLabels: readonly string[];
   readonly caution: string;
+  readonly sourceSummaries: readonly RelationshipSourceSummary[];
   readonly sourceRecordIds: {
     readonly dailyLogIds: readonly EntryId[];
     readonly sleepRecordIds: readonly SleepRecordId[];

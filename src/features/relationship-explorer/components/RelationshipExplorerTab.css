@@ -9,6 +9,11 @@
 .relationship-card h3 { margin: 6px 0 10px; color: #1a365d; }
 .relationship-status { display: inline-block; margin: 0; padding: 4px 9px; border-radius: 999px; background: #e6fffa; color: #285e61; font-size: .78rem; font-weight: 700; }
 .relationship-summary { min-height: 4.5em; line-height: 1.6; }
+.fatigue-scale-note { margin: 8px 0; padding: 8px 10px; border-radius: 8px; background: #edf8f4; color: #285e61; font-size: .84rem; font-weight: 600; }
+.reading-guide { margin: 10px 0; padding: 8px 10px; border: 1px solid #c6e6dc; border-radius: 8px; }
+.reading-guide summary, .source-records > summary, .internal-ids summary { cursor: pointer; font-weight: 700; }
+.reading-guide ul, .source-records ul { padding-left: 20px; line-height: 1.6; }
+.internal-ids { margin: 10px 0 0; padding: 8px; background: #f7fafc; border-radius: 8px; }
 .relationship-period, .relationship-used-data { color: #4a5568; font-size: .86rem; }
 .relationship-caution { padding: 10px; border-radius: 8px; background: #fffaf0; color: #744210; font-size: .82rem; line-height: 1.55; }
 .confidence-row { display: grid; gap: 7px; padding: 12px; background: #f7fafc; border-radius: 10px; font-size: .88rem; }
