@@ -60,5 +60,13 @@ export class DailyContextQueryService {
     if (input.timezone.trim() === '') throw new RangeError('timezone must not be empty');
     return enumerateDateRange(input.startDate, input.endDate).map((date) => this.getByDate(date, input.timezone));
   }
+
+  /** Dates that can contribute to a sleep/fatigue projection. Returned as a sorted copy. */
+  listSleepAndLogDates(): readonly DateString[] {
+    return [...new Set([
+      ...this.dailyLogs.getAll().map((record) => record.date),
+      ...this.sleepRecords.getAll().map((record) => record.sleepDate),
+    ])].sort((a, b) => a.localeCompare(b));
+  }
 }
 const EMPTY_HISTORICAL_RECORDS: ObservedWeatherRecordRepository = { save:()=>undefined, findById:()=>null, findByObservedDate:()=>[], findAll:()=>[], deleteAll:()=>undefined };
