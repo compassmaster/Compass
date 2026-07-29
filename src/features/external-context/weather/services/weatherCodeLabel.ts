@@ -14,6 +14,11 @@ export function getWeatherCodeLabel(code: number | null): string {
   return labels[code] ?? `不明な天気（コード: ${code}）`;
 }
 
+/** WMO codes representing rain, drizzle, freezing rain, rain showers, or thunderstorms. */
+export function isRainWeatherCode(code: number | null): boolean {
+  return code !== null && ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82, 95, 96, 99] as readonly number[]).includes(code);
+}
+
 /** IANA timezoneを利用者向けの名称へ変換し、未知値も技術値だと分かる形で表示する。 */
 export function getTimezoneLabel(timezone: string): string {
   return timezone === 'Asia/Tokyo' ? '日本標準時' : `タイムゾーン: ${timezone}`;
