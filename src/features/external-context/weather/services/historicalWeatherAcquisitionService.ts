@@ -2,18 +2,39 @@ import type { BaseLocationRepository } from '../../location/repositories/index.t
 import { HistoricalWeatherClientError, type HistoricalWeatherClient } from '../clients/index.ts';
 import type { ObservedWeatherRecordRepository } from '../repositories/index.ts';
 import type { ObservedWeatherRecord } from '../types/index.ts';
+import { toWeatherLocationSnapshot } from '../../location/services/baseLocationFactory.ts';
 import { getPreviousLocalDate } from './historicalWeatherDate.ts';
 import { normalizeHistoricalWeather } from './historicalWeatherNormalizer.ts';
 
 export type HistoricalWeatherAcquisitionResult = { readonly status:'SUCCESS'; readonly record:ObservedWeatherRecord } | { readonly status:'LOCATION_NOT_CONFIGURED' }
   | { readonly status:'REQUEST_FAILED' | 'INVALID_PROVIDER_RESPONSE'; readonly reason:string };
+export type AutomaticHistoricalWeatherAcquisitionResult = HistoricalWeatherAcquisitionResult | { readonly status:'ALREADY_ACQUIRED'; readonly record:ObservedWeatherRecord };
 export class HistoricalWeatherAcquisitionService {
   private inFlight: Promise<HistoricalWeatherAcquisitionResult> | null = null;
+  private automaticInFlight: Promise<AutomaticHistoricalWeatherAcquisitionResult> | null = null;
   private readonly locations:BaseLocationRepository;private readonly client:HistoricalWeatherClient;private readonly records:ObservedWeatherRecordRepository;private readonly now:()=>Date;
   constructor(locations:BaseLocationRepository, client:HistoricalWeatherClient, records:ObservedWeatherRecordRepository, now:() => Date = () => new Date()) {this.locations=locations;this.client=client;this.records=records;this.now=now;}
   acquirePreviousDay(): Promise<HistoricalWeatherAcquisitionResult> {
     if (this.inFlight) return this.inFlight;
     const pending = this.execute(); const guarded = pending.finally(() => { if (this.inFlight === guarded) this.inFlight = null; }); this.inFlight = guarded; return guarded;
+  }
+  acquirePreviousDayIfNeeded(): Promise<AutomaticHistoricalWeatherAcquisitionResult> {
+    if (this.automaticInFlight) return this.automaticInFlight;
+    const pending = this.executeAutomatic();
+    const guarded = pending.finally(() => { if (this.automaticInFlight === guarded) this.automaticInFlight = null; });
+    this.automaticInFlight = guarded;
+    return guarded;
+  }
+  private async executeAutomatic(): Promise<AutomaticHistoricalWeatherAcquisitionResult> {
+    const location = this.locations.get();
+    if (!location) return { status:'LOCATION_NOT_CONFIGURED' };
+    const localDate = getPreviousLocalDate(this.now(), location.timezone);
+    const snapshot = toWeatherLocationSnapshot(location);
+    const existing = this.records.findAll().find((record) => record.observedPeriod.localDate === localDate
+      && record.observedPeriod.timezone === location.timezone && record.observedPeriod.granularity === 'DAILY'
+      && record.source.sourceType === 'HISTORICAL' && sameLocationSnapshot(record.location, snapshot));
+    if (existing) return { status:'ALREADY_ACQUIRED', record:existing };
+    return this.acquirePreviousDay();
   }
   private async execute(): Promise<HistoricalWeatherAcquisitionResult> {
     const location = this.locations.get(); if (!location) return { status:'LOCATION_NOT_CONFIGURED' };
@@ -26,6 +47,10 @@ export class HistoricalWeatherAcquisitionService {
     const key = `${item.observedPeriod.timezone}\u0000${item.observedPeriod.localDate}`;
     const current=latest.get(key); if (!current || compareHistoricalWeatherRecency(item,current)>0) latest.set(key,item); }
     return [...latest.values()].sort((a,b)=>b.observedPeriod.localDate.localeCompare(a.observedPeriod.localDate)).slice(0,limit); }
+}
+function sameLocationSnapshot(a: ObservedWeatherRecord['location'], b: NonNullable<ObservedWeatherRecord['location']>): boolean {
+  return a !== null && a.timezone === b.timezone && a.precision === b.precision && a.label === b.label
+    && a.locality === b.locality && a.countryCode === b.countryCode && a.latitude === b.latitude && a.longitude === b.longitude;
 }
 export function compareHistoricalWeatherRecency(a:ObservedWeatherRecord,b:ObservedWeatherRecord):number { return Date.parse(a.source.fetchedAt)-Date.parse(b.source.fetchedAt) || Date.parse(a.createdAt)-Date.parse(b.createdAt) || a.id.localeCompare(b.id); }
 function isRecordForLocation(record: ObservedWeatherRecord, timezone: string, latitude: number, longitude: number): boolean {

@@ -268,3 +268,10 @@ Formal Reflectionは永続化、Repository直接読み取り、新しいlocalSto
 - HomeがLocationの保存通知とWeatherの取得要求をrequest IDで仲介し、Location featureはWeather featureへ直接依存しない。
 - Forecast / HistoricalのWMO Weather Codeは日本語表示へ変換し、未知コードと欠損を区別する。
 - Base LocationとWeatherの既存Domain Model、Repository、Application Service、保存形式は変更していない。既存手入力形式の保存データも読み込み・削除できる。
+
+## 2026-07-29 前日気象の起動時自動取得（Issue #33）
+
+- HomeのWeather表示開始時、設定済みBase Locationのtimezoneで前日を求め、既存の`HistoricalWeatherAcquisitionService`を通じて1回だけ自動取得する。
+- 同じlocalDate、timezone、完全に一致するLocation Snapshot、`HISTORICAL`、`DAILY`の保存済みRecordがあれば通信・保存を省略する。Forecast、OBSERVED、別timezone、別地域、非DAILYは既取得とみなさない。
+- Service singletonの進行中Promiseを共有し、React StrictModeのEffect再実行でも通信・保存を重複させない。手動取得は引き続き利用できる。
+- 自動取得失敗は利用者向け状態表示に閉じ、Evidence、Analysis、Understanding、Reflection、Conversation、Formal Pipelineには接続しない。

@@ -20,11 +20,48 @@ const location={schemaVersion:1,id:'location' as BaseLocation['id'],displayName:
 const record=normalizeHistoricalWeather(result,location,()=> 'one');assert.equal(record.kind,'OBSERVED_WEATHER_RECORD');assert.equal(record.source.sourceType,'HISTORICAL');assert.equal(record.availability.status,'PARTIAL');assert.equal(record.observedValues.precipitation?.value,null);
 const allNull={...result,dailyMinimumTemperature:null,dailyMaximumTemperature:null,precipitation:null,precipitationProbability:null,weatherCode:null,windSpeed:null,sunshineDuration:null};assert.equal(normalizeHistoricalWeather(allNull,location).availability.status,'UNAVAILABLE');assert.deepEqual(normalizeHistoricalWeather(allNull,location).observedValues,{});assert.notEqual(normalizeHistoricalWeather(result,location,()=> 'a').id,normalizeHistoricalWeather(result,location,()=> 'b').id);
 let calls=0;const saved:ObservedWeatherRecord[]=[];const repo={save:(r:ObservedWeatherRecord)=>saved.push(r),findById:()=>null,findByObservedDate:()=>[],findAll:()=>saved,deleteAll:()=>undefined};const service=new HistoricalWeatherAcquisitionService({get:()=>location} as never,{fetchDailyHistoricalWeather:async()=>{calls++;await Promise.resolve();return result;}},repo,()=>new Date('2026-07-27T00:00:00Z'));await Promise.all([service.acquirePreviousDay(),service.acquirePreviousDay()]);assert.equal(calls,1);assert.equal(saved.length,1);
+const automaticResults=await Promise.all([service.acquirePreviousDayIfNeeded(),service.acquirePreviousDayIfNeeded()]);assert.equal(automaticResults[0].status,'ALREADY_ACQUIRED');assert.equal(calls,1);assert.equal(saved.length,1);
 const otherTimezoneLocation={...location,id:'new-york' as BaseLocation['id'],displayName:'New York',timezone:'America/New_York',coordinates:{latitude:40.71,longitude:-74.01}};
 const otherCoordinatesLocation={...location,id:'osaka' as BaseLocation['id'],displayName:'Osaka',coordinates:{latitude:34.69,longitude:135.5}};
 const sameDateOtherTimezone=normalizeHistoricalWeather({...result,fetchedAt:'2026-07-27T02:00:00Z'},otherTimezoneLocation,()=> 'new-york');
 const sameDateOtherCoordinates=normalizeHistoricalWeather({...result,fetchedAt:'2026-07-27T03:00:00Z'},otherCoordinatesLocation,()=> 'osaka');
 saved.push(sameDateOtherTimezone,sameDateOtherCoordinates);
 assert.deepEqual(service.listLatest().map((item)=>item.id),[saved[0].id]);
-let absentCalls=0;const absent=new HistoricalWeatherAcquisitionService({get:()=>null} as never,{fetchDailyHistoricalWeather:async()=>{absentCalls++;return result;}},repo);assert.equal((await absent.acquirePreviousDay()).status,'LOCATION_NOT_CONFIGURED');assert.equal(absentCalls,0);
+const nonMatchingRecords=[
+  {...saved[0],id:'forecast' as ObservedWeatherRecord['id'],source:{...saved[0].source,sourceType:'FORECAST' as const}},
+  {...saved[0],id:'observed' as ObservedWeatherRecord['id'],source:{...saved[0].source,sourceType:'OBSERVED' as const}},
+  {...saved[0],id:'hourly' as ObservedWeatherRecord['id'],observedPeriod:{...saved[0].observedPeriod,granularity:'HOURLY' as const}},
+  sameDateOtherTimezone,sameDateOtherCoordinates,
+];
+let unmatchedCalls=0;const unmatchedRepo={...repo,findAll:()=>nonMatchingRecords,save:()=>undefined};const unmatchedService=new HistoricalWeatherAcquisitionService({get:()=>location} as never,{fetchDailyHistoricalWeather:async()=>{unmatchedCalls++;return result;}},unmatchedRepo,()=>new Date('2026-07-27T00:00:00Z'));assert.equal((await unmatchedService.acquirePreviousDayIfNeeded()).status,'SUCCESS');assert.equal(unmatchedCalls,1);
+// 保存がない初回起動をStrictMode相当で同時実行しても、取得と保存は一度だけ行う。
+let automaticCalls=0;const automaticSaved:ObservedWeatherRecord[]=[];
+const automaticRepo={...repo,findAll:()=>automaticSaved,save:(item:ObservedWeatherRecord)=>{automaticSaved.push(item);}};
+const automaticService=new HistoricalWeatherAcquisitionService({get:()=>location} as never,{fetchDailyHistoricalWeather:async()=>{automaticCalls++;await Promise.resolve();return result;}},automaticRepo,()=>new Date('2026-07-27T00:00:00Z'));
+const [firstAutomatic,secondAutomatic]=await Promise.all([automaticService.acquirePreviousDayIfNeeded(),automaticService.acquirePreviousDayIfNeeded()]);
+assert.equal(firstAutomatic.status,'SUCCESS');assert.equal(secondAutomatic.status,'SUCCESS');assert.equal(automaticCalls,1);assert.equal(automaticSaved.length,1);
+// StrictModeの再実行が先の保存完了後になっても、保存済み判定により再取得しない。
+assert.equal((await automaticService.acquirePreviousDayIfNeeded()).status,'ALREADY_ACQUIRED');assert.equal(automaticCalls,1);assert.equal(automaticSaved.length,1);
+// 保存済み判定はRepositoryから受け取った入力Recordを変更しない。
+const immutableInput=structuredClone(automaticSaved[0]);const immutableBefore=structuredClone(immutableInput);let immutableCalls=0;
+const immutableService=new HistoricalWeatherAcquisitionService({get:()=>location} as never,{fetchDailyHistoricalWeather:async()=>{immutableCalls++;return result;}},{...repo,findAll:()=>[immutableInput],save:()=>undefined},()=>new Date('2026-07-27T00:00:00Z'));
+assert.equal((await immutableService.acquirePreviousDayIfNeeded()).status,'ALREADY_ACQUIRED');assert.deepEqual(immutableInput,immutableBefore);assert.equal(immutableCalls,0);
+
+// 保存済み判定の各条件は単独で不一致でも取得対象になる。
+const mismatches:readonly ObservedWeatherRecord[]=[
+  {...saved[0],id:'other-date' as ObservedWeatherRecord['id'],observedPeriod:{...saved[0].observedPeriod,localDate:'2026-07-25'}},
+  {...saved[0],id:'other-timezone' as ObservedWeatherRecord['id'],observedPeriod:{...saved[0].observedPeriod,timezone:'UTC'}},
+  {...saved[0],id:'other-location' as ObservedWeatherRecord['id'],location:{...saved[0].location!,label:'別の地域'}},
+  {...saved[0],id:'no-location' as ObservedWeatherRecord['id'],location:null},
+  {...saved[0],id:'forecast-only' as ObservedWeatherRecord['id'],source:{...saved[0].source,sourceType:'FORECAST' as const}},
+  {...saved[0],id:'observed-only' as ObservedWeatherRecord['id'],source:{...saved[0].source,sourceType:'OBSERVED' as const}},
+  {...saved[0],id:'hourly-only' as ObservedWeatherRecord['id'],observedPeriod:{...saved[0].observedPeriod,granularity:'HOURLY' as const}},
+];
+for(const mismatch of mismatches){let mismatchCalls=0;const mismatchService=new HistoricalWeatherAcquisitionService({get:()=>location} as never,{fetchDailyHistoricalWeather:async()=>{mismatchCalls++;return result;}},{...repo,findAll:()=>[mismatch],save:()=>undefined},()=>new Date('2026-07-27T00:00:00Z'));assert.equal((await mismatchService.acquirePreviousDayIfNeeded()).status,'SUCCESS');assert.equal(mismatchCalls,1);}
+
+// 自動取得失敗は保存せず、lockを解放して既存の手動取得を妨げない。
+let failureCalls=0;const failureSaved:ObservedWeatherRecord[]=[];const failureService=new HistoricalWeatherAcquisitionService({get:()=>location} as never,{fetchDailyHistoricalWeather:async()=>{failureCalls++;if(failureCalls===1)throw new HistoricalWeatherClientError('REQUEST_FAILED','offline');return result;}},{...repo,findAll:()=>failureSaved,save:(item:ObservedWeatherRecord)=>{failureSaved.push(item);}},()=>new Date('2026-07-27T00:00:00Z'));
+assert.equal((await failureService.acquirePreviousDayIfNeeded()).status,'REQUEST_FAILED');assert.equal(failureSaved.length,0);assert.equal((await failureService.acquirePreviousDay()).status,'SUCCESS');assert.equal(failureCalls,2);assert.equal(failureSaved.length,1);
+
+let absentCalls=0;const absent=new HistoricalWeatherAcquisitionService({get:()=>null} as never,{fetchDailyHistoricalWeather:async()=>{absentCalls++;return result;}},repo);assert.equal((await absent.acquirePreviousDayIfNeeded()).status,'LOCATION_NOT_CONFIGURED');assert.equal((await absent.acquirePreviousDay()).status,'LOCATION_NOT_CONFIGURED');assert.equal(absentCalls,0);
 console.log('historical weather acquisition tests passed');
