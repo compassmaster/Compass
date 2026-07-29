@@ -18,6 +18,7 @@ export const logRepository: ILogRepository = new LocalStorageLogRepository();
 export const dailyLogApplicationService = new DailyLogApplicationService(logRepository);
 export const immediateResponseService = new ImmediateResponseService();
 
-export type { SaveDailyLogResult } from './dailyLogApplicationService';
+export type { SaveDailyLogResult, GetDailyLogResult, UpdateDailyLogInput, UpdateDailyLogResult, DeleteDailyLogResult } from './dailyLogApplicationService';
+export { DailyLogApplicationService } from './dailyLogApplicationService';
 export type { ImmediateResponse } from './immediateResponseService';
 export { ImmediateResponseService } from './immediateResponseService';

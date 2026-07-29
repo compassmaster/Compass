@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { logRepository } from '../features/daily-log/services';
+import { dailyLogApplicationService } from '../features/daily-log/services';
 import {
   userModelUpdateApplicationService,
   userModelUpdateCandidateRepository,
@@ -87,7 +87,7 @@ function loadInitialUserModel(): UserModel {
 
 export function App() {
   const [activeTab, setActiveTab] = useState<AppTab>('home');
-  const [logs, setLogs] = useState<DailyLog[]>(() => logRepository.getAll());
+  const [logs, setLogs] = useState<DailyLog[]>(() => dailyLogApplicationService.listDailyLogs());
   const [, setUserModel] = useState<UserModel>(() => loadInitialUserModel());
   const [userModelUpdateCandidates, setUserModelUpdateCandidates] = useState<UserModelUpdateCandidate[]>(() =>
     userModelUpdateCandidateRepository.getAll()
@@ -110,8 +110,7 @@ export function App() {
   );
 
   const refreshLogs = () => {
-    setLogs(logRepository.getAll());
-    setActiveTab('home');
+    setLogs(dailyLogApplicationService.listDailyLogs());
   };
 
   const refreshUserModelUpdateCandidates = () => {
@@ -147,7 +146,7 @@ export function App() {
   };
 
   const handleRunAnalysis = () => {
-    const allLogs = logRepository.getAll();
+    const allLogs = dailyLogApplicationService.listDailyLogs();
     const sleepRecords = sleepRecordApplicationService.list();
     const dates = [...allLogs.map((log) => log.date), ...sleepRecords.map((record) => record.sleepDate)].sort();
     if (dates.length === 0) {
@@ -203,7 +202,7 @@ export function App() {
           className={`tab-button ${activeTab === 'log' ? 'active-tab' : ''}`} 
           onClick={() => setActiveTab('log')}
         >
-          📝 今日の記録
+          📝 記録
         </button>
         <button className={`tab-button ${activeTab === 'relationships' ? 'active-tab' : ''}`} onClick={() => setActiveTab('relationships')}>
           🔎 関係

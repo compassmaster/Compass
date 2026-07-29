@@ -304,3 +304,11 @@ Do not implement an API Client, external fetch, UI, Analyzer, Prediction, Machin
 ## 2026-07-29 Prediction MVP (Issue #37)
 
 `prediction` featureのQuery Serviceは保存済み翌日DAILY Forecastと既存Rain × Fatigue Relationshipを依存注入で読み、5状態の非永続Read Modelを返す。雨判定は降水確率50%以上、降水量0超、雨系Weather Code。Relationship利用にはstatus、Medium以上、合計4日・各群2日、非null差が必要である。ForecastはBase Locationのtimezone・座標・地域Snapshotを完全照合し、fetchedAt、createdAt、IDの順で選ぶ。外部取得やwriteを追加せず、Formal Pipelineほかの知識系機能には非接続のままにする。
+
+## 2026-07-29 DailyLog管理 (Issue #42) Handoff
+
+- DailyLogApplicationServiceへ決定的な`listDailyLogs`、Result型の`getDailyLog` / `updateDailyLog` / `deleteDailyLog`を追加した。UIはRepository/localStorageを直接操作しない。
+- 記録タブは保存済み一覧、空状態、疲労スケール説明、編集フォーム、削除確認を備える。編集可能なのは対象日、気分、疲労、メモ、イベントのみ。sleepHoursを編集項目へ戻していない。
+- 更新時はid、createdAt、schemaVersion、既存sleepHoursを維持し、updatedAtのみServiceの現在時刻へ更新する。配列とeventsは防御的にコピーし、一覧順はdate降順、createdAt降順、ID昇順tie-breakで決定的にする。
+- 編集・削除は分析系の再生成や削除を行わない。Evidence、Insight、Understanding、UserModel、Reflection、Prediction、Formal Pipelineは次回の明示的な分析まで既存状態を維持する。
+- `scripts/test-daily-log-management.ts`がServiceの成功/不正/対象なし/不変性/日付変更とUI境界・表示契約を検証する。

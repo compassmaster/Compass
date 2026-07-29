@@ -53,7 +53,7 @@ export class LocalStorageLogRepository implements ILogRepository {
       console.warn(`[Compass] Log not found for update: ${log.id}`);
       return;
     }
-    logs[index] = { ...log, updatedAt: new Date().toISOString() };
+    logs[index] = { ...log, events: [...log.events] };
     this.persist(logs);
   }
 
