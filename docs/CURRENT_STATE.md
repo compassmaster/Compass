@@ -275,3 +275,7 @@ Formal Reflectionは永続化、Repository直接読み取り、新しいlocalSto
 - 同じlocalDate、timezone、完全に一致するLocation Snapshot、`HISTORICAL`、`DAILY`の保存済みRecordがあれば通信・保存を省略する。Forecast、OBSERVED、別timezone、別地域、非DAILYは既取得とみなさない。
 - Service singletonの進行中Promiseを共有し、React StrictModeのEffect再実行でも通信・保存を重複させない。手動取得は引き続き利用できる。
 - 自動取得失敗は利用者向け状態表示に閉じ、Evidence、Analysis、Understanding、Reflection、Conversation、Formal Pipelineには接続しない。
+
+## Relationship Explorer MVP (2026-07-29)
+
+独立した「関係」タブで睡眠×疲労と雨×疲労の読み取り専用Relationshipを一覧表示する。既存Query / Observation Serviceを再利用し、結果は永続化せずFormal Pipelineへ接続しない。

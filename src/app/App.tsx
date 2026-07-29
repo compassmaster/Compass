@@ -23,11 +23,12 @@ import type { UnderstandingObject } from '../features/understanding/types/unders
 import type { ResolvedFormalUserModel } from '../features/formal-user-model/types/formalUserModel.ts';
 import { LogTab } from '../features/daily-log/components/LogTab';
 import { MapTab } from '../features/compass-map/components/MapTab';
+import { RelationshipExplorerTab } from '../features/relationship-explorer/components/RelationshipExplorerTab.tsx';
 
 import './App.css';
 
 
-type AppTab = 'home' | 'log' | 'compassMap';
+type AppTab = 'home' | 'log' | 'relationships' | 'compassMap';
 
 
 function loadInitialUnderstandingCandidates(): UnderstandingCandidate[] {
@@ -203,6 +204,9 @@ export function App() {
         >
           📝 今日の記録
         </button>
+        <button className={`tab-button ${activeTab === 'relationships' ? 'active-tab' : ''}`} onClick={() => setActiveTab('relationships')}>
+          🔎 関係
+        </button>
         <button 
           className={`tab-button ${activeTab === 'compassMap' ? 'active-tab' : ''}`} 
           onClick={() => {
@@ -240,6 +244,7 @@ export function App() {
           />
         )}
         {activeTab === 'log' && <LogTab onSaveSuccess={refreshLogs} />}
+        {activeTab === 'relationships' && <RelationshipExplorerTab />}
         {activeTab === 'compassMap' && (
           <MapTab
             resolvedFormalUserModel={resolvedFormalUserModel}

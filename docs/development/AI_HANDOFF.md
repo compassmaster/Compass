@@ -277,3 +277,12 @@ Do not implement an API Client, external fetch, UI, Analyzer, Prediction, Machin
 ## 2026-07-29 Issue #33 handoff
 
 前日Historical Weatherは、Home起動時に既存`HistoricalWeatherAcquisitionService.acquirePreviousDayIfNeeded()`からbest-effortで自動取得する。保存済み判定は前日のlocalDate、Base Location timezone、全Location Snapshotフィールド、sourceType `HISTORICAL`、granularity `DAILY`の一致が必須である。singleton serviceは自動取得中Promiseを共有するためStrictModeでも重複通信・保存しない。手動取得は別操作として維持し、自動取得の失敗はWeather UI内で通知するだけで、Evidence / Analysis / Understanding / Reflection / Conversation / Formal Pipelineへは接続しない。
+
+## 2026-07-29 Relationship Explorer MVP (Issue #35)
+
+- 独立した「関係」タブと`relationship-explorer` featureを追加し、「睡眠時間と疲労」「雨と疲労」の2カードを常に表示する。
+- 専用Query Serviceは既存Daily Context Query ServiceとWeather Fatigue Observation Query Serviceを再利用する。UIはRepositoryをimportせず、結果は永続化しない。
+- データ信頼度は採用日数（High: 合計8日以上かつ各群3日以上、Medium: 合計4日以上かつ各群2日以上、それ以外Low）、分析信頼度は差と群数（関係ありのうち各群4日以上かつ差1.0以上High、その他Medium、関係未検出時Low）として別々に提示する。
+- Read Modelは平均と差の計算精度を保持し、UIだけが小数1桁へ丸める。採用したDailyLog / Sleep / Weather Record IDを追跡できる。
+- 入力配列を変更せず、日付・IDを決定的に扱う。設定不足・データ不足・差が小さい場合も状態付きカードを維持する。
+- Evidence、Analysis、Understanding、UserModel、Reflection、Prediction、ConversationおよびFormal Pipelineへの保存・自動接続は行わない。
