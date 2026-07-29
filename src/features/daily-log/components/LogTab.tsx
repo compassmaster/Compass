@@ -1,13 +1,8 @@
 import { useState, type FormEvent } from 'react';
 import { reflectionService } from '../../analysis/services';
-import {
-  calculateSleepDurationMinutes,
-  formatDurationMinutes,
-  sleepRecordApplicationService,
-} from '../../sleep/services';
+import { SleepRecordSection } from '../../sleep/components/SleepRecordSection';
 import { dailyLogApplicationService, immediateResponseService } from '../services';
 import {
-  todayDateString,
   type DailyLogDraft,
   type Scale,
 } from '../types/log';
@@ -23,11 +18,6 @@ import './LogTab.css';
 export function LogTab({ onSaveSuccess }: { onSaveSuccess: () => void }) {
   const [mood, setMood] = useState<Scale | null>(3);
   const [fatigue, setFatigue] = useState<Scale | null>(3);
-  const today = todayDateString();
-  const existingSleepRecord = sleepRecordApplicationService.getByDate(today);
-  const [bedtime, setBedtime] = useState(existingSleepRecord?.bedtime.slice(0, 16) ?? '');
-  const [wakeTime, setWakeTime] = useState(existingSleepRecord?.wakeTime.slice(0, 16) ?? '');
-  const [sleepMessage, setSleepMessage] = useState(existingSleepRecord ? 'その日の睡眠は保存済みです。必要なら修正できます。' : '');
   const [note, setNote] = useState('');
   const [events, setEvents] = useState('');
   const [listRevision, setListRevision] = useState(0);
@@ -46,27 +36,6 @@ export function LogTab({ onSaveSuccess }: { onSaveSuccess: () => void }) {
         .map((e) => e.trim())
         .filter(Boolean),
     };
-
-    const shouldSaveSleep = bedtime.trim() || wakeTime.trim();
-    if (shouldSaveSleep) {
-      const sleepResult = existingSleepRecord
-        ? sleepRecordApplicationService.update(existingSleepRecord.id, { sleepDate: today, bedtime, wakeTime, source: 'MANUAL' })
-        : sleepRecordApplicationService.create({ sleepDate: today, bedtime, wakeTime, source: 'MANUAL' });
-
-      if (!sleepResult.ok) {
-        const message = sleepResult.reason === 'WAKE_TIME_NOT_AFTER_BEDTIME'
-          ? '起床日時は就寝日時より後にしてください'
-          : sleepResult.reason === 'INVALID_DATETIME'
-          ? '就寝日時と起床日時を正しく入力してください'
-          : sleepResult.reason === 'DUPLICATE_SLEEP_DATE'
-          ? 'その日の睡眠はすでに保存されています。画面を更新して編集してください'
-          : '睡眠記録が見つかりませんでした';
-        setSleepMessage(message);
-        alert(message);
-        return;
-      }
-      setSleepMessage(`睡眠を保存しました（${formatDurationMinutes(sleepResult.record.durationMinutes)}）`);
-    }
 
     const result = dailyLogApplicationService.saveDailyLog(draft);
 
@@ -95,6 +64,7 @@ export function LogTab({ onSaveSuccess }: { onSaveSuccess: () => void }) {
 
   return (
     <>
+    <SleepRecordSection />
     <form onSubmit={handleSubmit} className="log-form">
       <h2>今日を記録する</h2>
 
@@ -156,44 +126,6 @@ export function LogTab({ onSaveSuccess }: { onSaveSuccess: () => void }) {
           ))}
         </div>
       </div>
-
-
-      <section className="sleep-record-panel">
-        <h3>その日の睡眠</h3>
-        <p className="sleep-record-help">
-          睡眠はDaily Logとは別に、起床日単位で1件だけ保存します。Daily Logを追加しても再入力は不要です。
-        </p>
-
-        <div className="form-group">
-          <label className="form-label">就寝日時</label>
-          <input
-            type="datetime-local"
-            value={bedtime}
-            onChange={(e) => setBedtime(e.target.value)}
-            className="form-input"
-          />
-        </div>
-
-        <div className="form-group">
-          <label className="form-label">起床日時</label>
-          <input
-            type="datetime-local"
-            value={wakeTime}
-            onChange={(e) => setWakeTime(e.target.value)}
-            className="form-input"
-          />
-        </div>
-
-        <div className="sleep-record-summary">
-          計算された睡眠時間:{' '}
-          {(() => {
-            if (!bedtime || !wakeTime) return '未計算';
-            const result = calculateSleepDurationMinutes(bedtime, wakeTime);
-            return result.ok ? formatDurationMinutes(result.durationMinutes) : '未計算';
-          })()}
-        </div>
-        {sleepMessage && <p className="sleep-record-message">{sleepMessage}</p>}
-      </section>
 
 
       <div className="form-group">
