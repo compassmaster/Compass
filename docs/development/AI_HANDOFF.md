@@ -303,3 +303,4 @@ Do not implement an API Client, external fetch, UI, Analyzer, Prediction, Machin
 - データ信頼度とPrediction信頼度を分離し、Prediction信頼度は的中確率でないとUIに明記した。疲労の確定値、診断、因果、行動指示は表示しない。
 - 結果は永続化せず、Evidence / Analysis / Understanding / UserModel / Reflection / Conversation / Formal Pipelineへ接続しない。採用Forecast IDとRelationshipのDailyLog / Weather Record IDを追跡する。
 - PR #38 review follow-up: Forecastは翌日・timezone・DAILY / FORECASTに加えて現在のBase Location座標snapshot一致を必須とする。Rain Relationshipは`RELATIONSHIP_FOUND`かつ疲労差`> 0`の場合だけ見通しに利用する。Read Modelへ雨判定、予報取得時刻、Relationship状態・分析信頼度を追加し、UIでも雨判定と予報取得時刻を確認可能にした。
+- 非雨状態も条件付き見通しとして扱い、「雨を条件にした疲労の高まりを含めない」と表示するが、天気以外の疲労を低いとは推測しない。非雨時のデータ信頼度はForecast availability、Prediction信頼度はAVAILABLEならMedium、PARTIALならLowとする。Relationship使用時のデータ信頼度はForecastとRelationshipの低い方を採用する。

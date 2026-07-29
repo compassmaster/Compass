@@ -17,6 +17,6 @@ export function PredictionTab() {
     </article>
   </section>;
 }
-function statusLabel(status: TomorrowFatiguePredictionReadModel['status']) { return ({ LOCATION_NOT_CONFIGURED: '地域の設定が必要です', FORECAST_NOT_AVAILABLE: '明日の予報がありません', RAIN_NOT_EXPECTED: '雨を条件にした見通しはありません', RELATIONSHIP_NOT_SUPPORTED: '関係を判断できる記録が不足しています', OUTLOOK_AVAILABLE: '条件付きの見通しがあります' })[status]; }
+function statusLabel(status: TomorrowFatiguePredictionReadModel['status']) { return ({ LOCATION_NOT_CONFIGURED: '地域の設定が必要です', FORECAST_NOT_AVAILABLE: '明日の予報がありません', RAIN_NOT_EXPECTED: '雨による疲労の高まりを含めない見通しです', RELATIONSHIP_NOT_SUPPORTED: '関係を判断できる記録が不足しています', OUTLOOK_AVAILABLE: '条件付きの見通しがあります' })[status]; }
 function confidenceLabel(value: ConfidenceLevel) { return ({ LOW: 'まだ低い', MEDIUM: '中くらい', HIGH: '比較的高い' })[value]; }
 function ids(values: readonly string[]) { return values.length ? values.join('、') : 'なし'; }
