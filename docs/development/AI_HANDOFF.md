@@ -295,6 +295,11 @@ Do not implement an API Client, external fetch, UI, Analyzer, Prediction, Machin
 - 状態全種、データ信頼度Low/Medium/High、分析信頼度Low/Medium/High、timezone伝播、期間、入力不変、決定的ID sortの境界テストを追加した。
 - Query経路へwrite監視付きRepositoryを注入し、Relationship取得時にDailyLog / Sleep / Forecast / Observed Weather / Base Locationの全Repository write methodが呼ばれないことを明示的にテストした。Issue #35の最終変更内容は`docs/変更履歴.md`にも同期した。
 
+### Relationship Explorer source presentation follow-up
+
+- 睡眠・雨カードの双方へ「疲労は高いほど疲れている」ことを常時表示し、平均疲労、平均の差、因果を断定しないことを説明する折りたたみガイドを追加した。
+- 使用Recordは件数と日付・値を含む一時的な表示用要約に変換し、内部IDは入れ子の折りたたみに隠した。要約は決定的にcopy-sortされ、Repository write、入力変更、知識系Pipelineへの接続は追加していない。
+
 ## 2026-07-29 Prediction MVP (Issue #37)
 
 `prediction` featureのQuery Serviceは保存済み翌日DAILY Forecastと既存Rain × Fatigue Relationshipを依存注入で読み、5状態の非永続Read Modelを返す。雨判定は降水確率50%以上、降水量0超、雨系Weather Code。Relationship利用にはstatus、Medium以上、合計4日・各群2日、非null差が必要である。ForecastはBase Locationのtimezone・座標・地域Snapshotを完全照合し、fetchedAt、createdAt、IDの順で選ぶ。外部取得やwriteを追加せず、Formal Pipelineほかの知識系機能には非接続のままにする。

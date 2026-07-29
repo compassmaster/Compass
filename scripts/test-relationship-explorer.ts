@@ -9,6 +9,7 @@ import type { SleepRecordId } from '../src/features/sleep/types/sleepRecord.ts';
 import type { ObservedWeatherRecordId } from '../src/features/external-context/weather/types/index.ts';
 import { DailyContextQueryService } from '../src/features/daily-context/services/dailyContextQueryService.ts';
 import { WeatherFatigueObservationQueryService } from '../src/features/weather-fatigue-observation/services/weatherFatigueObservationQueryService.ts';
+import { CARD_READING_GUIDE, FATIGUE_SCALE_NOTE } from '../src/features/relationship-explorer/components/relationshipExplorerPresentation.ts';
 import type { ILogRepository } from '../src/features/daily-log/services/logRepository.ts';
 import type { ISleepRecordRepository } from '../src/features/sleep/services/sleepRecordRepository.ts';
 import type { WeatherForecastSnapshotRepository, ObservedWeatherRecordRepository } from '../src/features/external-context/weather/repositories/index.ts';
@@ -32,7 +33,17 @@ assert.deepEqual(model.cards[0].period, { from: '2026-01-01', to: '2026-01-04' }
 assert.deepEqual(model.cards[1].period, { from: '2026-01-01', to: '2026-01-04' });
 assert.deepEqual(model.cards[0].usedDataLabels, ['日々の疲労記録', '睡眠時間の記録']);
 assert.match(model.cards[1].caution, /原因だとは判断せず/);
-const emptyDaily = { listSleepAndLogDates: () => [], getByDate: () => { throw new Error('not called'); } } as unknown as DailyContextQueryService;
+assert.deepEqual(model.cards[0].sourceSummaries.map((source) => source.summary), [
+  '2026-01-01 / 疲労 5', '2026-01-01 / 5時間',
+  '2026-01-02 / 疲労 4', '2026-01-02 / 5.5時間',
+  '2026-01-03 / 疲労 2', '2026-01-03 / 7時間',
+  '2026-01-04 / 疲労 2', '2026-01-04 / 8時間',
+], 'human-readable summaries have a deterministic date/type order');
+assert.match(FATIGUE_SCALE_NOTE, /高いほど疲れている/);
+assert.ok(CARD_READING_GUIDE.some((line) => line.includes('平均疲労')));
+assert.ok(CARD_READING_GUIDE.some((line) => line.includes('平均の差')));
+assert.ok(CARD_READING_GUIDE.some((line) => line.includes('原因だとは断定しません')));
+const emptyDaily = { listSleepAndLogDates: () => [], getByDate: (date: DateString, timezone: string) => emptyDay(date, timezone) } as unknown as DailyContextQueryService;
 const missingWeather = { getObservation: () => ({ ...weatherValue, status: 'LOCATION_NOT_CONFIGURED', matchedDayCount: 0, rainyDayCount: 0, dryDayCount: 0, rainyAverageFatigue: null, dryAverageFatigue: null, fatigueDifference: null, matchedDates: [], includedDailyLogIds: [], includedWeatherRecordIds: [], timezone: null }) } as unknown as WeatherFatigueObservationQueryService;
 assert.deepEqual(new RelationshipExplorerQueryService(emptyDaily, missingWeather).getRelationships().cards.map((card) => card.status), ['NO_MATCHED_DATA', 'SETTING_REQUIRED']);
 assert.deepEqual(new RelationshipExplorerQueryService(emptyDaily, missingWeather).getRelationships().cards[0].period, { from: null, to: null });
@@ -46,7 +57,7 @@ const boundaryCases = [
 for (const expected of boundaryCases) {
   const records = new Map(expected.days.map((value) => [value.localDate, value]));
   let requestedTimezone = '';
-  const context = { listSleepAndLogDates: () => expected.days.map((value) => value.localDate).reverse(), getByDate: (date: DateString, timezone: string) => { requestedTimezone = timezone; return records.get(date)!; } } as unknown as DailyContextQueryService;
+  const context = { listSleepAndLogDates: () => expected.days.map((value) => value.localDate).reverse(), getByDate: (date: DateString, timezone: string) => { requestedTimezone = timezone; return records.get(date) ?? emptyDay(date, timezone); } } as unknown as DailyContextQueryService;
   const card = new RelationshipExplorerQueryService(context, weather).getRelationships().cards[0];
   assert.deepEqual([card.status, card.dataConfidence, card.analysisConfidence], [expected.status, expected.data, expected.analysis]);
   assert.equal(requestedTimezone, 'Asia/Tokyo', 'sleep projection uses the configured observation timezone instead of fixed UTC');
@@ -82,4 +93,8 @@ console.log('Relationship Explorer tests passed');
 function day(date: string, durationMinutes: number, fatigue: number): DailyContextReadModel {
   const localDate = date as DateString;
   return { localDate, timezone: 'UTC', dailyLogs: [{ id: `log-${date}` as EntryId, date: localDate, fatigue, mood: 3, note: '', createdAt: `${date}T12:00:00.000Z` }], sleepRecord: { schemaVersion: 1, id: `sleep-${date}` as SleepRecordId, sleepDate: localDate, durationMinutes, createdAt: `${date}T08:00:00.000Z`, updatedAt: `${date}T08:00:00.000Z` }, forecast: null, historicalWeather: null, metadata: { dailyLogCount: 1, sleepRecordCandidateCount: 1, forecastCandidateCount: 0, historicalWeatherCandidateCount: 0, hasDailyLog: true, hasSleepRecord: true, hasForecast: false, hasHistoricalWeather: false, completeness: 'PARTIAL' } };
+}
+
+function emptyDay(localDate: DateString, timezone: string): DailyContextReadModel {
+  return { localDate, timezone, dailyLogs: [], sleepRecord: null, forecast: null, historicalWeather: null, metadata: { dailyLogCount: 0, sleepRecordCandidateCount: 0, forecastCandidateCount: 0, historicalWeatherCandidateCount: 0, hasDailyLog: false, hasSleepRecord: false, hasForecast: false, hasHistoricalWeather: false, completeness: 'EMPTY' } };
 }

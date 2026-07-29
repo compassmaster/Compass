@@ -282,7 +282,7 @@ Formal Reflectionは永続化、Repository直接読み取り、新しいlocalSto
 
 ### PR #36 review follow-up
 
-Relationshipカードは対象期間、使用データ種別、カード別注意事項を表示する。Rainの日時・Record IDは決定的にsortし、Sleep joinは固定UTCではなく設定timezone（未設定時は実行環境timezone）を利用する。状態・信頼度の境界は自動テストで固定した。
+Relationshipカードは対象期間、使用データ種別、カード別注意事項に加え、疲労スケールと平均・平均差・非因果性を説明する折りたたみガイドを表示する。「使った記録」は日付と疲労・睡眠時間・雨の有無を人が読める要約として件数付きで示し、内部IDは二段目の折りたたみに隠す。表示用projectionは入力Recordを変更せず日付・種別・IDで決定的にsortする。Sleep joinは固定UTCではなく設定timezone（未設定時は実行環境timezone）を利用する。
 
 ## Prediction MVP (Issue #37)
 
