@@ -42,6 +42,10 @@ const [firstAutomatic,secondAutomatic]=await Promise.all([automaticService.acqui
 assert.equal(firstAutomatic.status,'SUCCESS');assert.equal(secondAutomatic.status,'SUCCESS');assert.equal(automaticCalls,1);assert.equal(automaticSaved.length,1);
 // StrictModeの再実行が先の保存完了後になっても、保存済み判定により再取得しない。
 assert.equal((await automaticService.acquirePreviousDayIfNeeded()).status,'ALREADY_ACQUIRED');assert.equal(automaticCalls,1);assert.equal(automaticSaved.length,1);
+// 保存済み判定はRepositoryから受け取った入力Recordを変更しない。
+const immutableInput=structuredClone(automaticSaved[0]);const immutableBefore=structuredClone(immutableInput);let immutableCalls=0;
+const immutableService=new HistoricalWeatherAcquisitionService({get:()=>location} as never,{fetchDailyHistoricalWeather:async()=>{immutableCalls++;return result;}},{...repo,findAll:()=>[immutableInput],save:()=>undefined},()=>new Date('2026-07-27T00:00:00Z'));
+assert.equal((await immutableService.acquirePreviousDayIfNeeded()).status,'ALREADY_ACQUIRED');assert.deepEqual(immutableInput,immutableBefore);assert.equal(immutableCalls,0);
 
 // 保存済み判定の各条件は単独で不一致でも取得対象になる。
 const mismatches:readonly ObservedWeatherRecord[]=[
