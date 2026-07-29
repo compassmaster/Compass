@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { calculateSleepDurationMinutes, formatDurationMinutes, sleepRecordApplicationService } from '../services';
 import type { SleepRecord, SleepRecordId } from '../types/sleepRecord';
 import type { DateString } from '../../daily-log/types/log';
+import { synchronizeLoadedSleepDraft, type SleepRecordFormDraft } from './sleepRecordFormSynchronization';
 import './SleepRecordSection.css';
 
 const NOTICE = '過去に生成済みの分析結果は自動的には書き換わらず、次回の明示的な分析で更新されます。';
@@ -11,7 +12,7 @@ const messageFor = (reason: string) => reason === 'INVALID_DATETIME' ? '就寝�
   : '睡眠記録が見つかりませんでした。';
 const local = (value: string) => value.slice(0, 16);
 
-type DraftState = { sleepDate: string; bedtime: string; wakeTime: string };
+type DraftState = SleepRecordFormDraft;
 const emptyDraft = (): DraftState => ({ sleepDate: new Date().toLocaleDateString('sv-SE'), bedtime: '', wakeTime: '' });
 
 export function SleepRecordSection() {
@@ -46,6 +47,8 @@ export function SleepRecordSection() {
     if (!editing) return;
     const result = sleepRecordApplicationService.updateSleepRecord(editing.id, { ...editing, sleepDate: editing.sleepDate as DateString });
     if (!result.ok) { setMessage(messageFor(result.reason)); return; }
+    const synchronized = synchronizeLoadedSleepDraft(loadedId, draft, result.record);
+    setDraft(synchronized.draft); setLoadedId(synchronized.loadedId);
     setEditing(null); setMessage('睡眠記録を更新しました。'); setRevision((value) => value + 1);
   };
   const remove = () => {

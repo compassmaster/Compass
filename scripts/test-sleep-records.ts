@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { calculateSleepDurationMinutes } from '../src/features/sleep/services/sleepDuration.ts';
 import { LocalStorageSleepRecordRepository } from '../src/features/sleep/services/localStorageSleepRecordRepository.ts';
 import { SleepRecordApplicationService } from '../src/features/sleep/services/sleepRecordApplicationService.ts';
+import { synchronizeLoadedSleepDraft } from '../src/features/sleep/components/sleepRecordFormSynchronization.ts';
 import type { DateString } from '../src/features/daily-log/types/log.ts';
 
 class MemoryStorage implements Storage {
@@ -70,7 +71,16 @@ assert.equal(service.list().length, 1, 'list should expose one SleepRecord');
 
 const immutableStorage = new MemoryStorage();
 const immutableRepository = new LocalStorageSleepRecordRepository(immutableStorage);
-const clock = ['2026-07-29T10:00:00.000Z', '2026-07-30T11:00:00.000Z'];
+const clock = [
+  '2026-07-29T10:00:00.000Z',
+  '2026-07-30T11:00:00.000Z',
+  '2026-07-31T12:00:00.000Z',
+  '2026-08-01T13:00:00.000Z',
+  '2026-08-02T14:00:00.000Z',
+  '2026-08-03T15:00:00.000Z',
+  '2026-08-04T16:00:00.000Z',
+  '2026-08-05T17:00:00.000Z',
+];
 const managed = new SleepRecordApplicationService(immutableRepository, () => clock.shift()!);
 const firstDraft = { sleepDate: '2026-07-28' as DateString, bedtime: '2026-07-27T23:30', wakeTime: '2026-07-28T06:30', source: 'SMARTWATCH' as const };
 const draftSnapshot = structuredClone(firstDraft);
@@ -93,8 +103,30 @@ assert.deepEqual(managed.deleteSleepRecord('missing' as typeof first.record.id),
 
 const later = managed.createSleepRecord({ sleepDate: '2026-07-29' as DateString, bedtime: '2026-07-28T23:00', wakeTime: '2026-07-29T07:00' });
 assert.equal(later.ok, true);
+if (!later.ok) throw new Error('later fixture creation failed');
+assert.equal(Number.isNaN(Date.parse(later.record.createdAt)), false, 'all fixture createdAt values are valid datetimes');
+assert.equal(Number.isNaN(Date.parse(later.record.updatedAt)), false, 'all fixture updatedAt values are valid datetimes');
 assert.deepEqual(managed.listSleepRecords().map((record) => record.sleepDate), ['2026-07-29', '2026-07-27'], 'list is wake-date descending');
-if (later.ok) assert.deepEqual(managed.updateSleepRecord(first.record.id, { ...firstDraft, sleepDate: later.record.sleepDate }), { ok: false, reason: 'DUPLICATE_SLEEP_DATE' });
+assert.deepEqual(managed.updateSleepRecord(first.record.id, { ...firstDraft, sleepDate: later.record.sleepDate }), { ok: false, reason: 'DUPLICATE_SLEEP_DATE' });
+
+const loadedA = { sleepDate: changed.record.sleepDate, bedtime: changed.record.bedtime, wakeTime: changed.record.wakeTime };
+const editedA = managed.updateSleepRecord(first.record.id, {
+  sleepDate: '2026-07-26' as DateString,
+  bedtime: '2026-07-25T21:45',
+  wakeTime: '2026-07-26T05:45',
+});
+assert.equal(editedA.ok, true);
+if (!editedA.ok) throw new Error('A fixture update failed');
+const syncedA = synchronizeLoadedSleepDraft(first.record.id, loadedA, editedA.record);
+assert.deepEqual(syncedA, {
+  draft: { sleepDate: '2026-07-26', bedtime: '2026-07-25T21:45', wakeTime: '2026-07-26T05:45' },
+  loadedId: first.record.id,
+}, 'editing loaded A synchronizes its changed date and datetimes into the top form');
+const resavedA = managed.updateSleepRecord(syncedA.loadedId!, { ...syncedA.draft, sleepDate: syncedA.draft.sleepDate as DateString });
+assert.equal(resavedA.ok && resavedA.record.bedtime, editedA.record.bedtime, 'resaving the top form does not restore stale values');
+const unchangedForOther = synchronizeLoadedSleepDraft(first.record.id, syncedA.draft, later.record);
+assert.equal(unchangedForOther.draft, syncedA.draft, 'editing another record does not switch or mutate the top form');
+assert.equal(unchangedForOther.loadedId, first.record.id);
 assert.deepEqual(managed.deleteSleepRecord(first.record.id), { ok: true });
 assert.equal(managed.getSleepRecord(first.record.id).ok, false, 'deleted item immediately disappears');
 
