@@ -313,3 +313,5 @@ PR #49レビュー対応として、ナビゲーションを「ふりかえり�
 ### Backup review follow-up
 
 復元プレビューはresource別件数とunknown・欠落・重複を区別し、warning/errorおよび復元可否を表示する。全resourceの完全validatorとFormal pipeline参照整合検証、record配列の決定的な順序を備える。通常起動時の既存Understanding処理は維持し、復元後表示はreloadではなくApp callbackで更新する。
+
+既知Legacy保存形式はresource codecで非破壊にbackup現行形式へnormalizeする。Insightの旧Evidence表示field・未導入EvidenceRef・欠落dedupe key、Candidateの旧DISMISSED status、および数値sleepHoursを持つDailyLogを対象とし、安全に判定できない類似データはexportを拒否する。

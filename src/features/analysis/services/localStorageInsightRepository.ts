@@ -1,6 +1,6 @@
-import type { Insight } from '../types/analysis';
-import { getInsightDedupeKey, mergeDuplicateInsight } from './insightDeduplication';
-import type { IInsightRepository } from './insightRepository';
+import type { Insight } from '../types/analysis.ts';
+import { getInsightDedupeKey, mergeDuplicateInsight } from './insightDeduplication.ts';
+import type { IInsightRepository } from './insightRepository.ts';
 
 const STORAGE_KEY = 'compass_insights';
 

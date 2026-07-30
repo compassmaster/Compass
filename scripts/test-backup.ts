@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { BackupApplicationService, type BackupEnvelope } from '../src/features/backup/services/backupApplicationService.ts';
 import { BACKUP_RESOURCE_REGISTRY } from '../src/features/backup/services/backupResourceRegistry.ts';
+import { LocalStorageInsightRepository } from '../src/features/analysis/services/localStorageInsightRepository.ts';
+import { LocalStorageLogRepository } from '../src/features/daily-log/services/localStorageLogRepository.ts';
+import { LocalStorageUserModelUpdateCandidateRepository } from '../src/features/compass-map/services/userModelUpdateCandidateService.ts';
 
 class MemoryStorage { readonly values = new Map<string, string>(); failOnceOnKey: string | null = null; getItem(k:string){return this.values.get(k)??null} removeItem(k:string){this.values.delete(k)} setItem(k:string,v:string){if(k===this.failOnceOnKey){this.failOnceOnKey=null;throw Error('write failure')}this.values.set(k,v)} }
 const t='2026-07-30T00:00:00.000Z';
@@ -48,4 +51,35 @@ const before=new Map(storage.values);storage.failOnceOnKey='compass_analysis_evi
 const reconcileFailureStorage=populatedStorage();const failing=new BackupApplicationService(reconcileFailureStorage,BACKUP_RESOURCE_REGISTRY,()=>t,()=>{throw Error('reconcile')});const reconcileBefore=new Map(reconcileFailureStorage.values);assert.throws(()=>failing.restore(failing.prepareImport(exported)));assert.deepEqual(reconcileFailureStorage.values,reconcileBefore,'reconcile rollback');
 const app=readFileSync(new URL('../src/app/App.tsx',import.meta.url),'utf8');assert.match(app,/generateAndSaveFromEvidence/);assert.match(app,/reconcileAll/);const composition=readFileSync(new URL('../src/features/backup/services/index.ts',import.meta.url),'utf8');assert.doesNotMatch(composition,/analysisApplicationService|generateAndSaveFromEvidence|reconcileAll/);
 const ui=readFileSync(new URL('../src/features/backup/components/BackupPanel.tsx',import.meta.url),'utf8');assert.doesNotMatch(ui,/localStorage|Repository|location\.reload/);
+
+// Known stored legacy shapes are decoded and normalized for the backup without mutating storage.
+const legacyStorage=populatedStorage();
+const currentInsight=(fixtures.legacyInsights as any[])[0];
+const withoutDedupe={...currentInsight,id:'legacy-no-dedupe'};delete withoutDedupe.dedupeKey;
+const oldEvidence={...currentInsight,id:'legacy-old-evidence',evidence:['old summary']};delete oldEvidence.evidenceSummaries;
+const beforeEvidenceRefs={...currentInsight,id:'legacy-no-refs'};delete beforeEvidenceRefs.evidenceRefs;
+legacyStorage.setItem('compass_insights',JSON.stringify([withoutDedupe,oldEvidence,beforeEvidenceRefs]));
+const dismissed={...(fixtures.legacyUserModelUpdateCandidates as any[])[0],status:'DISMISSED'};
+legacyStorage.setItem('compass_user_model_update_candidates',JSON.stringify([dismissed]));
+const historicalDailyLog={...(fixtures.dailyLogs as any[])[0],sleepHours:7.5};
+legacyStorage.setItem('compass_daily_logs',JSON.stringify([historicalDailyLog]));
+const rawBefore=new Map(legacyStorage.values);
+const legacyService=new BackupApplicationService(legacyStorage,BACKUP_RESOURCE_REGISTRY,()=>t);
+const legacyExport=legacyService.export();
+assert.deepEqual(legacyStorage.values,rawBefore,'export must not mutate stored legacy data');
+const normalizedEnvelope=JSON.parse(legacyExport) as BackupEnvelope;
+const normalizedInsights=normalizedEnvelope.resources.find((item)=>item.name==='legacyInsights')!.data as any[];
+assert.equal(normalizedInsights.every((item)=>typeof item.dedupeKey==='string'),true);
+assert.deepEqual(normalizedInsights.find((item)=>item.id==='legacy-old-evidence').evidenceSummaries,['old summary']);
+assert.deepEqual(normalizedInsights.find((item)=>item.id==='legacy-no-refs').evidenceRefs,[],'missing references are not guessed');
+assert.equal((normalizedEnvelope.resources.find((item)=>item.name==='legacyUserModelUpdateCandidates')!.data as any[])[0].status,'REJECTED');
+const restoredLegacy=new MemoryStorage();
+new BackupApplicationService(restoredLegacy,BACKUP_RESOURCE_REGISTRY,()=>t).restore(new BackupApplicationService(restoredLegacy,BACKUP_RESOURCE_REGISTRY,()=>t).prepareImport(legacyExport));
+Object.defineProperty(globalThis,'localStorage',{value:restoredLegacy,configurable:true});
+assert.equal(new LocalStorageInsightRepository().getAll().length,3,'existing Insight repository reads restored normalized legacy data');
+assert.equal(new LocalStorageLogRepository().getAll()[0].sleepHours,7.5,'historical DailyLog meaning is preserved');
+assert.equal(new LocalStorageUserModelUpdateCandidateRepository().getAll()[0].status,'REJECTED','existing candidate repository reads normalized status');
+const resemblesLegacy={...currentInsight,id:'invalid-lookalike',evidence:['summary']};delete resemblesLegacy.evidenceSummaries;delete resemblesLegacy.evidenceRefs;delete resemblesLegacy.createdAt;
+legacyStorage.setItem('compass_insights',JSON.stringify([resemblesLegacy]));
+assert.throws(()=>legacyService.export(),/既知の保存形式/,'unsafe lookalike must be rejected');
 console.log('backup tests passed');

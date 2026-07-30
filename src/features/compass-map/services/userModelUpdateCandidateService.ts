@@ -73,7 +73,7 @@ export class LocalStorageUserModelUpdateCandidateRepository implements IUserMode
 }
 
 
-function normalizeCandidate(candidate: UserModelUpdateCandidate): UserModelUpdateCandidate {
+export function normalizeCandidate(candidate: UserModelUpdateCandidate): UserModelUpdateCandidate {
   if ((candidate as { status?: string }).status === 'DISMISSED') {
     return {
       ...candidate,

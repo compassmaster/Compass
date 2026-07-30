@@ -351,3 +351,10 @@ DailyLogの編集・削除成功時は`DailyLogList`の`onChanged`から`LogTab`
 - Backup previewを構造化Read Model + Presenterへ変更し、version/export日時、resource件数、unknown/欠落/重複、warning/error、復元可否を表示する。export前にも同じRegistry集計を確認する。
 - 全14 resourceのvalidatorを必須field/rangeまで強化し、Formal pipelineの参照整合もimport前に検証する。各record配列は入力を変更せずstable keyで正規化する。
 - 通常起動時のCandidate生成/Object reconcileは維持した。restore自体はFormal membership reconcileのみ実施し、成功後の画面stateはApp callbackで再取得する（reloadなし）。
+
+### PR #52 Legacy compatibility follow-up
+
+- Backup Registry codecはlocalStorage JSON decode後の保存形式判定・非破壊normalizeと、backup importの厳格validationを分離した。
+- Legacy Insightは既存dedupe関数を再利用し、旧`evidence`を`evidenceSummaries`へ移す。未導入の`evidenceRefs`は空配列とし、source referenceを推測しない。
+- Legacy UserModelUpdateCandidateの`DISMISSED`はRepositoryと同じ公開normalize関数で`REJECTED`へ移す。exportはraw localStorageを変更しない。
+- DailyLogは初期Repository形式からschema v1であり、旧入力で使われた数値`sleepHours`を保持する。存在しないfieldの補完migrationは行わない。

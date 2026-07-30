@@ -2,6 +2,9 @@ import { isBaseLocation } from '../../external-context/location/types/baseLocati
 import { isObservedWeatherRecord, isWeatherForecastSnapshot } from '../../external-context/weather/types/weather.ts';
 import { isFormalUserModel } from '../../formal-user-model/types/formalUserModel.ts';
 import { isUnderstandingObject } from '../../understanding/types/understandingObject.ts';
+import { getInsightDedupeKey } from '../../analysis/services/insightDeduplication.ts';
+import type { Insight } from '../../analysis/types/analysis.ts';
+import { normalizeCandidate } from '../../compass-map/services/userModelUpdateCandidateService.ts';
 
 export interface BackupResourceDefinition {
   readonly name: string;
@@ -10,7 +13,9 @@ export interface BackupResourceDefinition {
   readonly emptyValue: null | readonly never[];
   readonly validate: (value: unknown) => boolean;
   readonly normalize: (value: unknown) => unknown;
+  readonly decodeStored: (value: unknown) => StoredResourceDecodeResult;
 }
+export type StoredResourceDecodeResult = { readonly ok: true; readonly data: unknown; readonly sourceFormat: 'CURRENT' | 'LEGACY' } | { readonly ok: false };
 
 const record = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value);
 const text = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
@@ -41,7 +46,7 @@ const insight = (value: unknown) => record(value) && text(value.id) && ['PATTERN
   && iso(value.createdAt) && iso(value.updatedAt) && ['NEW', 'CONFIRMED', 'DISMISSED'].includes(String(value.status)) && (value.metadata === undefined || record(value.metadata));
 const updateCandidate = (value: unknown) => record(value) && text(value.id) && text(value.sourceInsightId) && text(value.dedupeKey)
   && ['shortTerm.immediateConcerns', 'shortTerm.recentInterests'].includes(String(value.targetField)) && strings(value.proposedValue, true) && confidence(value.confidence)
-  && arrayOf(evidenceRef)(value.evidenceRefs) && iso(value.createdAt) && ['PENDING', 'APPLIED', 'REJECTED', 'DISMISSED'].includes(String(value.status)) && (value.updatedAt === undefined || iso(value.updatedAt));
+  && arrayOf(evidenceRef)(value.evidenceRefs) && iso(value.createdAt) && ['PENDING', 'APPLIED', 'REJECTED'].includes(String(value.status)) && (value.updatedAt === undefined || iso(value.updatedAt));
 const updateHistory = (value: unknown) => record(value) && text(value.candidateId) && text(value.sourceInsightId) && arrayOf(evidenceRef)(value.evidenceRefs)
   && ['shortTerm.immediateConcerns', 'shortTerm.recentInterests'].includes(String(value.targetField)) && iso(value.appliedAt);
 const hypothesis = (value: unknown) => record(value) && strings(value.value) && confidence(value.confidence) && Array.isArray(value.evidenceList)
@@ -65,20 +70,59 @@ function deepCopyAndSortReferences(value: unknown): unknown {
 }
 const identity = (value: unknown) => value;
 
+function currentDecoder(validate: (value: unknown) => boolean, normalize: (value: unknown) => unknown): (value: unknown) => StoredResourceDecodeResult {
+  return (value) => validate(value) ? { ok: true, data: normalize(value), sourceFormat: 'CURRENT' } : { ok: false };
+}
+function decodeInsights(value: unknown): StoredResourceDecodeResult {
+  if (!Array.isArray(value)) return { ok: false };
+  let legacy = false;
+  const decoded: unknown[] = [];
+  for (const item of value) {
+    if (!isKnownStoredInsight(item)) return { ok: false };
+    const summaries = (Array.isArray(item.evidenceSummaries) ? item.evidenceSummaries : item.evidence) as string[];
+    const refs = Array.isArray(item.evidenceRefs) ? item.evidenceRefs : [];
+    const dedupeKey = text(item.dedupeKey) ? item.dedupeKey : getInsightDedupeKey(item as unknown as Insight);
+    legacy ||= !text(item.dedupeKey) || !Array.isArray(item.evidenceSummaries) || !Array.isArray(item.evidenceRefs);
+    decoded.push({ ...item, dedupeKey, evidenceSummaries: [...summaries], evidenceRefs: [...refs] });
+  }
+  const normalized = normalizeArray(decoded);
+  return arrayOf(insight)(normalized) ? { ok: true, data: normalized, sourceFormat: legacy ? 'LEGACY' : 'CURRENT' } : { ok: false };
+}
+function isKnownStoredInsight(value: unknown): value is Record<string, unknown> {
+  if (!record(value) || !text(value.id) || !['PATTERN', 'TREND', 'INSIGHT'].includes(String(value.type)) || !text(value.message) || !confidence(value.confidence)
+    || !text(value.analyzerId) || !strings(value.relatedLogIds) || !iso(value.createdAt) || !iso(value.updatedAt) || !['NEW', 'CONFIRMED', 'DISMISSED'].includes(String(value.status))) return false;
+  const summaries = Array.isArray(value.evidenceSummaries) ? value.evidenceSummaries : value.evidence;
+  return strings(summaries) && (value.evidenceRefs === undefined || arrayOf(evidenceRef)(value.evidenceRefs))
+    && (value.dedupeKey === undefined || text(value.dedupeKey)) && (value.metadata === undefined || record(value.metadata));
+}
+function decodeUpdateCandidates(value: unknown): StoredResourceDecodeResult {
+  if (!Array.isArray(value)) return { ok: false };
+  let legacy = false;
+  const decoded = value.map((item) => {
+    if (record(item) && item.status === 'DISMISSED') { legacy = true; return normalizeCandidate(item as never); }
+    return item;
+  });
+  return arrayOf(updateCandidate)(decoded) ? { ok: true, data: normalizeArray(decoded), sourceFormat: legacy ? 'LEGACY' : 'CURRENT' } : { ok: false };
+}
+
+function resource(name: string, storageKey: string, emptyValue: null | readonly never[], validate: (value: unknown) => boolean, normalize: (value: unknown) => unknown, decodeStored = currentDecoder(validate, normalize)): BackupResourceDefinition {
+  return { name, storageKey, schemaVersion: 1, emptyValue, validate, normalize, decodeStored };
+}
+
 /** Sole backup allow-list. Its order is also the deterministic envelope order. */
 export const BACKUP_RESOURCE_REGISTRY: readonly BackupResourceDefinition[] = [
-  { name: 'dailyLogs', storageKey: 'compass_daily_logs', schemaVersion: 1, emptyValue: [], validate: arrayOf(dailyLog), normalize: normalizeArray },
-  { name: 'sleepRecords', storageKey: 'compass_sleep_records', schemaVersion: 1, emptyValue: [], validate: arrayOf(sleepRecord), normalize: normalizeArray },
-  { name: 'baseLocation', storageKey: 'compass_base_location_v1', schemaVersion: 1, emptyValue: null, validate: nullable((value) => record(value) && value.schemaVersion === 1 && isBaseLocation(value.location)), normalize: identity },
-  { name: 'weatherForecastSnapshots', storageKey: 'compass_weather_forecast_snapshots_v1', schemaVersion: 1, emptyValue: null, validate: nullable(versionedRecords(isWeatherForecastSnapshot)), normalize: normalizeEnvelope },
-  { name: 'observedWeatherRecords', storageKey: 'compass_observed_weather_records_v1', schemaVersion: 1, emptyValue: null, validate: nullable(versionedRecords(isObservedWeatherRecord)), normalize: normalizeEnvelope },
-  { name: 'evidence', storageKey: 'compass_analysis_evidence', schemaVersion: 1, emptyValue: [], validate: arrayOf(evidence), normalize: normalizeArray },
-  { name: 'understandingCandidates', storageKey: 'compass_understanding_candidates', schemaVersion: 1, emptyValue: [], validate: arrayOf(candidate), normalize: normalizeArray },
-  { name: 'candidateResponses', storageKey: 'compass_understanding_candidate_responses', schemaVersion: 1, emptyValue: [], validate: arrayOf(response), normalize: normalizeArray },
-  { name: 'understandingObjects', storageKey: 'compass_understanding_objects', schemaVersion: 1, emptyValue: [], validate: arrayOf(isUnderstandingObject), normalize: normalizeArray },
-  { name: 'formalUserModel', storageKey: 'compass_formal_user_model_v1', schemaVersion: 1, emptyValue: null, validate: nullable(isFormalUserModel), normalize: identity },
-  { name: 'legacyInsights', storageKey: 'compass_insights', schemaVersion: 1, emptyValue: [], validate: arrayOf(insight), normalize: normalizeArray },
-  { name: 'legacyUserModel', storageKey: 'compass_user_model', schemaVersion: 1, emptyValue: null, validate: nullable(userModel), normalize: identity },
-  { name: 'legacyUserModelUpdateCandidates', storageKey: 'compass_user_model_update_candidates', schemaVersion: 1, emptyValue: [], validate: arrayOf(updateCandidate), normalize: normalizeArray },
-  { name: 'legacyUserModelUpdateHistory', storageKey: 'compass_user_model_update_history', schemaVersion: 1, emptyValue: [], validate: arrayOf(updateHistory), normalize: normalizeArray },
+  resource('dailyLogs', 'compass_daily_logs', [], arrayOf(dailyLog), normalizeArray),
+  resource('sleepRecords', 'compass_sleep_records', [], arrayOf(sleepRecord), normalizeArray),
+  resource('baseLocation', 'compass_base_location_v1', null, nullable((value) => record(value) && value.schemaVersion === 1 && isBaseLocation(value.location)), identity),
+  resource('weatherForecastSnapshots', 'compass_weather_forecast_snapshots_v1', null, nullable(versionedRecords(isWeatherForecastSnapshot)), normalizeEnvelope),
+  resource('observedWeatherRecords', 'compass_observed_weather_records_v1', null, nullable(versionedRecords(isObservedWeatherRecord)), normalizeEnvelope),
+  resource('evidence', 'compass_analysis_evidence', [], arrayOf(evidence), normalizeArray),
+  resource('understandingCandidates', 'compass_understanding_candidates', [], arrayOf(candidate), normalizeArray),
+  resource('candidateResponses', 'compass_understanding_candidate_responses', [], arrayOf(response), normalizeArray),
+  resource('understandingObjects', 'compass_understanding_objects', [], arrayOf(isUnderstandingObject), normalizeArray),
+  resource('formalUserModel', 'compass_formal_user_model_v1', null, nullable(isFormalUserModel), identity),
+  resource('legacyInsights', 'compass_insights', [], arrayOf(insight), normalizeArray, decodeInsights),
+  resource('legacyUserModel', 'compass_user_model', null, nullable(userModel), identity),
+  resource('legacyUserModelUpdateCandidates', 'compass_user_model_update_candidates', [], arrayOf(updateCandidate), normalizeArray, decodeUpdateCandidates),
+  resource('legacyUserModelUpdateHistory', 'compass_user_model_update_history', [], arrayOf(updateHistory), normalizeArray),
 ] as const;

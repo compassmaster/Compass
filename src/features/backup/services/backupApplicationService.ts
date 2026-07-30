@@ -26,8 +26,9 @@ export class BackupApplicationService {
     const resources = this.registry.map((definition) => {
       const raw = this.storage.getItem(definition.storageKey); let data: unknown = clone(definition.emptyValue);
       if (raw !== null) { try { data = JSON.parse(raw) as unknown; } catch { throw new Error(`${definition.name} の保存データが不正なJSONです。`); } }
-      if (!definition.validate(data)) throw new Error(`${definition.name} の保存データがschemaに適合しません。`);
-      return { name: definition.name, schemaVersion: definition.schemaVersion, data: clone(definition.normalize(data)) };
+      const decoded = definition.decodeStored(data);
+      if (!decoded.ok) throw new Error(`${definition.name} の保存データが既知の保存形式に適合しません。`);
+      return { name: definition.name, schemaVersion: definition.schemaVersion, data: clone(decoded.data) };
     });
     return canonicalStringify({ format: BACKUP_FORMAT, schemaVersion: BACKUP_SCHEMA_VERSION, exportedAt: this.now(), resources });
   }
