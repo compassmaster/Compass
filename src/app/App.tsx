@@ -226,6 +226,9 @@ export function App() {
             logs={logs}
             candidates={userModelUpdateCandidates}
             onNavigateToLog={() => setActiveTab('log')}
+            onNavigateToSleep={() => setActiveTab('log')}
+            onNavigateToWeather={() => document.getElementById('home-weather-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            onNavigateToPrediction={() => setActiveTab('prediction')}
             onReflectionFeedback={handleReflectionFeedback}
             onNavigateToCompassMap={() => {
               refreshUserModelUpdateCandidates();
