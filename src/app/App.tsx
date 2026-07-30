@@ -25,11 +25,12 @@ import { LogTab } from '../features/daily-log/components/LogTab';
 import { MapTab } from '../features/compass-map/components/MapTab';
 import { RelationshipExplorerTab } from '../features/relationship-explorer/components/RelationshipExplorerTab.tsx';
 import { PredictionTab } from '../features/prediction/components/PredictionTab.tsx';
+import { WeeklySummaryTab } from '../features/weekly-summary/components/WeeklySummaryTab.tsx';
 
 import './App.css';
 
 
-type AppTab = 'home' | 'log' | 'relationships' | 'prediction' | 'compassMap';
+type AppTab = 'home' | 'log' | 'weeklySummary' | 'relationships' | 'prediction' | 'compassMap';
 
 
 function loadInitialUnderstandingCandidates(): UnderstandingCandidate[] {
@@ -204,6 +205,9 @@ export function App() {
         >
           📝 記録
         </button>
+        <button className={`tab-button ${activeTab === 'weeklySummary' ? 'active-tab' : ''}`} onClick={() => setActiveTab('weeklySummary')}>
+          📊 ふりかえり
+        </button>
         <button className={`tab-button ${activeTab === 'relationships' ? 'active-tab' : ''}`} onClick={() => setActiveTab('relationships')}>
           🔎 関係
         </button>
@@ -248,6 +252,7 @@ export function App() {
           />
         )}
         {activeTab === 'log' && <LogTab onSaveSuccess={refreshLogs} />}
+        {activeTab === 'weeklySummary' && <WeeklySummaryTab />}
         {activeTab === 'relationships' && <RelationshipExplorerTab />}
         {activeTab === 'prediction' && <PredictionTab />}
         {activeTab === 'compassMap' && (

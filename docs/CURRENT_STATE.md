@@ -300,3 +300,9 @@ Relationshipカードは対象期間、使用データ種別、カード別注�
 
 Homeは、既存のDaily ContextとPredictionの読み取り専用Queryを束ね、今日のDailyLog・睡眠・保存済み天気予報・明日の疲労見通しを非永続の概要として表示する。欠損は補完せず、知識系Pipelineの自動更新は行わない。
 概要カードから睡眠記録、Home内の天気予報、明日の見通しへ移動できる。疲労は5段階で、高いほど疲れていることを明記する。
+
+## Issue #48: 直近7日間サマリー
+
+独立した「7日間」タブを追加した。Base Location timezoneを基準に当日を含む7暦日を既存Daily Context Queryから取得し、日ごとの最新DailyLog、SleepRecord、Historical Weatherを読み取り専用で集計する。欠損は補完せず、平均の内部精度を維持して表示時だけ小数1桁へ丸め、対象日数とデータ充足状態を併記する。Forecast、外部API、永続化、知識系Pipelineには接続しない。
+
+PR #49レビュー対応として、ナビゲーションを「ふりかえり」、見出しを「7日間のCompass」に変更した。概要へデータ種別ごとの記録日数と疲労スケール説明を追加し、最新日順の7日分の日別カードで最新DailyLog、SleepRecord、Historical Weatherを確認できる。日別欠損は明示し、Forecastは日別Read Modelにも含めない。
