@@ -22,6 +22,7 @@ import type { UnderstandingCandidate, UnderstandingCandidateAnswer, Understandin
 import type { UnderstandingObject } from '../../understanding/types/understandingObject.ts';
 import type { ResolvedFormalUserModel } from '../../formal-user-model/types/formalUserModel.ts';
 import './HomeTab.css';
+import { HomeSummaryPanel } from './HomeSummaryPanel.tsx';
 
 interface HomeTabProps {
   logs: DailyLog[];
@@ -112,6 +113,8 @@ export function HomeTab({
           ✍️ 今日の状態を新しく記録する
         </button>
       </section>
+
+      <HomeSummaryPanel key={forecastAcquisitionRequestId} onNavigateToLog={onNavigateToLog} />
 
       <FormalReflectionPanel
         model={resolvedFormalUserModel}

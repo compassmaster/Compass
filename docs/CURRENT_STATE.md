@@ -295,3 +295,7 @@ Relationshipカードは対象期間、使用データ種別、カード別注�
 - 編集は対象日、気分、疲労、メモ、イベントに限定し、`id`、`createdAt`、`schemaVersion`、互換用`DailyLog.sleepHours`を維持して`updatedAt`のみ現在時刻へ更新する。削除は対象日・気分・疲労を示す確認UIを必須とする。
 - UIの一覧・取得・更新・削除はすべて`DailyLogApplicationService`を通る。Serviceは入力不正、対象なし、成功をResultで区別し、Repository由来の値と入力を変更しない。
 - 編集・削除は既存のEvidence、Insight、Understanding、UserModel、Reflection、Prediction、Formal Pipelineを自動更新・削除しない。UIで、生成済み分析は次回分析時に更新される旨を説明する。
+
+## 2026-07-30 Home Summary実装状態
+
+Homeは、既存のDaily ContextとPredictionの読み取り専用Queryを束ね、今日のDailyLog・睡眠・保存済み天気予報・明日の疲労見通しを非永続の概要として表示する。欠損は補完せず、知識系Pipelineの自動更新は行わない。

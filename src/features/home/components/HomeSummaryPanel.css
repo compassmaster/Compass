@@ -1,0 +1,11 @@
+.home-summary { margin-bottom: 30px; padding: 20px; border: 1px solid #cbd5e0; border-radius: 14px; background: #f8fafc; }
+.home-summary-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.home-summary-header h2, .home-summary-header p { margin: 0 0 6px; }
+.home-summary-header button, .home-summary article button { padding: 8px 12px; border: 1px solid #90cdf4; border-radius: 8px; background: #fff; color: #2b6cb0; cursor: pointer; }
+.home-summary-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.home-summary article { padding: 16px; border: 1px solid #e2e8f0; border-radius: 10px; background: #fff; }
+.home-summary article h3 { margin: 0 0 12px; font-size: 1rem; color: #4a5568; }
+.home-summary article strong { display: block; color: #1a202c; line-height: 1.45; }
+.home-summary article p, .home-summary article small { display: block; margin: 8px 0 0; color: #718096; line-height: 1.5; }
+.home-summary article button { margin-top: 10px; }
+@media (max-width: 640px) { .home-summary-header { flex-direction: column; } .home-summary-grid { grid-template-columns: 1fr; } }

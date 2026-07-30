@@ -317,3 +317,10 @@ Do not implement an API Client, external fetch, UI, Analyzer, Prediction, Machin
 ### PR #43 review follow-up
 
 DailyLogの編集・削除成功時は`DailyLogList`の`onChanged`から`LogTab`の`onSaveSuccess`を呼び、Appが保持するlogsもApplication Serviceから再読込する。再読込はタブを変更しないため、利用者は「記録」タブに留まる。テストは各編集フィールド、更新後の再取得と日付変更後の再ソート、親再読込コールバック接続を明示的に検証する。
+
+## 2026-07-30 Home Summary (Issue #46)
+
+- Homeに「今日の概要」を追加し、当日のDailyLog、起床日ベースのSleepRecord、保存済み日次Forecast、既存Queryによる翌日の疲労見通しを4カードで表示する。
+- `HomeSummaryQueryService`はBase Locationのtimezone（未設定時は実行環境timezone）で当日を決め、既存Daily Context / Prediction Queryを束ねるだけの非永続Read Modelである。UIはRepositoryへ直接アクセスしない。
+- 欠損値は推測せず明示的な空状態にする。Query実行ではAnalysis、Evidence、Hypothesis、Understanding、Formal UserModelを生成・更新しない。
+- `scripts/test-home-summary.ts`でtimezone境界、既存Query委譲、Location未設定fallback、年跨ぎを確認する。
