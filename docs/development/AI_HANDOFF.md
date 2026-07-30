@@ -326,3 +326,10 @@ DailyLogの編集・削除成功時は`DailyLogList`の`onChanged`から`LogTab`
 - `scripts/test-home-summary.ts`でtimezone境界、既存Query委譲、Location未設定fallback、年跨ぎを確認する。
 - PR #47レビュー対応としてカード名を「今日のCompass」に変更し、疲労を5段階かつ高いほど疲れている旨とともに表示する。睡眠は記録タブ、天気はHome内の予報、疲労見通しは専用タブへ、Appから渡したcallbackで移動する。全項目あり・一部あり・全項目なしの表示状態をテストする。
 - 追加レビュー対応として、DailyLogカードは未記録なら「今日を記録する」、記録済みなら「記録を確認する」を同じ`onNavigateToLog`導線で表示する。全カードの有無とDailyLog action文言は共通PresenterをSource of TruthとしてUIとテストで共有する。
+
+## 2026-07-30 直近7日間サマリー (Issue #48)
+
+- 独立した「7日間」タブ、専用Read Model / Query Service / Presenterを追加した。QueryはBase Location timezone（未設定時は実行環境timezone）で当日を決め、既存`DailyContextQueryService.listByDateRange`から当日を含む7暦日だけを読む。
+- DailyLogは日ごとに`createdAt`の実時刻、同時刻はIDの辞書順で最新1件を採用する。睡眠は既存Daily Contextが選んだSleepRecord、天気は`HISTORICAL`のObserved Weatherだけを集計し、Forecastは使用しない。
+- 気分、疲労、睡眠時間、最低/最高気温、降水量は欠損を補完せず、平均と対象日数を表示する。Read Modelは未丸めの値を保持し、Presenterだけが小数1桁に丸める。全なし/一部あり/3種すべて4日以上の状態を区別する。
+- 読み取り専用で、外部通信やRepository write、Analysis / Evidence / Insight / Understanding / Formal UserModel / Reflection / Predictionの生成・更新は行わない。
