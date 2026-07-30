@@ -28,6 +28,9 @@ interface HomeTabProps {
   logs: DailyLog[];
   candidates: UserModelUpdateCandidate[];
   onNavigateToLog: () => void;
+  onNavigateToSleep: () => void;
+  onNavigateToWeather: () => void;
+  onNavigateToPrediction: () => void;
   onReflectionFeedback: (agreed: boolean) => void;
   onNavigateToCompassMap: () => void;
   onApplyCandidate: (candidateId: string) => void;
@@ -46,6 +49,9 @@ export function HomeTab({
   logs,
   candidates,
   onNavigateToLog,
+  onNavigateToSleep,
+  onNavigateToWeather,
+  onNavigateToPrediction,
   onReflectionFeedback,
   onNavigateToCompassMap,
   onApplyCandidate,
@@ -114,15 +120,17 @@ export function HomeTab({
         </button>
       </section>
 
-      <HomeSummaryPanel key={forecastAcquisitionRequestId} onNavigateToLog={onNavigateToLog} />
+      <HomeSummaryPanel key={forecastAcquisitionRequestId} onNavigateToLog={onNavigateToLog} onNavigateToSleep={onNavigateToSleep} onNavigateToWeather={onNavigateToWeather} onNavigateToPrediction={onNavigateToPrediction} />
 
       <FormalReflectionPanel
         model={resolvedFormalUserModel}
         onNavigateToCompassMap={onNavigateToCompassMap}
       />
 
-      <BaseLocationPanel onSaved={() => setForecastAcquisitionRequestId((current) => current + 1)} />
-      <WeatherForecastPanel acquisitionRequestId={forecastAcquisitionRequestId} />
+      <div id="home-weather-section">
+        <BaseLocationPanel onSaved={() => setForecastAcquisitionRequestId((current) => current + 1)} />
+        <WeatherForecastPanel acquisitionRequestId={forecastAcquisitionRequestId} />
+      </div>
       <DailyContextPanel />
       <WeatherFatigueObservationPanel />
 

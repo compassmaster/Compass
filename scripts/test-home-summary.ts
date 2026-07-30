@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { HomeSummaryQueryService, localDateInTimezone } from '../src/features/home/services/homeSummaryQueryService.ts';
 import type { DailyContextReadModel } from '../src/features/daily-context/types/dailyContextReadModel.ts';
 import type { PredictionReadModel } from '../src/features/prediction/types/prediction.ts';
+import { getHomeSummaryAvailability } from '../src/features/home/components/homeSummaryPresentation.ts';
 
 const context: DailyContextReadModel = {
   localDate: '2026-07-30' as DailyContextReadModel['localDate'], timezone: 'Asia/Tokyo', dailyLogs: [], sleepRecord: null, forecast: null, historicalWeather: null,
@@ -33,4 +35,19 @@ const fallback = new HomeSummaryQueryService(
 assert.equal(fallback.localDate, '2026-07-29');
 assert.equal(fallback.timezone, 'America/Los_Angeles');
 assert.equal(localDateInTimezone(new Date('2026-12-31T15:30:00Z'), 'Asia/Tokyo'), '2027-01-01');
+
+const summary = { localDate: '2026-07-30', timezone: 'Asia/Tokyo', today: context, tomorrowOutlook: outlook };
+assert.equal(getHomeSummaryAvailability(summary), 'NONE', '全項目に記録がない状態');
+assert.equal(getHomeSummaryAvailability({ ...summary, today: { ...context, metadata: { ...context.metadata, hasDailyLog: true } } }), 'PARTIAL', '一部だけ記録がある状態');
+assert.equal(getHomeSummaryAvailability({ ...summary, today: { ...context, metadata: { ...context.metadata, hasDailyLog: true, hasSleepRecord: true, hasForecast: true } }, tomorrowOutlook: { ...outlook, status: 'OUTLOOK_AVAILABLE' } }), 'ALL_AVAILABLE', '全項目に記録がある状態');
+const panelSource = await readFile(new URL('../src/features/home/components/HomeSummaryPanel.tsx', import.meta.url), 'utf8');
+const homeSource = await readFile(new URL('../src/features/home/components/HomeTab.tsx', import.meta.url), 'utf8');
+const appSource = await readFile(new URL('../src/app/App.tsx', import.meta.url), 'utf8');
+assert.match(panelSource, /今日のCompass/);
+assert.match(panelSource, /疲労 \{latestLog\.fatigue\} \/ 5（高いほど疲れています）/);
+for (const callback of ['onNavigateToSleep', 'onNavigateToWeather', 'onNavigateToPrediction']) {
+  assert.match(panelSource, new RegExp(callback));
+  assert.match(homeSource, new RegExp(callback));
+  assert.match(appSource, new RegExp(callback));
+}
 console.log('HomeSummary tests passed');
