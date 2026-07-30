@@ -333,3 +333,9 @@ DailyLogの編集・削除成功時は`DailyLogList`の`onChanged`から`LogTab`
 - DailyLogは日ごとに`createdAt`の実時刻、同時刻はIDの辞書順で最新1件を採用する。睡眠は既存Daily Contextが選んだSleepRecord、天気は`HISTORICAL`のObserved Weatherだけを集計し、Forecastは使用しない。
 - 気分、疲労、睡眠時間、最低/最高気温、降水量は欠損を補完せず、平均と対象日数を表示する。Read Modelは未丸めの値を保持し、Presenterだけが小数1桁に丸める。全なし/一部あり/3種すべて4日以上の状態を区別する。
 - 読み取り専用で、外部通信やRepository write、Analysis / Evidence / Insight / Understanding / Formal UserModel / Reflection / Predictionの生成・更新は行わない。
+
+### PR #49 review follow-up
+
+- 「7日間」ナビゲーションを「ふりかえり」、画面見出しを「7日間のCompass」へ変更した。
+- Read Modelへ当日を含む7日分の日別itemを新しい日付順で追加した。各itemはその日の最新DailyLogの気分・疲労、SleepRecordの睡眠時間、Historical Weatherの天気code・降水量だけを保持し、Forecastは保持しない。
+- UIへDailyLog・睡眠・過去気象の記録日数、疲労スケール説明、7日分の日別カードを追加した。欠損はDailyLog/Sleepを「記録なし」、Historical Weather/降水量を「データなし」と表示し、補完しない。

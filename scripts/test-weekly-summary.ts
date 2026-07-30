@@ -30,9 +30,20 @@ assert.equal(result.mood.count, 4); assert.equal(result.mood.average, 3.5, '同�
 assert.equal(result.sleepHours.count, 4); assert.equal(result.sleepHours.average, 7.5);
 assert.equal(result.precipitation.count, 4); assert.equal(result.precipitation.average, 1.5, 'Historical Weatherだけを集計しForecastを除外');
 assert.deepEqual(result.sourceRecordIds.dailyLogIds, ['log-1','log-2','log-3','new']);
+assert.equal(result.days.length, 7, 'day itemは常に7件');
+assert.deepEqual(result.days.map((day) => day.date), dates.slice().reverse(), '日別データは新しい日付順');
+assert.deepEqual(result.days.at(-1)?.dailyLog, { id: 'new', mood: 5, fatigue: 1 }, '日別も最新DailyLogを使用');
+assert.equal(result.days.at(-1)?.sleep?.durationHours, 7);
+assert.equal(result.days.at(-1)?.historicalWeather?.precipitation, 0);
+assert.equal(result.days[0].dailyLog, null); assert.equal(result.days[0].sleep, null); assert.equal(result.days[0].historicalWeather, null, '各データなしをnullで保持');
+assert.equal(JSON.stringify(result.days).includes('forecast'), false, '日別表示へForecastを混入させない');
 assert.equal(JSON.stringify(originalLogs), originalSnapshot, '入力データを変更しない');
 const presentation = createWeeklySummaryPresentation(result);
 assert.equal(presentation.metrics.find((metric) => metric.label === '平均睡眠時間')?.value, '7.5時間');
+assert.deepEqual(presentation.recordCounts.map((item) => item.count), [4, 4, 4]);
+assert.equal(presentation.days.length, 7);
+assert.equal(presentation.days[0].dailyLog, '記録なし'); assert.equal(presentation.days[0].sleep, '記録なし');
+assert.equal(presentation.days[0].weather, 'データなし'); assert.equal(presentation.days[0].precipitation, 'データなし', '欠損表示文言');
 const noneContexts = dates.map((date, index) => ({ ...context(date, index), dailyLogs: [], sleepRecord: null, forecast: null, historicalWeather: null, metadata: { ...context(date,index).metadata, hasDailyLog: false, hasSleepRecord: false, hasForecast: false, hasHistoricalWeather: false } }));
 const none = new WeeklySummaryQueryService({ get: () => null } as never, { listByDateRange: () => noneContexts } as never, () => new Date('2026-03-01T00:30:00Z'), () => 'America/Los_Angeles').getSummary();
 assert.equal(none.availability, 'NONE'); assert.equal(none.mood.average, null); assert.equal(none.mood.count, 0, '欠損を0で補完しない');
@@ -44,4 +55,6 @@ const tabSource = await readFile(new URL('../src/features/weekly-summary/compone
 const appSource = await readFile(new URL('../src/app/App.tsx', import.meta.url), 'utf8');
 assert.match(presenterSource, /toFixed\(1\)/, '丸めはPresenterだけ');
 assert.doesNotMatch(tabSource, /Repository|localStorage/); assert.match(appSource, /weeklySummary/); assert.match(appSource, /<WeeklySummaryTab/);
+assert.match(appSource, /ふりかえり/); assert.match(tabSource, /7日間のCompass/);
+assert.match(tabSource, /疲労は5段階で、高いほど疲れている/);
 console.log('WeeklySummary tests passed');

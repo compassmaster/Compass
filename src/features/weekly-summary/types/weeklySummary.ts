@@ -4,6 +4,16 @@ import type { ObservedWeatherRecordId } from '../../external-context/weather/typ
 
 export type WeeklySummaryAvailability = 'NONE' | 'PARTIAL' | 'SUFFICIENT';
 export interface WeeklySummaryMetric { readonly average: number | null; readonly count: number; }
+export interface WeeklySummaryDayItem {
+  readonly date: DateString;
+  readonly dailyLog: { readonly id: EntryId; readonly mood: number; readonly fatigue: number } | null;
+  readonly sleep: { readonly id: SleepRecordId; readonly durationHours: number } | null;
+  readonly historicalWeather: {
+    readonly id: ObservedWeatherRecordId;
+    readonly weatherCode: number | null;
+    readonly precipitation: number | null;
+  } | null;
+}
 /** A transient, read-only projection. It is never persisted. */
 export interface WeeklySummaryReadModel {
   readonly timezone: string;
@@ -16,5 +26,7 @@ export interface WeeklySummaryReadModel {
   readonly minimumTemperature: WeeklySummaryMetric;
   readonly maximumTemperature: WeeklySummaryMetric;
   readonly precipitation: WeeklySummaryMetric;
+  /** Exactly seven calendar days, newest first. */
+  readonly days: readonly WeeklySummaryDayItem[];
   readonly sourceRecordIds: { readonly dailyLogIds: readonly EntryId[]; readonly sleepRecordIds: readonly SleepRecordId[]; readonly historicalWeatherRecordIds: readonly ObservedWeatherRecordId[] };
 }

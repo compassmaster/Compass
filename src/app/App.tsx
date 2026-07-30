@@ -206,7 +206,7 @@ export function App() {
           📝 記録
         </button>
         <button className={`tab-button ${activeTab === 'weeklySummary' ? 'active-tab' : ''}`} onClick={() => setActiveTab('weeklySummary')}>
-          📊 7日間
+          📊 ふりかえり
         </button>
         <button className={`tab-button ${activeTab === 'relationships' ? 'active-tab' : ''}`} onClick={() => setActiveTab('relationships')}>
           🔎 関係
