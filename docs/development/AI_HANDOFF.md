@@ -325,3 +325,4 @@ DailyLogの編集・削除成功時は`DailyLogList`の`onChanged`から`LogTab`
 - 欠損値は推測せず明示的な空状態にする。Query実行ではAnalysis、Evidence、Hypothesis、Understanding、Formal UserModelを生成・更新しない。
 - `scripts/test-home-summary.ts`でtimezone境界、既存Query委譲、Location未設定fallback、年跨ぎを確認する。
 - PR #47レビュー対応としてカード名を「今日のCompass」に変更し、疲労を5段階かつ高いほど疲れている旨とともに表示する。睡眠は記録タブ、天気はHome内の予報、疲労見通しは専用タブへ、Appから渡したcallbackで移動する。全項目あり・一部あり・全項目なしの表示状態をテストする。
+- 追加レビュー対応として、DailyLogカードは未記録なら「今日を記録する」、記録済みなら「記録を確認する」を同じ`onNavigateToLog`導線で表示する。全カードの有無とDailyLog action文言は共通PresenterをSource of TruthとしてUIとテストで共有する。
