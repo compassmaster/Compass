@@ -26,24 +26,19 @@ import { MapTab } from '../features/compass-map/components/MapTab';
 import { RelationshipExplorerTab } from '../features/relationship-explorer/components/RelationshipExplorerTab.tsx';
 import { PredictionTab } from '../features/prediction/components/PredictionTab.tsx';
 import { WeeklySummaryTab } from '../features/weekly-summary/components/WeeklySummaryTab.tsx';
+import { BackupPanel } from '../features/backup/components/BackupPanel.tsx';
 
 import './App.css';
 
 
-type AppTab = 'home' | 'log' | 'weeklySummary' | 'relationships' | 'prediction' | 'compassMap';
+type AppTab = 'home' | 'log' | 'weeklySummary' | 'relationships' | 'prediction' | 'compassMap' | 'backup';
 
 
 function loadInitialUnderstandingCandidates(): UnderstandingCandidate[] {
-  const storedEvidence = analysisApplicationService.listEvidence();
-  if (storedEvidence.length > 0) {
-    understandingCandidateApplicationService.generateAndSaveFromEvidence(storedEvidence);
-  }
   return understandingCandidateApplicationService.listCandidates();
 }
 
 function loadInitialUnderstandingObjects(): UnderstandingObject[] {
-  const evidence = analysisApplicationService.listEvidence();
-  understandingObjectApplicationService.reconcileAll(evidence);
   return understandingObjectApplicationService.listObjects();
 }
 
@@ -222,6 +217,9 @@ export function App() {
         >
           🧭 Compass Map
         </button>
+        <button className={`tab-button ${activeTab === 'backup' ? 'active-tab' : ''}`} onClick={() => setActiveTab('backup')}>
+          💾 バックアップ
+        </button>
       </nav>
 
       <main className="app-main">
@@ -255,6 +253,7 @@ export function App() {
         {activeTab === 'weeklySummary' && <WeeklySummaryTab />}
         {activeTab === 'relationships' && <RelationshipExplorerTab />}
         {activeTab === 'prediction' && <PredictionTab />}
+        {activeTab === 'backup' && <BackupPanel />}
         {activeTab === 'compassMap' && (
           <MapTab
             resolvedFormalUserModel={resolvedFormalUserModel}

@@ -1,0 +1,7 @@
+.backup-panel { max-width: 760px; margin: 0 auto; padding: 1.5rem; background: white; border-radius: 16px; }
+.backup-panel p { line-height: 1.7; }
+.backup-actions, .backup-confirm { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; margin-top: 1rem; }
+.backup-file { display: inline-flex; padding: .65rem 1rem; border: 1px solid #64748b; border-radius: 8px; cursor: pointer; }
+.backup-file input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.backup-confirm { padding: 1rem; background: #fff7ed; border: 1px solid #fdba74; border-radius: 8px; }
+.backup-confirm p { flex-basis: 100%; margin: 0; }

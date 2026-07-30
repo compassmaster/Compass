@@ -3,6 +3,12 @@
 This document is the permanent handoff file for all future AI assistants working on Compass.
 Every AI assistant must read this document before starting work and update it before finishing work.
 
+## 2026-07-30 Backup / Restore (Issue #51)
+
+- 14 resourceを単一Registryで管理するversion 1 backup envelopeを追加した。棚卸しは`LOCAL_STORAGE_BACKUP_INVENTORY.md`を参照。
+- importは全resourceを先行検証し、unknown・欠落・不正recordを含む場合は一切書き込まない。復元は全置換のみで、管理対象keyを事前snapshotし、書き込みまたは整合処理失敗時に全rollbackする。
+- UIはApplication Serviceだけを利用し、ファイルはブラウザ内で処理する。復元後はFormal UserModel membership reconcileだけを行い、Analysis / Evidence / Candidate / Understanding生成は行わない。
+
 ---
 
 **Last Updated:** 2026-07-28
