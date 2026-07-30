@@ -306,3 +306,12 @@ Homeは、既存のDaily ContextとPredictionの読み取り専用Queryを束ね
 独立した「7日間」タブを追加した。Base Location timezoneを基準に当日を含む7暦日を既存Daily Context Queryから取得し、日ごとの最新DailyLog、SleepRecord、Historical Weatherを読み取り専用で集計する。欠損は補完せず、平均の内部精度を維持して表示時だけ小数1桁へ丸め、対象日数とデータ充足状態を併記する。Forecast、外部API、永続化、知識系Pipelineには接続しない。
 
 PR #49レビュー対応として、ナビゲーションを「ふりかえり」、見出しを「7日間のCompass」に変更した。概要へデータ種別ごとの記録日数と疲労スケール説明を追加し、最新日順の7日分の日別カードで最新DailyLog、SleepRecord、Historical Weatherを確認できる。日別欠損は明示し、Forecastは日別Read Modelにも含めない。
+## Backup / Restore (Issue #51)
+
+全localStorage永続resource（現行DomainとLegacy互換フロー）をversioned JSONへ書き出し、全検証後に原子的な全置換で復元できる。対象は単一Registryで管理し、対象外keyは維持する。復元後に実行するのはFormal UserModel整合処理だけである。
+
+### Backup review follow-up
+
+復元プレビューはresource別件数とunknown・欠落・重複を区別し、warning/errorおよび復元可否を表示する。全resourceの完全validatorとFormal pipeline参照整合検証、record配列の決定的な順序を備える。通常起動時の既存Understanding処理は維持し、復元後表示はreloadではなくApp callbackで更新する。
+
+既知Legacy保存形式はresource codecで非破壊にbackup現行形式へnormalizeする。Insightの旧Evidence表示field・未導入EvidenceRef・欠落dedupe key、Candidateの旧DISMISSED status、および数値sleepHoursを持つDailyLogを対象とし、安全に判定できない類似データはexportを拒否する。

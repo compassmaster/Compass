@@ -2,8 +2,8 @@
 // Compass — localStorage ベースのリポジトリ実装
 // ============================================================
 
-import type { DailyLog, DateString, EntryId } from '../types/log';
-import type { ILogRepository } from './logRepository';
+import type { DailyLog, DateString, EntryId } from '../types/log.ts';
+import type { ILogRepository } from './logRepository.ts';
 
 const STORAGE_KEY = 'compass_daily_logs';
 

@@ -1,0 +1,14 @@
+.backup-panel { max-width: 760px; margin: 0 auto; padding: 1.5rem; background: white; border-radius: 16px; }
+.backup-panel p { line-height: 1.7; }
+.backup-actions, .backup-confirm { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; margin-top: 1rem; }
+.backup-file { display: inline-flex; padding: .65rem 1rem; border: 1px solid #64748b; border-radius: 8px; cursor: pointer; }
+.backup-file input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.backup-confirm { padding: 1rem; background: #fff7ed; border: 1px solid #fdba74; border-radius: 8px; }
+.backup-confirm p { flex-basis: 100%; margin: 0; }
+.backup-preview { margin: 1rem 0; padding: 1rem; border: 1px solid #cbd5e1; border-radius: 10px; }
+.backup-preview dl { display: grid; gap: .4rem; }
+.backup-preview dl div { display: grid; grid-template-columns: minmax(10rem, 1fr) 2fr; gap: .5rem; }
+.backup-preview dt { font-weight: 700; }
+.preview-ok { color: #047857; font-weight: 700; }
+.preview-error, .preview-errors { color: #b91c1c; }
+.preview-warnings { color: #92400e; }

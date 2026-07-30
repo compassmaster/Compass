@@ -3,6 +3,12 @@
 This document is the permanent handoff file for all future AI assistants working on Compass.
 Every AI assistant must read this document before starting work and update it before finishing work.
 
+## 2026-07-30 Backup / Restore (Issue #51)
+
+- 14 resourceを単一Registryで管理するversion 1 backup envelopeを追加した。棚卸しは`LOCAL_STORAGE_BACKUP_INVENTORY.md`を参照。
+- importは全resourceを先行検証し、unknown・欠落・不正recordを含む場合は一切書き込まない。復元は全置換のみで、管理対象keyを事前snapshotし、書き込みまたは整合処理失敗時に全rollbackする。
+- UIはApplication Serviceだけを利用し、ファイルはブラウザ内で処理する。復元後はFormal UserModel membership reconcileだけを行い、Analysis / Evidence / Candidate / Understanding生成は行わない。
+
 ---
 
 **Last Updated:** 2026-07-28
@@ -339,3 +345,16 @@ DailyLogの編集・削除成功時は`DailyLogList`の`onChanged`から`LogTab`
 - 「7日間」ナビゲーションを「ふりかえり」、画面見出しを「7日間のCompass」へ変更した。
 - Read Modelへ当日を含む7日分の日別itemを新しい日付順で追加した。各itemはその日の最新DailyLogの気分・疲労、SleepRecordの睡眠時間、Historical Weatherの天気code・降水量だけを保持し、Forecastは保持しない。
 - UIへDailyLog・睡眠・過去気象の記録日数、疲労スケール説明、7日分の日別カードを追加した。欠損はDailyLog/Sleepを「記録なし」、Historical Weather/降水量を「データなし」と表示し、補完しない。
+
+### PR #52 review follow-up
+
+- Backup previewを構造化Read Model + Presenterへ変更し、version/export日時、resource件数、unknown/欠落/重複、warning/error、復元可否を表示する。export前にも同じRegistry集計を確認する。
+- 全14 resourceのvalidatorを必須field/rangeまで強化し、Formal pipelineの参照整合もimport前に検証する。各record配列は入力を変更せずstable keyで正規化する。
+- 通常起動時のCandidate生成/Object reconcileは維持した。restore自体はFormal membership reconcileのみ実施し、成功後の画面stateはApp callbackで再取得する（reloadなし）。
+
+### PR #52 Legacy compatibility follow-up
+
+- Backup Registry codecはlocalStorage JSON decode後の保存形式判定・非破壊normalizeと、backup importの厳格validationを分離した。
+- Legacy Insightは既存dedupe関数を再利用し、旧`evidence`を`evidenceSummaries`へ移す。未導入の`evidenceRefs`は空配列とし、source referenceを推測しない。
+- Legacy UserModelUpdateCandidateの`DISMISSED`はRepositoryと同じ公開normalize関数で`REJECTED`へ移す。exportはraw localStorageを変更しない。
+- DailyLogは初期Repository形式からschema v1であり、旧入力で使われた数値`sleepHours`を保持する。存在しないfieldの補完migrationは行わない。
