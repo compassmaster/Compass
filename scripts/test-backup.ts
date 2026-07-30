@@ -1,42 +1,51 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { BackupApplicationService } from '../src/features/backup/services/backupApplicationService.ts';
-import type { BackupResourceDefinition } from '../src/features/backup/services/backupResourceRegistry.ts';
+import { BackupApplicationService, type BackupEnvelope } from '../src/features/backup/services/backupApplicationService.ts';
+import { BACKUP_RESOURCE_REGISTRY } from '../src/features/backup/services/backupResourceRegistry.ts';
 
-class MemoryStorage {
-  readonly values = new Map<string, string>(); failOnKey: string | null = null;
-  getItem(key: string) { return this.values.get(key) ?? null; }
-  setItem(key: string, value: string) { if (key === this.failOnKey) { this.failOnKey = null; throw new Error('write failure'); } this.values.set(key, value); }
-  removeItem(key: string) { this.values.delete(key); }
-}
-const valid = (value: unknown) => Array.isArray(value) && value.every((item) => typeof item === 'object' && item !== null && typeof (item as { id?: unknown }).id === 'string');
-const registry: BackupResourceDefinition[] = [
-  { name: 'a', storageKey: 'managed-a', schemaVersion: 1, validate: valid },
-  { name: 'b', storageKey: 'managed-b', schemaVersion: 1, validate: valid },
-];
-const clock = () => '2026-07-30T00:00:00.000Z';
-const storage = new MemoryStorage();
-storage.setItem('managed-a', JSON.stringify([{ z: 1, id: 'a' }])); storage.setItem('managed-b', JSON.stringify([{ id: 'b' }])); storage.setItem('unmanaged', 'keep');
-let reconciled = 0;
-const service = new BackupApplicationService(storage, registry, clock, () => { reconciled += 1; });
-const exported = service.export(); const envelope = JSON.parse(exported);
-assert.deepEqual(envelope.resources.map((item: { name: string }) => item.name), ['a', 'b']);
-assert.equal(service.export(), exported, 'deterministic output');
-assert.deepEqual(JSON.parse(new BackupApplicationService(new MemoryStorage(), registry, clock).export()).resources.map((item: { data: unknown }) => item.data), [[], []]);
-assert.equal(service.prepareImport('{').ok, false); assert.equal(service.prepareImport(JSON.stringify({ ...envelope, format: 'other' })).ok, false);
-assert.equal(service.prepareImport(JSON.stringify({ ...envelope, schemaVersion: 2 })).ok, false);
-const bad = structuredClone(envelope); bad.resources[0].data = [{ nope: true }]; assert.equal(service.prepareImport(JSON.stringify(bad)).ok, false);
-const unknown = structuredClone(envelope); unknown.resources[0].name = 'unknown'; assert.equal(service.prepareImport(JSON.stringify(unknown)).ok, false);
-const replacement = structuredClone(envelope); replacement.resources[0].data = [{ id: 'new' }]; replacement.resources[1].data = [];
-const replacementJson = JSON.stringify(replacement); const prepared = service.prepareImport(replacementJson);
-assert.equal(storage.getItem('managed-a'), JSON.stringify([{ z: 1, id: 'a' }]), 'validation does not write');
-service.restore(prepared);
-assert.deepEqual(JSON.parse(storage.getItem('managed-a')!), [{ id: 'new' }]); assert.equal(storage.getItem('managed-b'), null);
-assert.equal(storage.getItem('unmanaged'), 'keep'); assert.equal(reconciled, 1); assert.equal(JSON.stringify(replacement), replacementJson);
-storage.setItem('managed-a', JSON.stringify([{ id: 'before-a' }])); storage.setItem('managed-b', JSON.stringify([{ id: 'before-b' }]));
-storage.failOnKey = 'managed-b'; const rollback = structuredClone(envelope); rollback.resources[0].data = [{ id: 'after-a' }]; rollback.resources[1].data = [{ id: 'after-b' }];
-assert.throws(() => service.restore(service.prepareImport(JSON.stringify(rollback)))); storage.failOnKey = null;
-assert.deepEqual(JSON.parse(storage.getItem('managed-a')!), [{ id: 'before-a' }]); assert.deepEqual(JSON.parse(storage.getItem('managed-b')!), [{ id: 'before-b' }]); assert.equal(storage.getItem('unmanaged'), 'keep');
-const ui = readFileSync(new URL('../src/features/backup/components/BackupPanel.tsx', import.meta.url), 'utf8');
-assert.doesNotMatch(ui, /localStorage|Repository/);
+class MemoryStorage { readonly values = new Map<string, string>(); failOnceOnKey: string | null = null; getItem(k:string){return this.values.get(k)??null} removeItem(k:string){this.values.delete(k)} setItem(k:string,v:string){if(k===this.failOnceOnKey){this.failOnceOnKey=null;throw Error('write failure')}this.values.set(k,v)} }
+const t='2026-07-30T00:00:00.000Z';
+const evidence={id:'evidence-1',type:'SLEEP_FATIGUE_OBSERVATION',analyzerId:'analyzer',title:'title',message:'message',observation:'observation',confidence:.7,sampleSize:2,sourceReferences:[{sourceType:'daily_log',id:'log-1',date:'2026-07-29'}],period:{from:'2026-07-29',to:'2026-07-29'},createdAt:t,dedupeKey:'evidence-key'};
+const candidate={id:'candidate-1',type:'SLEEP_FATIGUE_PATTERN',generatorId:'generator',title:'title',statement:'statement',explanation:'explanation',evidenceIds:['evidence-1'],dedupeKey:'candidate-key',createdAt:t,updatedAt:t};
+const object={id:'object-1',type:'SLEEP_FATIGUE_RELATIONSHIP',layer:'LONG_TERM',categories:['INTERNAL_STATE'],statement:'statement',sourceCandidateIds:['candidate-1'],evidenceIds:['evidence-1'],status:{maturity:'HYPOTHESIS',confidence:.7,evidenceCount:1,lastUpdatedAt:t,nextQuestions:[]},createdAt:t,updatedAt:t};
+const evidenceRef={sourceType:'daily_log',logId:'log-1',analyzerId:'analyzer',rationale:'reason',excerpt:'text',sourceCreatedAt:t};
+const hypothesis={value:[],confidence:0,evidenceList:[],lastUpdated:t};
+const location={schemaVersion:1,id:'location-1',displayName:'東京',municipality:'東京',countryCode:'JP',timezone:'Asia/Tokyo',coordinates:{latitude:35,longitude:139},source:'USER_CONFIRMED',confirmationStatus:'CONFIRMED',createdAt:t,updatedAt:t};
+const weatherLocation={timezone:'Asia/Tokyo',precision:'COARSE',locality:'東京',countryCode:'JP'};
+const forecast={id:'forecast-1',schemaVersion:1,kind:'WEATHER_FORECAST_SNAPSHOT',targetPeriod:{localDate:'2026-07-30',timezone:'Asia/Tokyo',granularity:'DAILY'},forecastValues:{temperature:{value:25,unit:'celsius'}},location:weatherLocation,source:{provider:'test',sourceType:'FORECAST',fetchedAt:t},availability:{status:'AVAILABLE'},createdAt:t};
+const observed={id:'observed-1',schemaVersion:1,kind:'OBSERVED_WEATHER_RECORD',observedPeriod:{localDate:'2026-07-29',timezone:'Asia/Tokyo',granularity:'DAILY'},observedValues:{temperature:{value:24,unit:'celsius'}},location:weatherLocation,source:{provider:'test',sourceType:'HISTORICAL',fetchedAt:t},availability:{status:'AVAILABLE'},createdAt:t};
+const fixtures: Record<string, unknown>={
+ dailyLogs:[{id:'log-2',date:'2026-07-30',createdAt:t,updatedAt:t,schemaVersion:1,mood:3,fatigue:4,sleepHours:null,note:'note',events:[]},{id:'log-1',date:'2026-07-29',createdAt:t,updatedAt:t,schemaVersion:1,mood:4,fatigue:3,sleepHours:null,note:'note',events:[]}],
+ sleepRecords:[{id:'sleep-1',sleepDate:'2026-07-29',bedtime:'2026-07-28T23:00:00.000Z',wakeTime:'2026-07-29T07:00:00.000Z',durationMinutes:480,source:'MANUAL',createdAt:t,updatedAt:t}],
+ baseLocation:{schemaVersion:1,location},weatherForecastSnapshots:{schemaVersion:1,records:[forecast]},observedWeatherRecords:{schemaVersion:1,records:[observed]},evidence:[evidence],understandingCandidates:[candidate],candidateResponses:[{candidateId:'candidate-1',answer:'AGREE',respondedAt:t}],understandingObjects:[object],formalUserModel:{schemaVersion:1,userId:'user-1',understandingIds:{longTerm:['object-1'],shortTerm:[]},createdAt:t,updatedAt:t},
+ legacyInsights:[{id:'insight-1',type:'PATTERN',message:'message',confidence:.8,analyzerId:'analyzer',evidenceSummaries:['summary'],evidenceRefs:[evidenceRef],relatedLogIds:['log-1'],dedupeKey:'insight-key',createdAt:t,updatedAt:t,status:'NEW'}],
+ legacyUserModel:{userId:'user-1',longTerm:{coreValues:hypothesis,longTermGoals:hypothesis,personalityTraits:hypothesis},shortTerm:{currentMood:{status:'ok',intensity:3,lastUpdated:t},immediateConcerns:hypothesis,recentInterests:hypothesis}},
+ legacyUserModelUpdateCandidates:[{id:'update-1',sourceInsightId:'insight-1',dedupeKey:'update-key',targetField:'shortTerm.immediateConcerns',proposedValue:['value'],confidence:.8,evidenceRefs:[evidenceRef],createdAt:t,status:'PENDING'}],
+ legacyUserModelUpdateHistory:[{candidateId:'update-1',sourceInsightId:'insight-1',evidenceRefs:[evidenceRef],targetField:'shortTerm.immediateConcerns',appliedAt:t}],
+};
+function populatedStorage(){const s=new MemoryStorage();for(const d of BACKUP_RESOURCE_REGISTRY)s.setItem(d.storageKey,JSON.stringify(fixtures[d.name]));return s}
+const storage=populatedStorage(); storage.setItem('not-managed','keep'); let reconciles=0;
+const service=new BackupApplicationService(storage,BACKUP_RESOURCE_REGISTRY,()=>t,()=>{reconciles++});
+const exported=service.export(); const envelope=JSON.parse(exported) as BackupEnvelope;
+assert.equal(envelope.resources.length,14); assert.deepEqual(envelope.resources.map(r=>r.name),BACKUP_RESOURCE_REGISTRY.map(r=>r.name));
+assert.equal(service.prepareImport(exported).preview.restorable,true); assert.deepEqual(service.getExportPreview().resourceSummaries.map(r=>r.count),[2,1,1,1,1,1,1,1,1,1,1,1,1,1]);
+for(const definition of BACKUP_RESOURCE_REGISTRY) assert.equal(definition.validate(fixtures[definition.name]),true,`${definition.name} fixture`);
+const requiredPath:Record<string,string[]>= {dailyLogs:['id'],sleepRecords:['durationMinutes'],baseLocation:['location'],weatherForecastSnapshots:['records'],observedWeatherRecords:['records'],evidence:['title'],understandingCandidates:['explanation'],candidateResponses:['answer'],understandingObjects:['statement'],formalUserModel:['userId'],legacyInsights:['message'],legacyUserModel:['userId'],legacyUserModelUpdateCandidates:['targetField'],legacyUserModelUpdateHistory:['appliedAt']};
+for(const definition of BACKUP_RESOURCE_REGISTRY){const broken=structuredClone(fixtures[definition.name]) as any;let target:any=broken;if(Array.isArray(target))target=target[0];delete target[requiredPath[definition.name][0]];assert.equal(definition.validate(broken),false,`${definition.name} required field`)}
+const brokenCandidateRef=structuredClone(envelope) as any;brokenCandidateRef.resources.find((r:any)=>r.name==='understandingCandidates').data[0].evidenceIds=['missing'];assert.equal(service.prepareImport(JSON.stringify(brokenCandidateRef)).preview.errors.some(e=>e.code==='BROKEN_REFERENCE'),true);
+const brokenResponseRef=structuredClone(envelope) as any;brokenResponseRef.resources.find((r:any)=>r.name==='candidateResponses').data[0].candidateId='missing';assert.equal(service.prepareImport(JSON.stringify(brokenResponseRef)).preview.errors.some(e=>e.code==='BROKEN_REFERENCE'),true);
+const brokenObjectRef=structuredClone(envelope) as any;brokenObjectRef.resources.find((r:any)=>r.name==='understandingObjects').data[0].evidenceIds=['missing'];assert.equal(service.prepareImport(JSON.stringify(brokenObjectRef)).preview.errors.some(e=>e.code==='BROKEN_REFERENCE'),true);
+const brokenFormalRef=structuredClone(envelope) as any;brokenFormalRef.resources.find((r:any)=>r.name==='formalUserModel').data.understandingIds.longTerm=['missing'];assert.equal(service.prepareImport(JSON.stringify(brokenFormalRef)).preview.errors.some(e=>e.code==='BROKEN_REFERENCE'),true);
+const badConfidence=structuredClone(envelope);(badConfidence.resources.find(r=>r.name==='evidence')!.data as any[])[0].confidence=2;assert.equal(service.prepareImport(JSON.stringify(badConfidence)).preview.restorable,false);
+const emptyStorage=new MemoryStorage();const emptyService=new BackupApplicationService(emptyStorage,BACKUP_RESOURCE_REGISTRY,()=>t);const empty=emptyService.export();assert.equal(JSON.parse(empty).resources.length,14);assert.equal(emptyService.prepareImport(empty).preview.warnings.length,14);
+const unknown=structuredClone(envelope) as any;unknown.resources.push({name:'futureData',schemaVersion:1,data:[{id:'x'}]});let preview=service.prepareImport(JSON.stringify(unknown)).preview;assert.equal(preview.restorable,false);assert.deepEqual(preview.unknownResources.map(r=>[r.name,r.count,r.occurrences]),[['futureData',1,1]]);
+const missing=structuredClone(envelope) as any;missing.resources.pop();preview=service.prepareImport(JSON.stringify(missing)).preview;assert.deepEqual(preview.missingResources,['legacyUserModelUpdateHistory']);
+const duplicate=structuredClone(envelope) as any;duplicate.resources.push(duplicate.resources[0]);preview=service.prepareImport(JSON.stringify(duplicate)).preview;assert.deepEqual(preview.duplicateResources,['dailyLogs']);
+const reverse=populatedStorage();reverse.setItem('compass_daily_logs',JSON.stringify([...(fixtures.dailyLogs as any[])].reverse()));assert.equal(new BackupApplicationService(reverse,BACKUP_RESOURCE_REGISTRY,()=>t).export(),exported,'array output order is deterministic');
+const replacement=structuredClone(envelope) as any;(replacement.resources.find((r:any)=>r.name==='dailyLogs').data as any[])[0].note='restored';const prepared=service.prepareImport(JSON.stringify(replacement));const immutable=JSON.stringify(replacement);service.restore(prepared);assert.equal(JSON.parse(storage.getItem('compass_daily_logs')!)[0].note,'restored');assert.equal(JSON.stringify(replacement),immutable);assert.equal(storage.getItem('not-managed'),'keep');assert.equal(reconciles,1);
+const before=new Map(storage.values);storage.failOnceOnKey='compass_analysis_evidence';assert.throws(()=>service.restore(prepared));assert.deepEqual(storage.values,before,'write rollback');
+const reconcileFailureStorage=populatedStorage();const failing=new BackupApplicationService(reconcileFailureStorage,BACKUP_RESOURCE_REGISTRY,()=>t,()=>{throw Error('reconcile')});const reconcileBefore=new Map(reconcileFailureStorage.values);assert.throws(()=>failing.restore(failing.prepareImport(exported)));assert.deepEqual(reconcileFailureStorage.values,reconcileBefore,'reconcile rollback');
+const app=readFileSync(new URL('../src/app/App.tsx',import.meta.url),'utf8');assert.match(app,/generateAndSaveFromEvidence/);assert.match(app,/reconcileAll/);const composition=readFileSync(new URL('../src/features/backup/services/index.ts',import.meta.url),'utf8');assert.doesNotMatch(composition,/analysisApplicationService|generateAndSaveFromEvidence|reconcileAll/);
+const ui=readFileSync(new URL('../src/features/backup/components/BackupPanel.tsx',import.meta.url),'utf8');assert.doesNotMatch(ui,/localStorage|Repository|location\.reload/);
 console.log('backup tests passed');

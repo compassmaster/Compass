@@ -345,3 +345,9 @@ DailyLogの編集・削除成功時は`DailyLogList`の`onChanged`から`LogTab`
 - 「7日間」ナビゲーションを「ふりかえり」、画面見出しを「7日間のCompass」へ変更した。
 - Read Modelへ当日を含む7日分の日別itemを新しい日付順で追加した。各itemはその日の最新DailyLogの気分・疲労、SleepRecordの睡眠時間、Historical Weatherの天気code・降水量だけを保持し、Forecastは保持しない。
 - UIへDailyLog・睡眠・過去気象の記録日数、疲労スケール説明、7日分の日別カードを追加した。欠損はDailyLog/Sleepを「記録なし」、Historical Weather/降水量を「データなし」と表示し、補完しない。
+
+### PR #52 review follow-up
+
+- Backup previewを構造化Read Model + Presenterへ変更し、version/export日時、resource件数、unknown/欠落/重複、warning/error、復元可否を表示する。export前にも同じRegistry集計を確認する。
+- 全14 resourceのvalidatorを必須field/rangeまで強化し、Formal pipelineの参照整合もimport前に検証する。各record配列は入力を変更せずstable keyで正規化する。
+- 通常起動時のCandidate生成/Object reconcileは維持した。restore自体はFormal membership reconcileのみ実施し、成功後の画面stateはApp callbackで再取得する（reloadなし）。

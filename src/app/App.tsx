@@ -35,10 +35,13 @@ type AppTab = 'home' | 'log' | 'weeklySummary' | 'relationships' | 'prediction' 
 
 
 function loadInitialUnderstandingCandidates(): UnderstandingCandidate[] {
+  const storedEvidence = analysisApplicationService.listEvidence();
+  if (storedEvidence.length > 0) understandingCandidateApplicationService.generateAndSaveFromEvidence(storedEvidence);
   return understandingCandidateApplicationService.listCandidates();
 }
 
 function loadInitialUnderstandingObjects(): UnderstandingObject[] {
+  understandingObjectApplicationService.reconcileAll(analysisApplicationService.listEvidence());
   return understandingObjectApplicationService.listObjects();
 }
 
@@ -104,6 +107,16 @@ export function App() {
   const [resolvedFormalUserModel, setResolvedFormalUserModel] = useState<ResolvedFormalUserModel>(() =>
     reconcileAndResolveFormalUserModel()
   );
+
+  const refreshAfterRestore = () => {
+    setLogs(dailyLogApplicationService.listDailyLogs());
+    setUserModelUpdateCandidates(userModelUpdateCandidateRepository.getAll());
+    setAnalysisEvidence(analysisApplicationService.listEvidence());
+    setUnderstandingCandidates(understandingCandidateApplicationService.listCandidates());
+    setUnderstandingCandidateResponses(understandingCandidateApplicationService.listResponses());
+    setUnderstandingObjects(understandingObjectApplicationService.listObjects());
+    setResolvedFormalUserModel(reconcileAndResolveFormalUserModel());
+  };
 
   const refreshLogs = () => {
     setLogs(dailyLogApplicationService.listDailyLogs());
@@ -253,7 +266,7 @@ export function App() {
         {activeTab === 'weeklySummary' && <WeeklySummaryTab />}
         {activeTab === 'relationships' && <RelationshipExplorerTab />}
         {activeTab === 'prediction' && <PredictionTab />}
-        {activeTab === 'backup' && <BackupPanel />}
+        {activeTab === 'backup' && <BackupPanel onRestored={refreshAfterRestore} />}
         {activeTab === 'compassMap' && (
           <MapTab
             resolvedFormalUserModel={resolvedFormalUserModel}

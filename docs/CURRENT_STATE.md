@@ -309,3 +309,7 @@ PR #49レビュー対応として、ナビゲーションを「ふりかえり�
 ## Backup / Restore (Issue #51)
 
 全localStorage永続resource（現行DomainとLegacy互換フロー）をversioned JSONへ書き出し、全検証後に原子的な全置換で復元できる。対象は単一Registryで管理し、対象外keyは維持する。復元後に実行するのはFormal UserModel整合処理だけである。
+
+### Backup review follow-up
+
+復元プレビューはresource別件数とunknown・欠落・重複を区別し、warning/errorおよび復元可否を表示する。全resourceの完全validatorとFormal pipeline参照整合検証、record配列の決定的な順序を備える。通常起動時の既存Understanding処理は維持し、復元後表示はreloadではなくApp callbackで更新する。
