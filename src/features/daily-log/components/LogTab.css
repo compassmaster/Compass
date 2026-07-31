@@ -96,3 +96,10 @@
 .sleep-record-summary {
   font-weight: 600;
 }
+
+@media (max-width: 600px) {
+  .log-form { padding: 16px; }
+  .scale-container { flex-wrap: wrap; }
+  .scale-button { flex-basis: calc(33.333% - 10px); min-height: 44px; }
+  .submit-button { min-height: 44px; }
+}

@@ -214,28 +214,31 @@ export function App() {
         <p className="app-subtitle">あなたを理解し、現在を支え、未来を一緒に考えるパートナー</p>
       </header>
 
-      <nav className="app-nav">
+      <nav className="app-nav" aria-label="主要画面">
         <button 
           className={`tab-button ${activeTab === 'home' ? 'active-tab' : ''}`} 
+          aria-current={activeTab === 'home' ? 'page' : undefined}
           onClick={() => setActiveTab('home')}
         >
           🏠 ホーム
         </button>
         <button 
           className={`tab-button ${activeTab === 'log' ? 'active-tab' : ''}`} 
+          aria-current={activeTab === 'log' ? 'page' : undefined}
           onClick={() => setActiveTab('log')}
         >
           📝 記録
         </button>
-        <button className={`tab-button ${activeTab === 'weeklySummary' ? 'active-tab' : ''}`} onClick={() => setActiveTab('weeklySummary')}>
+        <button className={`tab-button ${activeTab === 'weeklySummary' ? 'active-tab' : ''}`} aria-current={activeTab === 'weeklySummary' ? 'page' : undefined} onClick={() => setActiveTab('weeklySummary')}>
           📊 ふりかえり
         </button>
-        <button className={`tab-button ${activeTab === 'relationships' ? 'active-tab' : ''}`} onClick={() => setActiveTab('relationships')}>
+        <button className={`tab-button ${activeTab === 'relationships' ? 'active-tab' : ''}`} aria-current={activeTab === 'relationships' ? 'page' : undefined} onClick={() => setActiveTab('relationships')}>
           🔎 関係
         </button>
-        <button className={`tab-button ${activeTab === 'prediction' ? 'active-tab' : ''}`} onClick={() => setActiveTab('prediction')}>☂️ 明日の見通し</button>
+        <button className={`tab-button ${activeTab === 'prediction' ? 'active-tab' : ''}`} aria-current={activeTab === 'prediction' ? 'page' : undefined} onClick={() => setActiveTab('prediction')}>☂️ 明日の見通し</button>
         <button 
           className={`tab-button ${activeTab === 'compassMap' ? 'active-tab' : ''}`} 
+          aria-current={activeTab === 'compassMap' ? 'page' : undefined}
           onClick={() => {
             refreshUserModelUpdateCandidates();
             refreshResolvedFormalUserModel();
@@ -244,7 +247,7 @@ export function App() {
         >
           🧭 Compass Map
         </button>
-        <button className={`tab-button ${activeTab === 'backup' ? 'active-tab' : ''}`} onClick={() => setActiveTab('backup')}>
+        <button className={`tab-button ${activeTab === 'backup' ? 'active-tab' : ''}`} aria-current={activeTab === 'backup' ? 'page' : undefined} onClick={() => setActiveTab('backup')}>
           💾 バックアップ
         </button>
       </nav>

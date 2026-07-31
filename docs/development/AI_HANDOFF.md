@@ -3,6 +3,13 @@
 This document is the permanent handoff file for all future AI assistants working on Compass.
 Every AI assistant must read this document before starting work and update it before finishing work.
 
+## 2026-07-31 Responsive App Shell (Issue #55)
+
+- 7つの画面名・順序・切替callbackは維持し、600px以下のApp navigationを折り返さない横スクロールレールにした。全タブは44px以上で、選択中だけ`aria-current="page"`を持つ。
+- `index.css`からViteテンプレートのdark mode・固定root幅・大見出し指定を除き、light color scheme、全要素border-box、長文・メディア・フォームの共通overflow境界へ置き換えた。新しい永続化やDomain/Application/Repository変更はない。
+- Backup、DailyLog、Relationship、Compass Mapの狭幅レイアウトを補強した。First-use guideの600px以下1列規則と既存の更新・復元callbackは維持される。
+- 手動ブラウザQAは未実施。`docs/qa/RESPONSIVE_QA.md`の360 / 390 / 768 / desktop手順に従って実機確認すること。
+
 ## 2026-07-30 Backup / Restore (Issue #51)
 
 - 14 resourceを単一Registryで管理するversion 1 backup envelopeを追加した。棚卸しは`LOCAL_STORAGE_BACKUP_INVENTORY.md`を参照。

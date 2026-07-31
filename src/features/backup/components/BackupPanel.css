@@ -12,3 +12,10 @@
 .preview-ok { color: #047857; font-weight: 700; }
 .preview-error, .preview-errors { color: #b91c1c; }
 .preview-warnings { color: #92400e; }
+@media (max-width: 600px) {
+  .backup-panel { padding: 1rem; }
+  .backup-actions > *, .backup-confirm > * { width: 100%; }
+  .backup-file { justify-content: center; min-height: 44px; }
+  .backup-preview dl div { grid-template-columns: 1fr; }
+  .backup-preview dd { margin-left: 0; overflow-wrap: anywhere; }
+}
