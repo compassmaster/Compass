@@ -15,7 +15,7 @@ import './LogTab.css';
  * フォームの状態はこのコンポーネント内で閉じて管理する。
  * 保存成功時に onSaveSuccess コールバックで親に通知する。
  */
-export function LogTab({ onSaveSuccess }: { onSaveSuccess: () => void }) {
+export function LogTab({ onSaveSuccess, onSleepChanged }: { onSaveSuccess: () => void; onSleepChanged?: () => void }) {
   const [mood, setMood] = useState<Scale | null>(3);
   const [fatigue, setFatigue] = useState<Scale | null>(3);
   const [note, setNote] = useState('');
@@ -64,7 +64,7 @@ export function LogTab({ onSaveSuccess }: { onSaveSuccess: () => void }) {
 
   return (
     <>
-    <SleepRecordSection />
+    {onSleepChanged ? <SleepRecordSection onChanged={onSleepChanged} /> : <SleepRecordSection />}
     <form onSubmit={handleSubmit} className="log-form">
       <h2>今日を記録する</h2>
 

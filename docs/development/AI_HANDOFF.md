@@ -358,3 +358,9 @@ DailyLogの編集・削除成功時は`DailyLogList`の`onChanged`から`LogTab`
 - Legacy Insightは既存dedupe関数を再利用し、旧`evidence`を`evidenceSummaries`へ移す。未導入の`evidenceRefs`は空配列とし、source referenceを推測しない。
 - Legacy UserModelUpdateCandidateの`DISMISSED`はRepositoryと同じ公開normalize関数で`REJECTED`へ移す。exportはraw localStorageを変更しない。
 - DailyLogは初期Repository形式からschema v1であり、旧入力で使われた数値`sleepHours`を保持する。存在しないfieldの補完migrationは行わない。
+
+## 2026-07-31 First-use guide (Issue #53)
+
+- `first-use-guide`はBase Location、DailyLog、SleepRecord Repositoryへのread-only Queryで、専用localStorage keyやdismiss flagを持たない。
+- Home上部の3ステップは疲労スケール、睡眠の起床日基準、地域の天気用途、データ不足が不具合ではない理由を常時示す。3件完了後も縮小調の完了表示と手順を残す。
+- App callbackが地域・DailyLog・SleepRecordの変更とbackup restore後にprojectionを再取得する。睡眠へのMVP導線は記録タブまでであり、専用section focusは将来改善とする。

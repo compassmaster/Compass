@@ -27,6 +27,8 @@ import { RelationshipExplorerTab } from '../features/relationship-explorer/compo
 import { PredictionTab } from '../features/prediction/components/PredictionTab.tsx';
 import { WeeklySummaryTab } from '../features/weekly-summary/components/WeeklySummaryTab.tsx';
 import { BackupPanel } from '../features/backup/components/BackupPanel.tsx';
+import { firstUseGuideQueryService } from '../features/first-use-guide/services/index.ts';
+import type { FirstUseGuideStepId } from '../features/first-use-guide/types/firstUseGuide.ts';
 
 import './App.css';
 
@@ -86,6 +88,7 @@ function loadInitialUserModel(): UserModel {
 
 export function App() {
   const [activeTab, setActiveTab] = useState<AppTab>('home');
+  const [firstUseGuide, setFirstUseGuide] = useState(() => firstUseGuideQueryService.get());
   const [logs, setLogs] = useState<DailyLog[]>(() => dailyLogApplicationService.listDailyLogs());
   const [, setUserModel] = useState<UserModel>(() => loadInitialUserModel());
   const [userModelUpdateCandidates, setUserModelUpdateCandidates] = useState<UserModelUpdateCandidate[]>(() =>
@@ -109,6 +112,7 @@ export function App() {
   );
 
   const refreshAfterRestore = () => {
+    setFirstUseGuide(firstUseGuideQueryService.get());
     setLogs(dailyLogApplicationService.listDailyLogs());
     setUserModelUpdateCandidates(userModelUpdateCandidateRepository.getAll());
     setAnalysisEvidence(analysisApplicationService.listEvidence());
@@ -120,6 +124,16 @@ export function App() {
 
   const refreshLogs = () => {
     setLogs(dailyLogApplicationService.listDailyLogs());
+    setFirstUseGuide(firstUseGuideQueryService.get());
+  };
+
+  const refreshFirstUseGuide = () => setFirstUseGuide(firstUseGuideQueryService.get());
+  const handleFirstUseNavigate = (step: FirstUseGuideStepId) => {
+    if (step === 'BASE_LOCATION') {
+      document.getElementById('home-weather-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+    setActiveTab('log');
   };
 
   const refreshUserModelUpdateCandidates = () => {
@@ -260,9 +274,12 @@ export function App() {
             understandingCandidateResponses={understandingCandidateResponses}
             resolvedFormalUserModel={resolvedFormalUserModel}
             onUnderstandingCandidateRespond={handleUnderstandingCandidateResponse}
+            firstUseGuide={firstUseGuide}
+            onFirstUseNavigate={handleFirstUseNavigate}
+            onFirstUseDataChanged={refreshFirstUseGuide}
           />
         )}
-        {activeTab === 'log' && <LogTab onSaveSuccess={refreshLogs} />}
+        {activeTab === 'log' && <LogTab onSaveSuccess={refreshLogs} onSleepChanged={refreshFirstUseGuide} />}
         {activeTab === 'weeklySummary' && <WeeklySummaryTab />}
         {activeTab === 'relationships' && <RelationshipExplorerTab />}
         {activeTab === 'prediction' && <PredictionTab />}
