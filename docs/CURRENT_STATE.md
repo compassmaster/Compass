@@ -2,7 +2,7 @@
 status: Active
 dependsOn: []
 usedBy: []
-lastUpdated: "2026-07-28"
+lastUpdated: "2026-07-31"
 ---
 # Current State (現在のプロジェクト状況)
 
@@ -12,6 +12,7 @@ lastUpdated: "2026-07-28"
 
 ## 完了済み
 
+- Issue #55: 主要7画面のレスポンシブ基盤。600px以下では7タブを44px以上の1行横スクロールレールとし、active tabを`aria-current`でも識別可能にした。共通の幅計算・長文折り返しと主要grid/form/cardの狭幅対応、および再利用可能な手動QA手順を追加した。
 - 初期開発体制のセットアップ。
 - AI Collaboration Protocol v1.0の制定。
 - Compass Core Philosophy v1.0の策定。

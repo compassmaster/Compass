@@ -23,4 +23,4 @@
 .relationship-stats dt { color: #718096; font-size: .77rem; }
 .relationship-stats dd { margin: 3px 0 0; font-weight: 700; }
 .relationship-card details { margin-top: 14px; color: #4a5568; font-size: .82rem; overflow-wrap: anywhere; }
-@media (max-width: 560px) { .relationship-stats { grid-template-columns: 1fr; } }
+@media (max-width: 560px) { .relationship-grid, .relationship-stats { grid-template-columns: 1fr; } .relationship-header button { min-height: 44px; } }

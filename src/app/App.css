@@ -41,6 +41,7 @@
 }
 
 .tab-button {
+  min-height: 44px;
   padding: 10px 20px;
   border: 1px solid #cbd5e0;
   border-radius: 20px;
@@ -48,6 +49,12 @@
   cursor: pointer;
   font-size: 1rem;
   transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.tab-button:focus-visible {
+  outline: 3px solid #f6ad55;
+  outline-offset: 2px;
 }
 
 .active-tab {
@@ -59,4 +66,45 @@
 
 .app-main {
   padding: 10px;
+}
+
+@media (max-width: 600px) {
+  .app-container {
+    width: 100%;
+    padding: 12px;
+  }
+
+  .app-header {
+    margin-bottom: 16px;
+    padding: 8px 4px 14px;
+  }
+
+  .app-title {
+    font-size: clamp(1.75rem, 9vw, 2.25rem);
+  }
+
+  .app-subtitle {
+    overflow-wrap: anywhere;
+  }
+
+  .app-nav {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    gap: 8px;
+    margin: 0 -12px 18px;
+    padding: 2px 12px 8px;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tab-button {
+    flex: 0 0 auto;
+    padding: 10px 16px;
+  }
+
+  .app-main {
+    padding: 0;
+  }
 }
