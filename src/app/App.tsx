@@ -44,7 +44,8 @@ function loadInitialUnderstandingCandidates(): UnderstandingCandidate[] {
 }
 
 function loadInitialUnderstandingObjects(): UnderstandingObject[] {
-  understandingObjectApplicationService.reconcileAll(analysisApplicationService.listEvidence());
+  // Existing current state may predate history support; startup reconciliation must not invent history.
+  understandingObjectApplicationService.reconcileAll(analysisApplicationService.listEvidence(), new Date().toISOString(), false);
   return understandingObjectApplicationService.listObjects();
 }
 

@@ -59,7 +59,7 @@ const userModel = (value: unknown) => record(value) && text(value.userId) && rec
 
 function stableKey(value: unknown): string {
   if (!record(value)) return JSON.stringify(value);
-  return [value.date, value.sleepDate, value.createdAt, value.updatedAt, value.respondedAt, value.appliedAt, value.id, value.candidateId, value.logId, value.analyzerId].map((item) => String(item ?? '')).join('\u0000');
+  return [value.date, value.sleepDate, value.occurredAt, value.createdAt, value.updatedAt, value.respondedAt, value.appliedAt, value.id, value.candidateId, value.logId, value.analyzerId].map((item) => String(item ?? '')).join('\u0000');
 }
 function normalizeArray(value: unknown): unknown { return Array.isArray(value) ? [...value].map(deepCopyAndSortReferences).sort((a, b) => stableKey(a).localeCompare(stableKey(b))) : value; }
 function normalizeEnvelope(value: unknown): unknown { if (!record(value) || !Array.isArray(value.records)) return value; return { ...value, records: normalizeArray(value.records) }; }

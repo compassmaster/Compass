@@ -31,7 +31,8 @@ export class UnderstandingObjectApplicationService {
     this.historyRepository = historyRepository;
   }
 
-  reconcileCandidate(candidateId: string, evidenceList: Evidence[], now = new Date().toISOString()): ReconcileUnderstandingObjectResult {
+  reconcileCandidate(candidateId: string, evidenceList: Evidence[], now = new Date().toISOString(), recordHistory = true): ReconcileUnderstandingObjectResult {
+    if (!Number.isFinite(Date.parse(now))) return { action: 'SKIPPED', object: null, reason: 'INVALID_OCCURRED_AT' };
     const candidate = this.candidateRepository.getById(candidateId);
     if (!candidate) return { action: 'SKIPPED', object: null, reason: 'CANDIDATE_NOT_FOUND' };
     const response = this.responseRepository.getByCandidateId(candidateId);
@@ -40,7 +41,7 @@ export class UnderstandingObjectApplicationService {
       const existing = this.objectRepository.getBySourceCandidateId(candidateId);
       if (existing) {
         this.objectRepository.delete(existing.id);
-        this.historyRepository?.append({ id: createUnderstandingHistoryEventId('UNDERSTANDING_REMOVED', existing.id, now), type: 'UNDERSTANDING_REMOVED', candidateId: candidate.id, understandingId: existing.id, before: existing, reason: 'USER_RESPONSE_CHANGED', occurredAt: now });
+        if (recordHistory) this.historyRepository?.append({ id: createUnderstandingHistoryEventId('UNDERSTANDING_REMOVED', existing.id, now), type: 'UNDERSTANDING_REMOVED', candidateId: candidate.id, understandingId: existing.id, before: existing, reason: 'USER_RESPONSE_CHANGED', occurredAt: now });
         return { action: 'REMOVED', object: null, reason: 'RESPONSE_NOT_AGREE' };
       }
       return { action: 'UNCHANGED', object: null, reason: 'RESPONSE_NOT_AGREE' };
@@ -48,16 +49,19 @@ export class UnderstandingObjectApplicationService {
     const result = createUnderstandingObject(candidate, response, evidenceList, now);
     if (!result.ok) return { action: 'SKIPPED', object: null, reason: result.reason };
     const existing = this.objectRepository.getBySourceCandidateId(candidateId);
+    if (existing && sameMeaning(existing, result.object)) return { action: 'UNCHANGED', object: existing };
     this.objectRepository.save(result.object);
     const saved = this.objectRepository.getById(result.object.id) ?? result.object;
-    if (!existing) this.historyRepository?.append({ id: createUnderstandingHistoryEventId('UNDERSTANDING_CREATED', saved.id, now), type: 'UNDERSTANDING_CREATED', candidateId: candidate.id, understandingId: saved.id, after: saved, reason: 'USER_AGREED', occurredAt: now });
-    else if (!sameMeaning(existing, saved)) this.historyRepository?.append({ id: createUnderstandingHistoryEventId('UNDERSTANDING_UPDATED', saved.id, now), type: 'UNDERSTANDING_UPDATED', candidateId: candidate.id, understandingId: saved.id, before: existing, after: saved, reason: existing.statement === saved.statement ? 'EVIDENCE_CHANGED' : 'CANDIDATE_CHANGED', occurredAt: now });
-    else return { action: 'UNCHANGED', object: saved };
+    if (!existing) {
+      if (recordHistory) this.historyRepository?.append({ id: createUnderstandingHistoryEventId('UNDERSTANDING_CREATED', saved.id, now), type: 'UNDERSTANDING_CREATED', candidateId: candidate.id, understandingId: saved.id, after: saved, reason: 'USER_AGREED', occurredAt: now });
+    } else if (recordHistory) {
+      this.historyRepository?.append({ id: createUnderstandingHistoryEventId('UNDERSTANDING_UPDATED', saved.id, now), type: 'UNDERSTANDING_UPDATED', candidateId: candidate.id, understandingId: saved.id, before: existing, after: saved, reason: existing.statement === saved.statement ? 'EVIDENCE_CHANGED' : 'CANDIDATE_CHANGED', occurredAt: now });
+    }
     return { action: 'CREATED_OR_UPDATED', object: saved };
   }
 
-  reconcileAll(evidenceList: Evidence[], now = new Date().toISOString()): UnderstandingObject[] {
-    for (const response of this.responseRepository.list()) this.reconcileCandidate(response.candidateId, evidenceList, now);
+  reconcileAll(evidenceList: Evidence[], now = new Date().toISOString(), recordHistory = true): UnderstandingObject[] {
+    for (const response of this.responseRepository.list()) this.reconcileCandidate(response.candidateId, evidenceList, now, recordHistory);
     return this.listObjects();
   }
 

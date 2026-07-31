@@ -38,6 +38,7 @@ export class UnderstandingCandidateApplicationService {
 
   respond(candidateId: string, answer: UnderstandingCandidateAnswer, now = new Date().toISOString()): RespondResult {
     if (!isUnderstandingCandidateAnswer(answer)) return { action: 'SKIPPED', reason: 'INVALID_ANSWER' };
+    if (!Number.isFinite(Date.parse(now))) return { action: 'SKIPPED', reason: 'INVALID_OCCURRED_AT' };
     const candidate = this.candidateRepository.getById(candidateId);
     if (!candidate) return { action: 'SKIPPED', reason: 'CANDIDATE_NOT_FOUND' };
     const previous = this.responseRepository.getByCandidateId(candidateId);
