@@ -17,7 +17,9 @@ export class LocalStorageUnderstandingObjectRepository implements IUnderstanding
     if (!isUnderstandingObject(object)) return;
     const objects = this.load();
     const index = objects.findIndex((item) => item.id === object.id || item.sourceCandidateIds.some((id) => object.sourceCandidateIds.includes(id)));
-    const next = index >= 0 ? objects.map((item, i) => i === index ? mergeObject(item, object) : item) : [...objects, object];
+    const merged = index >= 0 ? mergeObject(objects[index], object) : object;
+    if (index >= 0 && sameMeaning(objects[index], merged)) return;
+    const next = index >= 0 ? objects.map((item, i) => i === index ? merged : item) : [...objects, object];
     this.persist(next);
   }
   delete(id: string): void { this.persist(this.load().filter((item) => item.id !== id)); }
@@ -45,3 +47,8 @@ function mergeObject(existing: UnderstandingObject, incoming: UnderstandingObjec
 }
 function unique(values: readonly string[]): string[] { return [...new Set(values)]; }
 function sortObjects(a: UnderstandingObject, b: UnderstandingObject): number { return b.updatedAt.localeCompare(a.updatedAt) || a.id.localeCompare(b.id); }
+function sameMeaning(a: UnderstandingObject, b: UnderstandingObject): boolean {
+  return a.statement === b.statement && JSON.stringify(a.sourceCandidateIds) === JSON.stringify(b.sourceCandidateIds)
+    && JSON.stringify(a.evidenceIds) === JSON.stringify(b.evidenceIds) && a.status.maturity === b.status.maturity
+    && a.status.confidence === b.status.confidence && a.status.evidenceCount === b.status.evidenceCount;
+}

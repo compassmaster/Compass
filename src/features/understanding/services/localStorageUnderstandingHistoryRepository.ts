@@ -1,13 +1,16 @@
 import { isUnderstandingCandidateAnswer } from '../types/understandingCandidate.ts';
 import type { UnderstandingHistoryEnvelope, UnderstandingHistoryEvent } from '../types/understandingHistory.ts';
 import { isUnderstandingObject } from '../types/understandingObject.ts';
+import type { UnderstandingObject } from '../types/understandingObject.ts';
 import type { IUnderstandingHistoryRepository } from './understandingHistoryRepository.ts';
 
 export const UNDERSTANDING_HISTORY_STORAGE_KEY = 'compass_understanding_history_v1';
 const clone = <T>(value: T): T => structuredClone(value);
 const record = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value);
 const text = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
-const iso = (value: unknown): value is string => text(value) && Number.isFinite(Date.parse(value));
+const iso = (value: unknown): value is string => typeof value === 'string'
+  && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/.test(value)
+  && Number.isFinite(Date.parse(value));
 const hasOnlyKeys = (value: Record<string, unknown>, keys: readonly string[]): boolean => {
   const actual = Object.keys(value).sort();
   return actual.length === keys.length && actual.every((key, index) => key === [...keys].sort()[index]);
@@ -18,15 +21,26 @@ export function isUnderstandingHistoryEvent(value: unknown): value is Understand
   if (value.type === 'CANDIDATE_RESPONSE_CHANGED') return hasOnlyKeys(value, ['id', 'type', 'candidateId', 'candidateTitle', 'candidateStatement', 'previousAnswer', 'answer', 'occurredAt'])
     && text(value.candidateTitle) && text(value.candidateStatement)
     && (value.previousAnswer === null || (typeof value.previousAnswer === 'string' && isUnderstandingCandidateAnswer(value.previousAnswer)))
-    && typeof value.answer === 'string' && isUnderstandingCandidateAnswer(value.answer);
+    && typeof value.answer === 'string' && isUnderstandingCandidateAnswer(value.answer)
+    && value.previousAnswer !== value.answer;
   if (!text(value.understandingId)) return false;
-  if (value.type === 'UNDERSTANDING_CREATED') return hasOnlyKeys(value, ['id', 'type', 'candidateId', 'understandingId', 'after', 'reason', 'occurredAt']) && value.reason === 'USER_AGREED' && isHistorySnapshot(value.after);
-  if (value.type === 'UNDERSTANDING_UPDATED') return hasOnlyKeys(value, ['id', 'type', 'candidateId', 'understandingId', 'before', 'after', 'reason', 'occurredAt']) && ['EVIDENCE_CHANGED', 'CANDIDATE_CHANGED'].includes(String(value.reason)) && isHistorySnapshot(value.before) && isHistorySnapshot(value.after);
-  if (value.type === 'UNDERSTANDING_REMOVED') return hasOnlyKeys(value, ['id', 'type', 'candidateId', 'understandingId', 'before', 'reason', 'occurredAt']) && value.reason === 'USER_RESPONSE_CHANGED' && isHistorySnapshot(value.before);
+  if (value.type === 'UNDERSTANDING_CREATED') return hasOnlyKeys(value, ['id', 'type', 'candidateId', 'understandingId', 'after', 'reason', 'occurredAt']) && value.reason === 'USER_AGREED' && isMatchingSnapshot(value.after, value.understandingId, value.candidateId);
+  if (value.type === 'UNDERSTANDING_UPDATED') return hasOnlyKeys(value, ['id', 'type', 'candidateId', 'understandingId', 'before', 'after', 'reason', 'occurredAt']) && ['EVIDENCE_CHANGED', 'CANDIDATE_CHANGED'].includes(String(value.reason))
+    && isMatchingSnapshot(value.before, value.understandingId, value.candidateId) && isMatchingSnapshot(value.after, value.understandingId, value.candidateId)
+    && hasMeaningfulSnapshotChange(value.before, value.after);
+  if (value.type === 'UNDERSTANDING_REMOVED') return hasOnlyKeys(value, ['id', 'type', 'candidateId', 'understandingId', 'before', 'reason', 'occurredAt']) && value.reason === 'USER_RESPONSE_CHANGED' && isMatchingSnapshot(value.before, value.understandingId, value.candidateId);
   return false;
 }
-function isHistorySnapshot(value: unknown): boolean {
+function isHistorySnapshot(value: unknown): value is UnderstandingObject {
   return isUnderstandingObject(value) && iso(value.createdAt) && iso(value.updatedAt) && iso(value.status.lastUpdatedAt);
+}
+function isMatchingSnapshot(value: unknown, understandingId: unknown, candidateId: unknown): value is UnderstandingObject {
+  return isHistorySnapshot(value) && value.id === understandingId && value.sourceCandidateIds.includes(candidateId as never);
+}
+function hasMeaningfulSnapshotChange(before: UnderstandingObject, after: UnderstandingObject): boolean {
+  return before.statement !== after.statement || JSON.stringify(before.sourceCandidateIds) !== JSON.stringify(after.sourceCandidateIds)
+    || JSON.stringify(before.evidenceIds) !== JSON.stringify(after.evidenceIds) || before.status.maturity !== after.status.maturity
+    || before.status.confidence !== after.status.confidence || before.status.evidenceCount !== after.status.evidenceCount;
 }
 export function isUnderstandingHistoryEnvelope(value: unknown): value is UnderstandingHistoryEnvelope {
   if (!record(value) || !hasOnlyKeys(value, ['schemaVersion', 'records']) || value.schemaVersion !== 1 || !Array.isArray(value.records) || !value.records.every(isUnderstandingHistoryEvent)) return false;

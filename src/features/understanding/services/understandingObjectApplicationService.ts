@@ -32,7 +32,7 @@ export class UnderstandingObjectApplicationService {
   }
 
   reconcileCandidate(candidateId: string, evidenceList: Evidence[], now = new Date().toISOString(), recordHistory = true): ReconcileUnderstandingObjectResult {
-    if (!Number.isFinite(Date.parse(now))) return { action: 'SKIPPED', object: null, reason: 'INVALID_OCCURRED_AT' };
+    if (!isIsoTimestamp(now)) return { action: 'SKIPPED', object: null, reason: 'INVALID_OCCURRED_AT' };
     const candidate = this.candidateRepository.getById(candidateId);
     if (!candidate) return { action: 'SKIPPED', object: null, reason: 'CANDIDATE_NOT_FOUND' };
     const response = this.responseRepository.getByCandidateId(candidateId);
@@ -51,7 +51,8 @@ export class UnderstandingObjectApplicationService {
     const existing = this.objectRepository.getBySourceCandidateId(candidateId);
     if (existing && sameMeaning(existing, result.object)) return { action: 'UNCHANGED', object: existing };
     this.objectRepository.save(result.object);
-    const saved = this.objectRepository.getById(result.object.id) ?? result.object;
+    const saved = this.objectRepository.getBySourceCandidateId(candidateId) ?? result.object;
+    if (existing && sameMeaning(existing, saved)) return { action: 'UNCHANGED', object: existing };
     if (!existing) {
       if (recordHistory) this.historyRepository?.append({ id: createUnderstandingHistoryEventId('UNDERSTANDING_CREATED', saved.id, now), type: 'UNDERSTANDING_CREATED', candidateId: candidate.id, understandingId: saved.id, after: saved, reason: 'USER_AGREED', occurredAt: now });
     } else if (recordHistory) {
@@ -73,3 +74,4 @@ function sameMeaning(a: UnderstandingObject, b: UnderstandingObject): boolean {
     && JSON.stringify(a.evidenceIds) === JSON.stringify(b.evidenceIds) && a.status.maturity === b.status.maturity
     && a.status.confidence === b.status.confidence && a.status.evidenceCount === b.status.evidenceCount;
 }
+function isIsoTimestamp(value: string): boolean { return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/.test(value) && Number.isFinite(Date.parse(value)); }

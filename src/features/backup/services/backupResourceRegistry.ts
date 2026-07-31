@@ -3,6 +3,8 @@ import { isObservedWeatherRecord, isWeatherForecastSnapshot } from '../../extern
 import { isFormalUserModel } from '../../formal-user-model/types/formalUserModel.ts';
 import { isUnderstandingObject } from '../../understanding/types/understandingObject.ts';
 import { isUnderstandingHistoryEnvelope } from '../../understanding/services/localStorageUnderstandingHistoryRepository.ts';
+import { sortUnderstandingHistory } from '../../understanding/services/localStorageUnderstandingHistoryRepository.ts';
+import type { UnderstandingHistoryEnvelope } from '../../understanding/types/understandingHistory.ts';
 import { getInsightDedupeKey } from '../../analysis/services/insightDeduplication.ts';
 import type { Insight } from '../../analysis/types/analysis.ts';
 import { normalizeCandidate } from '../../compass-map/services/userModelUpdateCandidateService.ts';
@@ -63,6 +65,11 @@ function stableKey(value: unknown): string {
 }
 function normalizeArray(value: unknown): unknown { return Array.isArray(value) ? [...value].map(deepCopyAndSortReferences).sort((a, b) => stableKey(a).localeCompare(stableKey(b))) : value; }
 function normalizeEnvelope(value: unknown): unknown { if (!record(value) || !Array.isArray(value.records)) return value; return { ...value, records: normalizeArray(value.records) }; }
+function normalizeUnderstandingHistory(value: unknown): unknown {
+  if (!isUnderstandingHistoryEnvelope(value)) return value;
+  const records = structuredClone(value.records).sort(sortUnderstandingHistory);
+  return { schemaVersion: 1, records } satisfies UnderstandingHistoryEnvelope;
+}
 function deepCopyAndSortReferences(value: unknown): unknown {
   if (!record(value)) return value;
   const copy: Record<string, unknown> = { ...value };
@@ -121,7 +128,7 @@ export const BACKUP_RESOURCE_REGISTRY: readonly BackupResourceDefinition[] = [
   resource('understandingCandidates', 'compass_understanding_candidates', [], arrayOf(candidate), normalizeArray),
   resource('candidateResponses', 'compass_understanding_candidate_responses', [], arrayOf(response), normalizeArray),
   resource('understandingObjects', 'compass_understanding_objects', [], arrayOf(isUnderstandingObject), normalizeArray),
-  resource('understandingHistory', 'compass_understanding_history_v1', { schemaVersion: 1, records: [] }, isUnderstandingHistoryEnvelope, normalizeEnvelope),
+  resource('understandingHistory', 'compass_understanding_history_v1', { schemaVersion: 1, records: [] }, isUnderstandingHistoryEnvelope, normalizeUnderstandingHistory),
   resource('formalUserModel', 'compass_formal_user_model_v1', null, nullable(isFormalUserModel), identity),
   resource('legacyInsights', 'compass_insights', [], arrayOf(insight), normalizeArray, decodeInsights),
   resource('legacyUserModel', 'compass_user_model', null, nullable(userModel), identity),

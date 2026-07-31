@@ -10,6 +10,8 @@ const changes = (before: UnderstandingObject, after: UnderstandingObject) => [
   before.status.maturity !== after.status.maturity && `成熟度: ${before.status.maturity} → ${after.status.maturity}`,
   before.status.confidence !== after.status.confidence && `Evidenceによる支持度: ${Math.round(before.status.confidence * 100)}% → ${Math.round(after.status.confidence * 100)}%`,
   before.status.evidenceCount !== after.status.evidenceCount && `Evidence件数: ${before.status.evidenceCount}件 → ${after.status.evidenceCount}件`,
+  JSON.stringify(before.evidenceIds) !== JSON.stringify(after.evidenceIds) && `参照Evidence: ${before.evidenceIds.join('、')} → ${after.evidenceIds.join('、')}`,
+  JSON.stringify(before.sourceCandidateIds) !== JSON.stringify(after.sourceCandidateIds) && `参照Candidate: ${before.sourceCandidateIds.join('、')} → ${after.sourceCandidateIds.join('、')}`,
 ].filter((item): item is string => Boolean(item));
 
 export function UnderstandingHistoryPanel({ events }: { events: UnderstandingHistoryEvent[] }) {

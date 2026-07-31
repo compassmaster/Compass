@@ -38,7 +38,7 @@ export class UnderstandingCandidateApplicationService {
 
   respond(candidateId: string, answer: UnderstandingCandidateAnswer, now = new Date().toISOString()): RespondResult {
     if (!isUnderstandingCandidateAnswer(answer)) return { action: 'SKIPPED', reason: 'INVALID_ANSWER' };
-    if (!Number.isFinite(Date.parse(now))) return { action: 'SKIPPED', reason: 'INVALID_OCCURRED_AT' };
+    if (!isIsoTimestamp(now)) return { action: 'SKIPPED', reason: 'INVALID_OCCURRED_AT' };
     const candidate = this.candidateRepository.getById(candidateId);
     if (!candidate) return { action: 'SKIPPED', reason: 'CANDIDATE_NOT_FOUND' };
     const previous = this.responseRepository.getByCandidateId(candidateId);
@@ -49,3 +49,5 @@ export class UnderstandingCandidateApplicationService {
     return { action: previous ? 'CHANGED' : 'CREATED', response };
   }
 }
+
+function isIsoTimestamp(value: string): boolean { return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/.test(value) && Number.isFinite(Date.parse(value)); }
