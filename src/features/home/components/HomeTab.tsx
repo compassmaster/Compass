@@ -23,6 +23,8 @@ import type { UnderstandingObject } from '../../understanding/types/understandin
 import type { ResolvedFormalUserModel } from '../../formal-user-model/types/formalUserModel.ts';
 import './HomeTab.css';
 import { HomeSummaryPanel } from './HomeSummaryPanel.tsx';
+import { FirstUseGuide } from '../../first-use-guide/components/FirstUseGuide.tsx';
+import type { FirstUseGuideReadModel, FirstUseGuideStepId } from '../../first-use-guide/types/firstUseGuide.ts';
 
 interface HomeTabProps {
   logs: DailyLog[];
@@ -43,6 +45,9 @@ interface HomeTabProps {
   understandingCandidateResponses: UnderstandingCandidateResponse[];
   resolvedFormalUserModel: ResolvedFormalUserModel;
   onUnderstandingCandidateRespond: (candidateId: string, answer: UnderstandingCandidateAnswer) => void;
+  firstUseGuide: FirstUseGuideReadModel;
+  onFirstUseNavigate: (step: FirstUseGuideStepId) => void;
+  onFirstUseDataChanged: () => void;
 }
 
 export function HomeTab({
@@ -64,6 +69,9 @@ export function HomeTab({
   understandingCandidateResponses,
   resolvedFormalUserModel,
   onUnderstandingCandidateRespond,
+  firstUseGuide,
+  onFirstUseNavigate,
+  onFirstUseDataChanged,
 }: HomeTabProps) {
 
   const [forecastAcquisitionRequestId, setForecastAcquisitionRequestId] = useState(0);
@@ -120,6 +128,8 @@ export function HomeTab({
         </button>
       </section>
 
+      <FirstUseGuide model={firstUseGuide} onNavigate={onFirstUseNavigate} />
+
       <HomeSummaryPanel key={forecastAcquisitionRequestId} onNavigateToLog={onNavigateToLog} onNavigateToSleep={onNavigateToSleep} onNavigateToWeather={onNavigateToWeather} onNavigateToPrediction={onNavigateToPrediction} />
 
       <FormalReflectionPanel
@@ -128,7 +138,7 @@ export function HomeTab({
       />
 
       <div id="home-weather-section">
-        <BaseLocationPanel onSaved={() => setForecastAcquisitionRequestId((current) => current + 1)} />
+        <BaseLocationPanel onSaved={() => { setForecastAcquisitionRequestId((current) => current + 1); onFirstUseDataChanged(); }} />
         <WeatherForecastPanel acquisitionRequestId={forecastAcquisitionRequestId} />
       </div>
       <DailyContextPanel />

@@ -29,7 +29,7 @@ export function BaseLocationPanel({ onSaved }: BaseLocationPanelProps) {
   };
   const remove = () => {
     if (!window.confirm('Base Locationを削除しますか？ 過去のWeather記録は変更されません。')) return;
-    baseLocationApplicationService.deleteBaseLocation(); setForm(empty); setSelectedRegionId(''); setConfigured(false); setError(''); setMessage('地域設定を削除しました。');
+    baseLocationApplicationService.deleteBaseLocation(); setForm(empty); setSelectedRegionId(''); setConfigured(false); setError(''); setMessage('地域設定を削除しました。'); onSaved?.();
   };
   return <section className="home-section base-location-panel">
     <p className="section-eyebrow">外部コンテキスト / 地域設定</p><h2 className="section-title">天気情報を取得する地域</h2>

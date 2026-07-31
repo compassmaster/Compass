@@ -15,7 +15,7 @@ const local = (value: string) => value.slice(0, 16);
 type DraftState = SleepRecordFormDraft;
 const emptyDraft = (): DraftState => ({ sleepDate: new Date().toLocaleDateString('sv-SE'), bedtime: '', wakeTime: '' });
 
-export function SleepRecordSection() {
+export function SleepRecordSection({ onChanged }: { readonly onChanged?: () => void }) {
   const [revision, setRevision] = useState(0);
   const [draft, setDraft] = useState<DraftState>(emptyDraft);
   const [loadedId, setLoadedId] = useState<SleepRecordId | null>(null);
@@ -42,6 +42,7 @@ export function SleepRecordSection() {
     if (!result.ok) { setMessage(messageFor(result.reason)); return; }
     setLoadedId(result.record.id); setMessage(`睡眠を${loadedId ? '更新' : '保存'}しました（${formatDurationMinutes(result.record.durationMinutes)}）。`);
     setRevision((value) => value + 1);
+    onChanged?.();
   };
   const saveEdit = () => {
     if (!editing) return;
@@ -50,6 +51,7 @@ export function SleepRecordSection() {
     const synchronized = synchronizeLoadedSleepDraft(loadedId, draft, result.record);
     setDraft(synchronized.draft); setLoadedId(synchronized.loadedId);
     setEditing(null); setMessage('睡眠記録を更新しました。'); setRevision((value) => value + 1);
+    onChanged?.();
   };
   const remove = () => {
     if (!deleting) return;
@@ -57,6 +59,7 @@ export function SleepRecordSection() {
     if (!result.ok) { setMessage(messageFor(result.reason)); return; }
     if (loadedId === deleting.id) { setLoadedId(null); setDraft(emptyDraft()); }
     setDeleting(null); setMessage('睡眠記録を削除しました。'); setRevision((value) => value + 1);
+    onChanged?.();
   };
 
   return <section className="sleep-management">

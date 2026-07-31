@@ -1,0 +1,15 @@
+.first-use-guide { margin-bottom: 30px; padding: 20px; border: 1px solid #b2f5ea; border-radius: 12px; background: #f0fff4; }
+.first-use-guide.complete { padding: 16px 20px; }
+.first-use-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.first-use-heading h2 { margin: 0; color: #234e52; }
+.first-use-progress { flex: 0 0 auto; padding: 7px 11px; border-radius: 999px; background: #fff; color: #276749; }
+.first-use-ready { font-weight: 700; color: #276749; }
+.first-use-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; padding: 0; list-style: none; }
+.first-use-steps li { min-width: 0; padding: 14px; border: 1px solid #c6f6d5; border-radius: 10px; background: #fff; overflow-wrap: anywhere; }
+.first-use-steps li.completed { background: #f7fafc; }
+.first-use-steps h3 { margin: 0; font-size: 1rem; color: #2d3748; }
+.first-use-steps p { line-height: 1.5; color: #4a5568; }
+.first-use-steps .first-use-status { font-weight: 700; color: #276749; }
+.first-use-steps button { min-height: 44px; width: 100%; padding: 9px 12px; border: 0; border-radius: 8px; background: #2b6cb0; color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
+.first-use-empty-note { margin-bottom: 0; padding-top: 12px; border-top: 1px solid #c6f6d5; color: #4a5568; line-height: 1.6; }
+@media (max-width: 600px) { .first-use-heading { align-items: flex-start; flex-direction: column; } .first-use-steps { grid-template-columns: 1fr; } }
