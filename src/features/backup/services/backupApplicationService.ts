@@ -56,7 +56,10 @@ export class BackupApplicationService {
     const missingResources = this.registry.filter((item) => !grouped.has(item.name)).map((item) => item.name);
     const duplicateResources = [...grouped].filter(([, values]) => values.length > 1).map(([name]) => name).sort();
     for (const item of unknownResources) errors.push({ code: 'UNKNOWN_RESOURCE', resourceName: item.name, message: `unknown resource: ${item.name}（${item.occurrences}件）` });
-    for (const name of missingResources) errors.push({ code: 'MISSING_RESOURCE', resourceName: name, message: `resourceが欠落しています: ${name}` });
+    for (const name of missingResources) {
+      if (name === 'understandingHistory') warnings.push({ code: 'LEGACY_BACKUP_WITHOUT_HISTORY', resourceName: name, message: '旧バックアップに理解履歴はありません。履歴を推測せず空の状態で復元します。' });
+      else errors.push({ code: 'MISSING_RESOURCE', resourceName: name, message: `resourceが欠落しています: ${name}` });
+    }
     for (const name of duplicateResources) errors.push({ code: 'DUPLICATE_RESOURCE', resourceName: name, message: `resourceが重複しています: ${name}` });
     const resourceSummaries: BackupResourceSummary[] = [];
     for (const definition of this.registry) {
@@ -77,7 +80,7 @@ export class BackupApplicationService {
     const before = new Map(this.registry.map((item) => [item.storageKey, this.storage.getItem(item.storageKey)]));
     try {
       const byName = new Map(prepared.envelope.resources.map((item) => [item.name, item.data]));
-      for (const definition of this.registry) { const data = definition.normalize(byName.get(definition.name)); const absent = data === null || (Array.isArray(data) && data.length === 0); if (absent) this.storage.removeItem(definition.storageKey); else this.storage.setItem(definition.storageKey, canonicalStringify(data)); }
+      for (const definition of this.registry) { const source = byName.has(definition.name) ? byName.get(definition.name) : definition.emptyValue; const data = definition.normalize(source); const absent = data === null || (Array.isArray(data) && data.length === 0); if (absent) this.storage.removeItem(definition.storageKey); else this.storage.setItem(definition.storageKey, canonicalStringify(data)); }
       this.afterRestore();
     } catch (error) { for (const [key, raw] of before) { if (raw === null) this.storage.removeItem(key); else this.storage.setItem(key, raw); } throw error; }
   }

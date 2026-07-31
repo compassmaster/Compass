@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import { LocalStorageUnderstandingHistoryRepository, UNDERSTANDING_HISTORY_STORAGE_KEY, isUnderstandingHistoryEnvelope } from '../src/features/understanding/services/localStorageUnderstandingHistoryRepository.ts';
+import { UnderstandingCandidateApplicationService } from '../src/features/understanding/services/understandingCandidateApplicationService.ts';
+import { UnderstandingCandidateService } from '../src/features/understanding/services/understandingCandidateService.ts';
+import { LocalStorageUnderstandingCandidateRepository } from '../src/features/understanding/services/localStorageUnderstandingCandidateRepository.ts';
+import { LocalStorageUnderstandingCandidateResponseRepository } from '../src/features/understanding/services/localStorageUnderstandingCandidateResponseRepository.ts';
+import type { UnderstandingCandidate, UnderstandingCandidateId } from '../src/features/understanding/types/understandingCandidate.ts';
+class MemoryStorage implements Storage { private values=new Map<string,string>();get length(){return this.values.size}clear(){this.values.clear()}getItem(k:string){return this.values.get(k)??null}key(i:number){return [...this.values.keys()][i]??null}removeItem(k:string){this.values.delete(k)}setItem(k:string,v:string){this.values.set(k,v)} }
+const storage=new MemoryStorage(); const history=new LocalStorageUnderstandingHistoryRepository(storage); const candidates=new LocalStorageUnderstandingCandidateRepository(storage); const responses=new LocalStorageUnderstandingCandidateResponseRepository(storage);
+const candidate:UnderstandingCandidate={id:'candidate-1' as UnderstandingCandidateId,type:'SLEEP_FATIGUE_PATTERN',generatorId:'g',title:'睡眠',statement:'短い睡眠と疲労に関係があるかもしれません。',explanation:'根拠',evidenceIds:['e' as never],dedupeKey:'d',createdAt:'2026-01-01T00:00:00Z',updatedAt:'2026-01-01T00:00:00Z'};
+candidates.save(candidate); const app=new UnderstandingCandidateApplicationService(new UnderstandingCandidateService([]),candidates,responses,history);
+const first=app.respond(candidate.id,'AGREE','2026-01-02T00:00:00Z'); assert.equal(first.action,'CREATED'); assert.equal(history.list()[0].type,'CANDIDATE_RESPONSE_CHANGED'); if(history.list()[0].type==='CANDIDATE_RESPONSE_CHANGED') assert.equal(history.list()[0].previousAnswer,null);
+const rawBefore=storage.getItem(UNDERSTANDING_HISTORY_STORAGE_KEY); const unchanged=app.respond(candidate.id,'AGREE','2026-01-03T00:00:00Z'); assert.equal(unchanged.action,'UNCHANGED'); assert.equal(responses.list()[0].respondedAt,'2026-01-02T00:00:00Z'); assert.equal(storage.getItem(UNDERSTANDING_HISTORY_STORAGE_KEY),rawBefore);
+app.respond(candidate.id,'UNSURE','2026-01-04T00:00:00Z'); assert.equal(history.list().length,2); const newest=history.list()[0]; if(newest.type==='CANDIDATE_RESPONSE_CHANGED'){assert.equal(newest.previousAnswer,'AGREE'); assert.equal(newest.answer,'UNSURE')}
+const listed=history.list(); if(listed[0].type==='CANDIDATE_RESPONSE_CHANGED') (listed[0] as {candidateTitle:string}).candidateTitle='改ざん'; assert.equal((history.list()[0] as {candidateTitle:string}).candidateTitle,'睡眠');
+storage.setItem(UNDERSTANDING_HISTORY_STORAGE_KEY,JSON.stringify({schemaVersion:1,records:[{bad:true}]})); assert.deepEqual(history.list(),[]); assert.equal(isUnderstandingHistoryEnvelope({schemaVersion:1,records:[]}),true);
+console.log('Understanding history tests passed');

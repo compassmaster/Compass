@@ -11,6 +11,7 @@ import type { UserModelUpdateCandidate } from '../../compass-map/services/userMo
 import { EvidencePanel } from '../../analysis/components/EvidencePanel';
 import { UnderstandingCandidatePanel } from '../../understanding/components/UnderstandingCandidatePanel';
 import { UnderstandingObjectPanel } from '../../understanding/components/UnderstandingObjectPanel';
+import { UnderstandingHistoryPanel } from '../../understanding/components/UnderstandingHistoryPanel.tsx';
 import { FormalUserModelPanel } from '../../formal-user-model/components';
 import { BaseLocationPanel } from '../../external-context/location/components/BaseLocationPanel';
 import { WeatherForecastPanel } from '../../external-context/weather/components/WeatherForecastPanel.tsx';
@@ -20,6 +21,7 @@ import type { Evidence } from '../../analysis/types/evidence.ts';
 import type { AnalyzerFailure } from '../../analysis/services/analysisService.ts';
 import type { UnderstandingCandidate, UnderstandingCandidateAnswer, UnderstandingCandidateResponse } from '../../understanding/types/understandingCandidate.ts';
 import type { UnderstandingObject } from '../../understanding/types/understandingObject.ts';
+import type { UnderstandingHistoryEvent } from '../../understanding/types/understandingHistory.ts';
 import type { ResolvedFormalUserModel } from '../../formal-user-model/types/formalUserModel.ts';
 import './HomeTab.css';
 import { HomeSummaryPanel } from './HomeSummaryPanel.tsx';
@@ -43,6 +45,7 @@ interface HomeTabProps {
   understandingCandidates: UnderstandingCandidate[];
   understandingObjects: UnderstandingObject[];
   understandingCandidateResponses: UnderstandingCandidateResponse[];
+  understandingHistory: UnderstandingHistoryEvent[];
   resolvedFormalUserModel: ResolvedFormalUserModel;
   onUnderstandingCandidateRespond: (candidateId: string, answer: UnderstandingCandidateAnswer) => void;
   firstUseGuide: FirstUseGuideReadModel;
@@ -67,6 +70,7 @@ export function HomeTab({
   understandingCandidates,
   understandingObjects,
   understandingCandidateResponses,
+  understandingHistory,
   resolvedFormalUserModel,
   onUnderstandingCandidateRespond,
   firstUseGuide,
@@ -190,6 +194,8 @@ export function HomeTab({
       />
 
       <UnderstandingObjectPanel objects={understandingObjects} evidence={analysisEvidence} />
+
+      <UnderstandingHistoryPanel events={understandingHistory} />
 
       <FormalUserModelPanel model={resolvedFormalUserModel} />
 

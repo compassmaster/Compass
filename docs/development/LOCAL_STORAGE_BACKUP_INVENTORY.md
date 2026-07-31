@@ -30,3 +30,5 @@ Legacy Insightの旧`evidence`は同じ文字列を`evidenceSummaries`へ移し�
 `getInsightDedupeKey`で生成する。`evidenceRefs`未導入データは空配列にするが参照を推測しない。
 旧Candidateの`DISMISSED`は既存Repository normalize関数で`REJECTED`へ移す。これらはexport値の
 コピーにだけ適用し、localStorage raw値を書き換えない。importは正規化済み現行backup形式だけを厳格検証する。
+
+| Understanding History | `compass_understanding_history_v1` | `{ schemaVersion: 1, records: UnderstandingHistoryEvent[] }` | 正式resource。旧backupで欠落時は空履歴（backfillなし） |

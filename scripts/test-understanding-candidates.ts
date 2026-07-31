@@ -101,7 +101,7 @@ const app = new UnderstandingCandidateApplicationService(service, candidateRepos
 assert.ok(app.respond(high!.id, 'AGREE'), 'existing candidate can be answered AGREE');
 assert.ok(app.respond(high!.id, 'PARTIALLY_DISAGREE'), 'existing candidate can be answered PARTIALLY_DISAGREE');
 assert.ok(app.respond(high!.id, 'UNSURE'), 'existing candidate can be answered UNSURE');
-assert.equal(app.respond('missing-candidate', 'AGREE'), null, 'missing candidate should not save response');
+assert.equal(app.respond('missing-candidate', 'AGREE').action, 'SKIPPED', 'missing candidate should not save response');
 assert.equal(responseRepository.list().length, 1, 'missing candidate answer should not add response');
 app.generateAndSaveFromEvidence([evidence({ shortSleepThresholdMinutes: 360, shortSleepAverageFatigue: 4.5, enoughSleepAverageFatigue: 2.5 })]);
 app.respond(high!.id, 'AGREE');
