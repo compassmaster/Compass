@@ -371,3 +371,7 @@ DailyLogの編集・削除成功時は`DailyLogList`の`onChanged`から`LogTab`
 - `first-use-guide`はBase Location、DailyLog、SleepRecord Repositoryへのread-only Queryで、専用localStorage keyやdismiss flagを持たない。
 - Home上部の3ステップは疲労スケール、睡眠の起床日基準、地域の天気用途、データ不足が不具合ではない理由を常時示す。3件完了後も縮小調の完了表示と手順を残す。
 - App callbackが地域・DailyLog・SleepRecordの変更とbackup restore後にprojectionを再取得する。睡眠へのMVP導線は記録タブまでであり、専用section focusは将来改善とする。
+
+## Understanding History handoff
+
+`compass_understanding_history_v1`は `{ schemaVersion: 1, records }` 形式のappend-only説明履歴。現在状態の再構築には使用しない。回答がUNCHANGEDならreconcile/refreshせず、Object更新はtimestamp以外の意味比較で記録する。旧backupに履歴がなければ空として扱い、backfillしない。

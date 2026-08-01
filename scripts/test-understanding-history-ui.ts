@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+const panel=readFileSync(new URL('../src/features/understanding/components/UnderstandingHistoryPanel.tsx',import.meta.url),'utf8');
+const css=readFileSync(new URL('../src/features/understanding/components/UnderstandingHistoryPanel.css',import.meta.url),'utf8');
+const home=readFileSync(new URL('../src/features/home/components/HomeTab.tsx',import.meta.url),'utf8');
+const app=readFileSync(new URL('../src/app/App.tsx',import.meta.url),'utf8');
+assert.match(panel,/理解の変化/);assert.match(panel,/現在の理解ではなく、過去に記録された変更/);assert.match(panel,/履歴はこの機能の導入後に記録された変更から表示されます/);assert.match(panel,/記録された理解の変化はまだありません/);
+assert.match(panel,/未回答/);assert.match(panel,/そう思う/);assert.match(panel,/少し違う/);assert.match(panel,/まだ分からない/);assert.match(panel,/previousAnswer/);assert.match(panel,/理解が作られました/);assert.match(panel,/理解の根拠が更新されました/);assert.match(panel,/ユーザーの回答が変わったため、現在の理解から外れました/);
+for(const label of ['理解文','成熟度','Evidenceによる支持度','Evidence件数'])assert.match(panel,new RegExp(label));
+assert.match(panel,/<time dateTime=/);assert.match(css,/@media \(max-width: 360px\)/);assert.match(css,/overflow-wrap: anywhere/);assert.doesNotMatch(panel,/localStorage|Repository/);
+assert.match(home,/UnderstandingHistoryPanel events=\{understandingHistory\}/);assert.match(app,/understandingHistoryRepository\.list\(\)/);assert.match(app,/setUnderstandingHistory\(understandingHistoryRepository\.list\(\)\)/);
+const refreshBody=app.slice(app.indexOf('const refreshUnderstandingState'),app.indexOf('const refreshResolvedFormalUserModel'));assert.match(refreshBody,/setUnderstandingHistory/,'回答・分析後の共通refreshで履歴を更新する');
+const restoreBody=app.slice(app.indexOf('const refreshAfterRestore'),app.indexOf('const refreshLogs'));assert.match(restoreBody,/setUnderstandingHistory/,'restore callbackで履歴を更新する');
+const responseBody=app.slice(app.indexOf('const handleUnderstandingCandidateResponse'),app.indexOf('const handleReflectionFeedback'));assert.match(responseBody,/UNCHANGED/);assert.match(responseBody,/refreshUnderstandingState\(\)/,'変更回答だけ共通refreshへ進む');
+const analysisBody=app.slice(app.indexOf('const handleRunAnalysis'),app.indexOf('const handleUnderstandingCandidateResponse'));assert.match(analysisBody,/reconcileAll/);assert.match(analysisBody,/refreshUnderstandingState\(\)/,'分析後に履歴を同期する');
+console.log('Understanding history UI/integration tests passed');

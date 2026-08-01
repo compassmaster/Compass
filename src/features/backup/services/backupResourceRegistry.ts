@@ -2,6 +2,9 @@ import { isBaseLocation } from '../../external-context/location/types/baseLocati
 import { isObservedWeatherRecord, isWeatherForecastSnapshot } from '../../external-context/weather/types/weather.ts';
 import { isFormalUserModel } from '../../formal-user-model/types/formalUserModel.ts';
 import { isUnderstandingObject } from '../../understanding/types/understandingObject.ts';
+import { isUnderstandingHistoryEnvelope } from '../../understanding/services/localStorageUnderstandingHistoryRepository.ts';
+import { sortUnderstandingHistory } from '../../understanding/services/localStorageUnderstandingHistoryRepository.ts';
+import type { UnderstandingHistoryEnvelope } from '../../understanding/types/understandingHistory.ts';
 import { getInsightDedupeKey } from '../../analysis/services/insightDeduplication.ts';
 import type { Insight } from '../../analysis/types/analysis.ts';
 import { normalizeCandidate } from '../../compass-map/services/userModelUpdateCandidateService.ts';
@@ -10,7 +13,7 @@ export interface BackupResourceDefinition {
   readonly name: string;
   readonly storageKey: string;
   readonly schemaVersion: number;
-  readonly emptyValue: null | readonly never[];
+  readonly emptyValue: unknown;
   readonly validate: (value: unknown) => boolean;
   readonly normalize: (value: unknown) => unknown;
   readonly decodeStored: (value: unknown) => StoredResourceDecodeResult;
@@ -58,10 +61,15 @@ const userModel = (value: unknown) => record(value) && text(value.userId) && rec
 
 function stableKey(value: unknown): string {
   if (!record(value)) return JSON.stringify(value);
-  return [value.date, value.sleepDate, value.createdAt, value.updatedAt, value.respondedAt, value.appliedAt, value.id, value.candidateId, value.logId, value.analyzerId].map((item) => String(item ?? '')).join('\u0000');
+  return [value.date, value.sleepDate, value.occurredAt, value.createdAt, value.updatedAt, value.respondedAt, value.appliedAt, value.id, value.candidateId, value.logId, value.analyzerId].map((item) => String(item ?? '')).join('\u0000');
 }
 function normalizeArray(value: unknown): unknown { return Array.isArray(value) ? [...value].map(deepCopyAndSortReferences).sort((a, b) => stableKey(a).localeCompare(stableKey(b))) : value; }
 function normalizeEnvelope(value: unknown): unknown { if (!record(value) || !Array.isArray(value.records)) return value; return { ...value, records: normalizeArray(value.records) }; }
+function normalizeUnderstandingHistory(value: unknown): unknown {
+  if (!isUnderstandingHistoryEnvelope(value)) return value;
+  const records = structuredClone(value.records).sort(sortUnderstandingHistory);
+  return { schemaVersion: 1, records } satisfies UnderstandingHistoryEnvelope;
+}
 function deepCopyAndSortReferences(value: unknown): unknown {
   if (!record(value)) return value;
   const copy: Record<string, unknown> = { ...value };
@@ -105,7 +113,7 @@ function decodeUpdateCandidates(value: unknown): StoredResourceDecodeResult {
   return arrayOf(updateCandidate)(decoded) ? { ok: true, data: normalizeArray(decoded), sourceFormat: legacy ? 'LEGACY' : 'CURRENT' } : { ok: false };
 }
 
-function resource(name: string, storageKey: string, emptyValue: null | readonly never[], validate: (value: unknown) => boolean, normalize: (value: unknown) => unknown, decodeStored = currentDecoder(validate, normalize)): BackupResourceDefinition {
+function resource(name: string, storageKey: string, emptyValue: unknown, validate: (value: unknown) => boolean, normalize: (value: unknown) => unknown, decodeStored = currentDecoder(validate, normalize)): BackupResourceDefinition {
   return { name, storageKey, schemaVersion: 1, emptyValue, validate, normalize, decodeStored };
 }
 
@@ -120,6 +128,7 @@ export const BACKUP_RESOURCE_REGISTRY: readonly BackupResourceDefinition[] = [
   resource('understandingCandidates', 'compass_understanding_candidates', [], arrayOf(candidate), normalizeArray),
   resource('candidateResponses', 'compass_understanding_candidate_responses', [], arrayOf(response), normalizeArray),
   resource('understandingObjects', 'compass_understanding_objects', [], arrayOf(isUnderstandingObject), normalizeArray),
+  resource('understandingHistory', 'compass_understanding_history_v1', { schemaVersion: 1, records: [] }, isUnderstandingHistoryEnvelope, normalizeUnderstandingHistory),
   resource('formalUserModel', 'compass_formal_user_model_v1', null, nullable(isFormalUserModel), identity),
   resource('legacyInsights', 'compass_insights', [], arrayOf(insight), normalizeArray, decodeInsights),
   resource('legacyUserModel', 'compass_user_model', null, nullable(userModel), identity),

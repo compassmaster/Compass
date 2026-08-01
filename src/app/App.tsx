@@ -12,7 +12,7 @@ import type { UserModelUpdateCandidate } from '../features/compass-map/services/
 
 import { HomeTab } from '../features/home/components/HomeTab';
 import { analysisApplicationService } from '../features/analysis/services';
-import { understandingCandidateApplicationService, understandingObjectApplicationService } from '../features/understanding/services';
+import { understandingCandidateApplicationService, understandingHistoryRepository, understandingObjectApplicationService } from '../features/understanding/services';
 import { DEFAULT_FORMAL_USER_ID } from '../features/formal-user-model/constants.ts';
 import { formalUserModelReconciler, formalUserModelRepository, formalUserModelResolver } from '../features/formal-user-model/services';
 import { sleepRecordApplicationService } from '../features/sleep/services';
@@ -20,6 +20,7 @@ import type { Evidence } from '../features/analysis/types/evidence.ts';
 import type { AnalyzerFailure } from '../features/analysis/services/analysisService.ts';
 import type { UnderstandingCandidate, UnderstandingCandidateAnswer, UnderstandingCandidateResponse } from '../features/understanding/types/understandingCandidate.ts';
 import type { UnderstandingObject } from '../features/understanding/types/understandingObject.ts';
+import type { UnderstandingHistoryEvent } from '../features/understanding/types/understandingHistory.ts';
 import type { ResolvedFormalUserModel } from '../features/formal-user-model/types/formalUserModel.ts';
 import { LogTab } from '../features/daily-log/components/LogTab';
 import { MapTab } from '../features/compass-map/components/MapTab';
@@ -43,7 +44,8 @@ function loadInitialUnderstandingCandidates(): UnderstandingCandidate[] {
 }
 
 function loadInitialUnderstandingObjects(): UnderstandingObject[] {
-  understandingObjectApplicationService.reconcileAll(analysisApplicationService.listEvidence());
+  // Existing current state may predate history support; startup reconciliation must not invent history.
+  understandingObjectApplicationService.reconcileAll(analysisApplicationService.listEvidence(), new Date().toISOString(), false);
   return understandingObjectApplicationService.listObjects();
 }
 
@@ -107,6 +109,7 @@ export function App() {
   const [understandingObjects, setUnderstandingObjects] = useState<UnderstandingObject[]>(() =>
     loadInitialUnderstandingObjects()
   );
+  const [understandingHistory, setUnderstandingHistory] = useState<UnderstandingHistoryEvent[]>(() => understandingHistoryRepository.list());
   const [resolvedFormalUserModel, setResolvedFormalUserModel] = useState<ResolvedFormalUserModel>(() =>
     reconcileAndResolveFormalUserModel()
   );
@@ -119,6 +122,7 @@ export function App() {
     setUnderstandingCandidates(understandingCandidateApplicationService.listCandidates());
     setUnderstandingCandidateResponses(understandingCandidateApplicationService.listResponses());
     setUnderstandingObjects(understandingObjectApplicationService.listObjects());
+    setUnderstandingHistory(understandingHistoryRepository.list());
     setResolvedFormalUserModel(reconcileAndResolveFormalUserModel());
   };
 
@@ -144,6 +148,7 @@ export function App() {
     setUnderstandingCandidates(understandingCandidateApplicationService.listCandidates());
     setUnderstandingCandidateResponses(understandingCandidateApplicationService.listResponses());
     setUnderstandingObjects(understandingObjectApplicationService.listObjects());
+    setUnderstandingHistory(understandingHistoryRepository.list());
   };
 
   const refreshResolvedFormalUserModel = () => {
@@ -193,7 +198,7 @@ export function App() {
 
   const handleUnderstandingCandidateResponse = (candidateId: string, answer: UnderstandingCandidateAnswer) => {
     const response = understandingCandidateApplicationService.respond(candidateId, answer);
-    if (!response) return;
+    if (response.action === 'SKIPPED' || response.action === 'UNCHANGED') return;
     understandingObjectApplicationService.reconcileCandidate(candidateId, analysisApplicationService.listEvidence());
     refreshUnderstandingState();
     refreshResolvedFormalUserModel();
@@ -275,6 +280,7 @@ export function App() {
             understandingCandidates={understandingCandidates}
             understandingObjects={understandingObjects}
             understandingCandidateResponses={understandingCandidateResponses}
+            understandingHistory={understandingHistory}
             resolvedFormalUserModel={resolvedFormalUserModel}
             onUnderstandingCandidateRespond={handleUnderstandingCandidateResponse}
             firstUseGuide={firstUseGuide}

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { createUnderstandingId, createUnderstandingObject } from '../src/features/understanding/factories/understandingObjectFactory.ts';
 import { UnderstandingObjectApplicationService } from '../src/features/understanding/services/understandingObjectApplicationService.ts';
+import { LocalStorageUnderstandingHistoryRepository } from '../src/features/understanding/services/localStorageUnderstandingHistoryRepository.ts';
 import { LocalStorageUnderstandingCandidateRepository } from '../src/features/understanding/services/localStorageUnderstandingCandidateRepository.ts';
 import { LocalStorageUnderstandingCandidateResponseRepository } from '../src/features/understanding/services/localStorageUnderstandingCandidateResponseRepository.ts';
 import { LocalStorageUnderstandingObjectRepository, UNDERSTANDING_OBJECT_STORAGE_KEY } from '../src/features/understanding/services/localStorageUnderstandingObjectRepository.ts';
@@ -57,15 +58,15 @@ storage.setItem(UNDERSTANDING_OBJECT_STORAGE_KEY, '{bad'); assert.deepEqual(repo
 storage.setItem(UNDERSTANDING_OBJECT_STORAGE_KEY, JSON.stringify([created.object, { bad: true }])); assert.equal(repo.list().length, 1, '配列内の不正要素だけを除外する');
 assert.equal(repo.getBySourceCandidateId(candidate.id)?.id, created.object.id, 'getBySourceCandidateIdできる'); repo.delete(created.object.id); assert.equal(repo.list().length, 0, 'deleteできる');
 
-const candidateRepo = new LocalStorageUnderstandingCandidateRepository(storage); const responseRepo = new LocalStorageUnderstandingCandidateResponseRepository(storage); const objectRepo = new LocalStorageUnderstandingObjectRepository(storage); const app = new UnderstandingObjectApplicationService(candidateRepo, responseRepo, objectRepo);
-candidateRepo.save(candidate); responseRepo.save(response('AGREE')); assert.equal(app.reconcileCandidate(candidate.id, [e1, e2], now).action, 'CREATED_OR_UPDATED', 'AGREE ResponseからObjectを保存できる');
-app.reconcileCandidate(candidate.id, [e1, e2], now); assert.equal(objectRepo.list().length, 1, '複数回reconcileしても増殖しない');
-responseRepo.save(response('PARTIALLY_DISAGREE')); app.reconcileCandidate(candidate.id, [e1, e2], now); assert.equal(objectRepo.list().length, 0, 'PARTIALLY_DISAGREEへ変更するとObjectが消える');
+const candidateRepo = new LocalStorageUnderstandingCandidateRepository(storage); const responseRepo = new LocalStorageUnderstandingCandidateResponseRepository(storage); const objectRepo = new LocalStorageUnderstandingObjectRepository(storage); const historyRepo = new LocalStorageUnderstandingHistoryRepository(storage); const app = new UnderstandingObjectApplicationService(candidateRepo, responseRepo, objectRepo, historyRepo);
+candidateRepo.save(candidate); responseRepo.save(response('AGREE')); assert.equal(app.reconcileCandidate(candidate.id, [e1, e2], now).action, 'CREATED_OR_UPDATED', 'AGREE ResponseからObjectを保存できる'); assert.equal(historyRepo.list()[0].type, 'UNDERSTANDING_CREATED', '生成履歴');
+const createdUpdatedAt = objectRepo.list()[0].updatedAt; app.reconcileCandidate(candidate.id, [e1, e2], '2026-07-23T00:00:00.000Z'); assert.equal(objectRepo.list().length, 1, '複数回reconcileしても増殖しない'); assert.equal(objectRepo.list()[0].updatedAt, createdUpdatedAt, 'timestampだけを更新しない'); assert.equal(historyRepo.list().length, 1, '同じ入力で履歴を増やさない');
+responseRepo.save(response('PARTIALLY_DISAGREE')); app.reconcileCandidate(candidate.id, [e1, e2], now); assert.equal(objectRepo.list().length, 0, 'PARTIALLY_DISAGREEへ変更するとObjectが消える'); assert.equal(historyRepo.list()[0].type, 'UNDERSTANDING_REMOVED'); if (historyRepo.list()[0].type === 'UNDERSTANDING_REMOVED') assert.equal(historyRepo.list()[0].before.statement, candidate.statement, '解除後もbefore snapshotを保持');
 responseRepo.save(response('AGREE')); app.reconcileCandidate(candidate.id, [e1, e2], now); responseRepo.save(response('UNSURE')); app.reconcileCandidate(candidate.id, [e1, e2], now); assert.equal(objectRepo.list().length, 0, 'UNSUREへ変更するとObjectが消える');
 responseRepo.save(response('AGREE')); app.reconcileCandidate(candidate.id, [e1, e2], now); assert.equal(objectRepo.list().length, 1, '非AGREEからAGREEへ変更するとObjectが作られる');
 assert.equal(app.reconcileCandidate('missing', [e1], now).action, 'SKIPPED', 'Candidate不在時は作らない');
 responseRepo.clear(); assert.equal(app.reconcileCandidate(candidate.id, [e1], now).action, 'SKIPPED', 'Response不在時は作らない');
 responseRepo.save(response('AGREE')); objectRepo.clear(); assert.equal(app.reconcileCandidate(candidate.id, [], now).action, 'SKIPPED', 'Evidence不在時は作らない');
-objectRepo.clear(); app.reconcileAll([e1, e2], now); assert.equal(objectRepo.list().length, 1, 'reconcileAllで既存AGREE Responseをbackfillできる');
+objectRepo.clear(); const historyCount = historyRepo.list().length; app.reconcileAll([e1, e2], now, false); assert.equal(objectRepo.list().length, 1, 'reconcileAllで既存AGREE Responseをbackfillできる'); assert.equal(historyRepo.list().length, historyCount, '導入前の現在状態から架空の履歴を作らない');
 assert.equal(storage.getItem('compass_user_model'), 'sentinel', 'UserModel storage is unchanged');
 console.log('Understanding Object tests passed');

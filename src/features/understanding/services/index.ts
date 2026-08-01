@@ -5,6 +5,7 @@ import { UnderstandingCandidateApplicationService } from './understandingCandida
 import { UnderstandingCandidateService } from './understandingCandidateService.ts';
 import { LocalStorageUnderstandingObjectRepository } from './localStorageUnderstandingObjectRepository.ts';
 import { UnderstandingObjectApplicationService } from './understandingObjectApplicationService.ts';
+import { LocalStorageUnderstandingHistoryRepository } from './localStorageUnderstandingHistoryRepository.ts';
 
 export * from './understandingCandidateRepository.ts';
 export * from './localStorageUnderstandingCandidateRepository.ts';
@@ -15,21 +16,26 @@ export * from './understandingCandidateApplicationService.ts';
 export * from './understandingObjectRepository.ts';
 export * from './localStorageUnderstandingObjectRepository.ts';
 export * from './understandingObjectApplicationService.ts';
+export * from './understandingHistoryRepository.ts';
+export * from './localStorageUnderstandingHistoryRepository.ts';
 
 export const understandingCandidateRepository = new LocalStorageUnderstandingCandidateRepository();
 export const understandingCandidateResponseRepository = new LocalStorageUnderstandingCandidateResponseRepository();
 export const understandingCandidateService = new UnderstandingCandidateService([
   sleepFatigueUnderstandingCandidateGenerator,
 ]);
+export const understandingHistoryRepository = new LocalStorageUnderstandingHistoryRepository();
 export const understandingCandidateApplicationService = new UnderstandingCandidateApplicationService(
   understandingCandidateService,
   understandingCandidateRepository,
-  understandingCandidateResponseRepository
+  understandingCandidateResponseRepository,
+  understandingHistoryRepository
 );
 
 export const understandingObjectRepository = new LocalStorageUnderstandingObjectRepository();
 export const understandingObjectApplicationService = new UnderstandingObjectApplicationService(
   understandingCandidateRepository,
   understandingCandidateResponseRepository,
-  understandingObjectRepository
+  understandingObjectRepository,
+  understandingHistoryRepository
 );

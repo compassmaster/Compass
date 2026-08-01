@@ -235,3 +235,7 @@ Formal UserModelはUnderstanding Object本体を複製せず、Long-term / Short
 実装済み: App起動時Formal UserModel reconcile、Object変更後のmembership refresh、Resolved Formal UserModel state、Formal UserModel読み取り専用確認UI、Long-term / Short-term表示、unresolved参照表示、modelUpdatedAt表示。
 
 未実装として維持: Compass Map正式反映、Reflection正式接続、Conversation正式接続、Formal UserModel編集UI、Understanding Object編集UI、旧UserModel migration、旧UserModel廃止、旧フロー停止、UserModel State判定、maturity昇格、Understanding履歴、LLM生成。
+
+## Change History
+
+Understanding Historyは現在状態とは別のappend-only監査・説明データである。Candidate回答の実変更とObjectの生成・意味のある更新・解除をsnapshot付きで保存する。Event Sourcingには用いず、導入前データから履歴を推測しない。

@@ -320,3 +320,7 @@ PR #49レビュー対応として、ナビゲーションを「ふりかえり�
 ## 2026-07-31 初回利用ガイド (Issue #53)
 
 Homeの「今日のCompass」導入直後に、通常地域・DailyLog・SleepRecordの既存Repositoryだけを読む3ステップガイドを追加した。進捗は非永続projectionとして毎回決定し、完了後も再確認できる。地域保存、DailyLog変更、SleepRecord変更、バックアップ復元後はreloadなしで再取得する。ガイド表示は天気取得やAnalysis / Evidence / Understanding / Formal UserModel / Prediction更新を開始せず、欠損を補完しない。
+
+## Understanding History（Issue #57）
+
+Candidate回答の実変更とUnderstanding Objectの生成・意味のある更新・解除を、schema v1のappend-only履歴へ保存する。Homeの「理解の変化」は現在状態と分離して新しい順に表示する。導入前の履歴は補完しない。バックアップexport/preview/atomic restoreの正式resourceに含まれる。

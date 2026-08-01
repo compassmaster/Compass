@@ -1,0 +1,8 @@
+.understanding-history-note { color: #475569; line-height: 1.7; }
+.understanding-history-list { display: grid; gap: 1rem; margin: 0; padding: 0; list-style: none; }
+.understanding-history-event { min-width: 0; overflow-wrap: anywhere; padding: 1rem; border: 1px solid #cbd5e1; border-left: .35rem solid #64748b; border-radius: .75rem; background: #fff; }
+.understanding-history-event time { color: #475569; font-size: .875rem; }
+.understanding-history-event h3 { margin: .45rem 0; font-size: 1rem; }
+.understanding-history-event p { margin: .4rem 0; line-height: 1.6; }
+.history-transition { font-weight: 700; }
+@media (max-width: 360px) { .understanding-history-event { padding: .75rem; } }
