@@ -324,3 +324,7 @@ Homeの「今日のCompass」導入直後に、通常地域・DailyLog・SleepRe
 ## Understanding History（Issue #57）
 
 Candidate回答の実変更とUnderstanding Objectの生成・意味のある更新・解除を、schema v1のappend-only履歴へ保存する。Homeの「理解の変化」は現在状態と分離して新しい順に表示する。導入前の履歴は補完しない。バックアップexport/preview/atomic restoreの正式resourceに含まれる。
+
+## Understanding Candidate 回答変更UI（Issue #59）
+
+回答済みCandidateの回答ボタンは通常時に無効化し、「回答を変更する」から一時選択を開始する。変更は「変更を保存」の後、React内の確認UIで差分を確認して「変更する」を押した場合にだけ既存`onRespond`へ渡す。未回答の初回回答、履歴、Application Service、Repositoryの契約と保存形式は変更しない。

@@ -8,9 +8,18 @@
 .understanding-candidate-statement { color: #25364a; font-size: 1.02rem; line-height: 1.8; }
 .understanding-candidate-meta, .understanding-candidate-current-answer { color: #5b6b7d; margin: 0.35rem 0; }
 .understanding-candidate-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1rem 0; }
-.understanding-answer-button { background: #f7fafc; border: 1px solid #cbd7e3; border-radius: 999px; color: #2f4054; cursor: pointer; padding: 0.55rem 0.9rem; }
+.understanding-answer-button { background: #f7fafc; border: 1px solid #cbd7e3; border-radius: 999px; color: #2f4054; cursor: pointer; min-height: 44px; padding: 0.55rem 0.9rem; }
 .understanding-answer-button:hover { background: #eef6ff; }
 .understanding-answer-button.selected, .understanding-answer-button[aria-pressed='true'] { background: #2f6fb0; border-color: #2f6fb0; color: #fff; font-weight: 700; }
+.understanding-answer-button:disabled { cursor: not-allowed; opacity: 0.72; }
+.understanding-secondary-button, .understanding-change-save-button, .understanding-change-confirm-button { border-radius: 10px; cursor: pointer; font-weight: 700; min-height: 44px; padding: 0.65rem 0.9rem; }
+.understanding-secondary-button { background: #fff; border: 1px solid #9aabba; color: #31465b; }
+.understanding-change-save-button, .understanding-change-confirm-button { background: #2f6fb0; border: 1px solid #2f6fb0; color: #fff; }
+.understanding-change-save-button:disabled { cursor: not-allowed; opacity: 0.55; }
+.understanding-response-edit-actions, .understanding-response-confirmation-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.75rem 0 1rem; }
+.understanding-response-confirmation { background: #fff8e8; border: 2px solid #c78316; border-radius: 14px; color: #3d3426; margin: 1rem 0; padding: 1rem; }
+.understanding-response-confirmation h4 { color: #3d3426; margin: 0; }
+.understanding-response-confirmation p { line-height: 1.7; margin: 0.5rem 0; }
 .understanding-evidence-detail { border-top: 1px solid #e6edf5; margin-top: 0.75rem; padding-top: 0.75rem; }
 .understanding-evidence-detail summary { color: #315f8f; cursor: pointer; font-weight: 700; }
 .understanding-evidence-detail-body { color: #526070; line-height: 1.7; margin-top: 0.75rem; }
@@ -22,3 +31,8 @@
 .understanding-evidence-item dt { color: #66778b; font-weight: 700; }
 .understanding-evidence-item dd { color: #24364b; margin: 0; text-align: right; }
 @media (max-width: 640px) { .understanding-candidate-card-header, .understanding-evidence-item dl div { display: block; } .hypothesis-badge { display: inline-block; margin-top: 0.5rem; } .understanding-evidence-item dd { text-align: left; } }
+@media (max-width: 360px) {
+  .understanding-candidate-card { border-radius: 14px; padding: 0.85rem; }
+  .understanding-candidate-actions, .understanding-response-edit-actions, .understanding-response-confirmation-actions { display: grid; grid-template-columns: 1fr; }
+  .understanding-answer-button, .understanding-response-edit-actions button, .understanding-response-confirmation-actions button { width: 100%; }
+}

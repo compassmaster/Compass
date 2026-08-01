@@ -375,3 +375,9 @@ DailyLogの編集・削除成功時は`DailyLogList`の`onChanged`から`LogTab`
 ## Understanding History handoff
 
 `compass_understanding_history_v1`は `{ schemaVersion: 1, records }` 形式のappend-only説明履歴。現在状態の再構築には使用しない。回答がUNCHANGEDならreconcile/refreshせず、Object更新はtimestamp以外の意味比較で記録する。旧backupに履歴がなければ空として扱い、backfillしない。
+
+## 2026-08-01 Understanding Candidate 回答変更UI (Issue #59)
+
+- 回答済みCandidateは通常時の3回答ボタンを無効化し、「回答を変更する」→一時選択→「変更を保存」→React内の確認表示→「変更する」の場合だけ既存`onRespond`を呼ぶ。
+- `window.confirm`は使用しない。確認表示は`alertdialog`としてラベル・説明を関連付け、選び直しと中止を提供する。操作ボタンは44px以上、360pxでは1列表示。
+- 状態遷移の純粋関数とUI契約テストを追加した。履歴、Application Service、Repository、永続化仕様は変更していない。

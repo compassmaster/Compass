@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import type { Evidence } from '../../analysis/types/evidence.ts';
 import type { UnderstandingCandidate, UnderstandingCandidateAnswer, UnderstandingCandidateResponse } from '../types/understandingCandidate.ts';
+import { beginResponseChange, confirmedResponse, requestResponseChangeConfirmation, returnToResponseSelection, selectDraftResponse, viewResponse, type ResponseChangeFlowState } from './understandingCandidateResponseChangeFlow.ts';
 import './UnderstandingCandidatePanel.css';
 
 interface UnderstandingCandidatePanelProps {
@@ -16,6 +18,45 @@ const answerLabels: Record<UnderstandingCandidateAnswer, string> = {
 };
 
 const answers: UnderstandingCandidateAnswer[] = ['AGREE', 'PARTIALLY_DISAGREE', 'UNSURE'];
+
+function CandidateAnswerControls({ candidate, response, onRespond }: { candidate: UnderstandingCandidate; response?: UnderstandingCandidateResponse; onRespond: UnderstandingCandidatePanelProps['onRespond'] }) {
+  const [changeFlow, setChangeFlow] = useState<ResponseChangeFlowState>(viewResponse);
+  const isEditing = changeFlow.step === 'EDITING';
+  const displayedAnswer = isEditing ? changeFlow.draftAnswer : response?.answer;
+
+  if (response && changeFlow.step === 'CONFIRMING') {
+    const titleId = `response-change-title-${candidate.id}`;
+    const descriptionId = `response-change-description-${candidate.id}`;
+    return (
+      <div className="understanding-response-confirmation" role="alertdialog" aria-labelledby={titleId} aria-describedby={descriptionId}>
+        <h4 id={titleId}>回答の変更を確認</h4>
+        <p id={descriptionId}>「{answerLabels[changeFlow.currentAnswer]}」から「{answerLabels[changeFlow.draftAnswer]}」へ変更します。よろしいですか？</p>
+        <div className="understanding-response-confirmation-actions">
+          <button type="button" className="understanding-secondary-button" onClick={() => setChangeFlow(returnToResponseSelection(changeFlow))}>選び直す</button>
+          <button type="button" className="understanding-change-confirm-button" autoFocus onClick={() => {
+            const answer = confirmedResponse(changeFlow);
+            if (answer) onRespond(candidate.id, answer);
+            setChangeFlow(viewResponse());
+          }}>変更する</button>
+        </div>
+      </div>
+    );
+  }
+
+  return <>
+    <div className="understanding-candidate-actions" aria-label={`${candidate.title}への回答`}>
+      {answers.map((answer) => <button key={answer} type="button" className={`understanding-answer-button ${displayedAnswer === answer ? 'selected' : ''}`} aria-pressed={displayedAnswer === answer} disabled={Boolean(response) && !isEditing} onClick={() => {
+        if (!response) onRespond(candidate.id, answer);
+        else setChangeFlow(selectDraftResponse(changeFlow, answer));
+      }}>{answerLabels[answer]}</button>)}
+    </div>
+    {response && !isEditing ? <button type="button" className="understanding-secondary-button" onClick={() => setChangeFlow(beginResponseChange(response.answer))}>回答を変更する</button> : null}
+    {response && isEditing ? <div className="understanding-response-edit-actions">
+      <button type="button" className="understanding-secondary-button" onClick={() => setChangeFlow(viewResponse())}>変更をやめる</button>
+      <button type="button" className="understanding-change-save-button" disabled={changeFlow.draftAnswer === changeFlow.currentAnswer} onClick={() => setChangeFlow(requestResponseChangeConfirmation(changeFlow))}>変更を保存</button>
+    </div> : null}
+  </>;
+}
 
 export function UnderstandingCandidatePanel({ candidates, responses, evidence, onRespond }: UnderstandingCandidatePanelProps) {
   const responseByCandidateId = new Map(responses.map((response) => [response.candidateId, response]));
@@ -51,19 +92,7 @@ export function UnderstandingCandidatePanel({ candidates, responses, evidence, o
                 <p className="understanding-candidate-current-answer">
                   現在の回答: {response ? `${answerLabels[response.answer]}（回答済み）` : '未回答'}
                 </p>
-                <div className="understanding-candidate-actions" aria-label={`${candidate.title}への回答`}>
-                  {answers.map((answer) => (
-                    <button
-                      key={answer}
-                      type="button"
-                      className={`understanding-answer-button ${response?.answer === answer ? 'selected' : ''}`}
-                      aria-pressed={response?.answer === answer}
-                      onClick={() => onRespond(candidate.id, answer)}
-                    >
-                      {answerLabels[answer]}
-                    </button>
-                  ))}
-                </div>
+                <CandidateAnswerControls candidate={candidate} response={response} onRespond={onRespond} />
 
                 <details className="understanding-evidence-detail">
                   <summary>なぜそう思った？</summary>
