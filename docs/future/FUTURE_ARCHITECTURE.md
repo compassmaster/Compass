@@ -1,5 +1,7 @@
 # Future Architecture
 
+プロダクト体験のCanonical Documentは[Conversation-First Product Direction](../product/CONVERSATION_FIRST_PRODUCT_DIRECTION.md)である。本書は実現候補の技術構想であり、Canonical Documentで採用された方向性を実装済みとするものではない。
+
 ## Purpose
 
 このドキュメントは、CompassのMVPでは採用しなかったが、
@@ -22,7 +24,7 @@ MVPの完了条件にも含めない。
 - [Machine Learning, Prediction, and External Context](MACHINE_LEARNING_EXTERNAL_CONTEXT.md)
 - Population-to-Personal Understanding
 - Candidate Prioritization
-- Understanding History
+- Understanding History（基本履歴は実装済み。高度な時間変化理解は将来構想）
 - Adaptive Understanding
 - Machine Learning / Prediction / External Context（D-0010はWeather保存境界のみを定義し、Conversationも未実装のまま維持する）
 ---
@@ -30,7 +32,7 @@ MVPの完了条件にも含めない。
 
 ## Future Item Status
 
-| Item | Status as of 2026-07-22 | Notes |
+| Item | Status as of 2026-08-01 | Notes |
 | --- | --- | --- |
 | Evidence → Understanding Candidate | Implemented | Formal Candidate generation, storage, display, and user response storage are implemented. |
 | Understanding Candidate Response → Understanding Object | Implemented | AGREE creates/upserts Hypothesis-maturity Objects; non-AGREE removes/does not keep Objects. |
@@ -38,10 +40,13 @@ MVPの完了条件にも含めない。
 | Compass Map from Formal UserModel Resolver | Implemented | Compass Map consumes ResolvedFormalUserModel read-only. |
 | Reflection from Formal UserModel Resolver | Implemented | Home Formal Reflection consumes ResolvedFormalUserModel read-only; legacy Reflection remains separate. |
 | Conversation from Formal UserModel Resolver | Not implemented | Conversation consumer connection remains future work. |
-| Understanding History / Agreement History | Not implemented | Still a future concept; no history store exists. |
+| Understanding History / Agreement History | Partially implemented | Candidate回答変更とUnderstanding Object生成・更新・解除のappend-only履歴は実装済み。長期的なAgreement評価は未実装。 |
 | Candidate Prioritizer / Candidate expiry | Not implemented | No prioritization or automatic expiry boundary exists. |
 | LLM Generator / Prompt Version management | Not implemented | No LLM generation path exists. |
-| Machine Learning / Prediction / External Context | Not implemented | D-0010 has accepted the Weather storage boundary before implementation; Weather Type/API, Prediction, and ML remain unimplemented. |
+| Weather External Context | Partially implemented | Domain / Repository / Base Location / Forecast・Historical取得と限定的な自動取得は実装済み。汎用External Context基盤ではない。 |
+| Read-only Relationship / Prediction | Partially implemented | 固定ルールのRelationship Explorerと翌日疲労見通しは実装済み。Prediction Evaluation保存と学習は未実装。 |
+| Calendar / wearable connections | Not implemented | 日付集計や`SMARTWATCH` source値は外部連携を意味しない。 |
+| Learning-based ML / online learning | Not implemented | 固定Analyzerを学習型MLとして扱わない。 |
 
 ## Current Boundary
 
@@ -50,13 +55,12 @@ MVPの完了条件にも含めない。
 - Candidateの寿命
 - Candidate Prioritizer
 - User Agreementの時間変化
-- Understanding History
-- Agreement History
+- 高度なUnderstanding Timeline / Agreement評価（基本履歴は実装済み）
 - Prompt Version管理
 - LLM Generator
 - Reflection Engineの高度化
 - Adaptive Understanding
-- Machine Learning / Prediction / External Context（D-0010はWeather保存境界のみを定義し、Conversationも未実装のまま維持する）
+- Calendar・ウェアラブル連携、汎用自動取得、Prediction Evaluation保存、学習型Machine Learning（Conversationも未実装のまま維持する）
 
 現在の実装対象仕様は、Accepted ADRとCurrent Implementation Stateを優先する。
 
