@@ -381,3 +381,10 @@ DailyLogの編集・削除成功時は`DailyLogList`の`onChanged`から`LogTab`
 - 回答済みCandidateは通常時の3回答ボタンを無効化し、「回答を変更する」→一時選択→「変更を保存」→React内の確認表示→「変更する」の場合だけ既存`onRespond`を呼ぶ。
 - `window.confirm`は使用しない。確認表示は`alertdialog`としてラベル・説明を関連付け、選び直しと中止を提供する。操作ボタンは44px以上、360pxでは1列表示。
 - 状態遷移の純粋関数とUI契約テストを追加した。履歴、Application Service、Repository、永続化仕様は変更していない。
+
+### PR #60 review follow-up
+
+- 回答済みVIEWINGでは回答選択肢を描画せず、現在回答と「回答を変更する」だけを表示する。
+- AGREEへの変更は理解の作成、AGREEからの変更は現在の理解からの解除、それ以外は反映状態不変と履歴記録を説明する。
+- Responseの`answer`または`respondedAt`が外部更新された場合はcontrolsをremountして未保存編集を破棄する。確認はキャンセル/Escape/フォーカス移動と復帰を提供し、SUBMITTING状態と同期refで連打を防ぐ。
+- テストは状態遷移を操作し、一時選択・保存・キャンセルではcallback 0回、確定と確定連打では合計1回であることを検証する。

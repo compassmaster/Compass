@@ -20,6 +20,8 @@
 .understanding-response-confirmation { background: #fff8e8; border: 2px solid #c78316; border-radius: 14px; color: #3d3426; margin: 1rem 0; padding: 1rem; }
 .understanding-response-confirmation h4 { color: #3d3426; margin: 0; }
 .understanding-response-confirmation p { line-height: 1.7; margin: 0.5rem 0; }
+.understanding-response-viewing p { color: #5b6b7d; margin: 0.35rem 0 0.75rem; }
+.understanding-response-impact { background: #f3f7fb; border-left: 4px solid #5d85ad; color: #31465b; line-height: 1.7; padding: 0.65rem 0.75rem; }
 .understanding-evidence-detail { border-top: 1px solid #e6edf5; margin-top: 0.75rem; padding-top: 0.75rem; }
 .understanding-evidence-detail summary { color: #315f8f; cursor: pointer; font-weight: 700; }
 .understanding-evidence-detail-body { color: #526070; line-height: 1.7; margin-top: 0.75rem; }

@@ -3,27 +3,59 @@ import type { UnderstandingCandidateAnswer } from '../types/understandingCandida
 export type ResponseChangeFlowState =
   | { step: 'VIEWING' }
   | { step: 'EDITING'; currentAnswer: UnderstandingCandidateAnswer; draftAnswer: UnderstandingCandidateAnswer }
-  | { step: 'CONFIRMING'; currentAnswer: UnderstandingCandidateAnswer; draftAnswer: UnderstandingCandidateAnswer };
+  | { step: 'CONFIRMING'; currentAnswer: UnderstandingCandidateAnswer; draftAnswer: UnderstandingCandidateAnswer }
+  | { step: 'SUBMITTING'; currentAnswer: UnderstandingCandidateAnswer; draftAnswer: UnderstandingCandidateAnswer };
+
+export type ResponseChangeFlowEvent =
+  | { type: 'BEGIN'; currentAnswer: UnderstandingCandidateAnswer }
+  | { type: 'SELECT'; answer: UnderstandingCandidateAnswer }
+  | { type: 'SAVE' }
+  | { type: 'SELECT_AGAIN' }
+  | { type: 'CANCEL' }
+  | { type: 'CONFIRM' };
+
+export interface ResponseChangeFlowTransition {
+  state: ResponseChangeFlowState;
+  confirmedAnswer: UnderstandingCandidateAnswer | null;
+}
 
 export const viewResponse = (): ResponseChangeFlowState => ({ step: 'VIEWING' });
 
-export const beginResponseChange = (currentAnswer: UnderstandingCandidateAnswer): ResponseChangeFlowState => ({
-  step: 'EDITING', currentAnswer, draftAnswer: currentAnswer,
-});
-
-export function selectDraftResponse(state: ResponseChangeFlowState, answer: UnderstandingCandidateAnswer): ResponseChangeFlowState {
-  return state.step === 'EDITING' ? { ...state, draftAnswer: answer } : state;
+export function transitionResponseChange(
+  state: ResponseChangeFlowState,
+  event: ResponseChangeFlowEvent,
+): ResponseChangeFlowTransition {
+  if (event.type === 'BEGIN' && state.step === 'VIEWING') {
+    return {
+      state: { step: 'EDITING', currentAnswer: event.currentAnswer, draftAnswer: event.currentAnswer },
+      confirmedAnswer: null,
+    };
+  }
+  if (event.type === 'SELECT' && state.step === 'EDITING') {
+    return { state: { ...state, draftAnswer: event.answer }, confirmedAnswer: null };
+  }
+  if (event.type === 'SAVE' && state.step === 'EDITING' && state.draftAnswer !== state.currentAnswer) {
+    return { state: { ...state, step: 'CONFIRMING' }, confirmedAnswer: null };
+  }
+  if (event.type === 'SELECT_AGAIN' && state.step === 'CONFIRMING') {
+    return { state: { ...state, step: 'EDITING' }, confirmedAnswer: null };
+  }
+  if (event.type === 'CANCEL') return { state: viewResponse(), confirmedAnswer: null };
+  if (event.type === 'CONFIRM' && state.step === 'CONFIRMING') {
+    return { state: { ...state, step: 'SUBMITTING' }, confirmedAnswer: state.draftAnswer };
+  }
+  return { state, confirmedAnswer: null };
 }
 
-export function requestResponseChangeConfirmation(state: ResponseChangeFlowState): ResponseChangeFlowState {
-  if (state.step !== 'EDITING' || state.draftAnswer === state.currentAnswer) return state;
-  return { ...state, step: 'CONFIRMING' };
-}
-
-export function returnToResponseSelection(state: ResponseChangeFlowState): ResponseChangeFlowState {
-  return state.step === 'CONFIRMING' ? { ...state, step: 'EDITING' } : state;
-}
-
-export function confirmedResponse(state: ResponseChangeFlowState): UnderstandingCandidateAnswer | null {
-  return state.step === 'CONFIRMING' ? state.draftAnswer : null;
+export function describeResponseChange(
+  currentAnswer: UnderstandingCandidateAnswer,
+  draftAnswer: UnderstandingCandidateAnswer,
+): string {
+  if (currentAnswer !== 'AGREE' && draftAnswer === 'AGREE') {
+    return 'この回答に変更すると、この候補から理解が作られ、現在の理解に加わります。';
+  }
+  if (currentAnswer === 'AGREE' && draftAnswer !== 'AGREE') {
+    return 'この回答に変更すると、この候補から作られた理解が現在の理解から外れます。';
+  }
+  return '現在の理解への反映状態は変わりません。回答の変更は履歴に記録されます。';
 }
