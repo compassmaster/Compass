@@ -2,6 +2,8 @@
 
 Compassは、単なる記録アプリやチャットAIではなく、「人を理解し、その理解を育て、現在を支え、未来を一緒に考える」ためのAIアーキテクチャ研究開発プロジェクトです。
 
+プロダクト体験の中心思想は「**Compassは、自分自身の取扱説明書を一緒に育てる存在である**」です。ChatをPrimary Experienceとする方向性と、実装済み／未実装の境界は[Conversation-First Product Direction](docs/product/CONVERSATION_FIRST_PRODUCT_DIRECTION.md)を参照してください。
+
 コードよりも設計思想を優先する設計主導のプロジェクトとして、ドキュメントをSingle Source of Truthにしながら実装を進めています。
 
 ## プロジェクトの目的
@@ -19,7 +21,7 @@ Compass Core Philosophy v1.0は完成済みです。
 
 実装済み範囲はEvidence、Understanding Candidate、Candidate Response保存、AGREE回答からのHypothesis段階Understanding Object生成・保存・表示です。Formal UserModelの参照ID集約境界（Object本体を複製せず、Long-term / Short-term Understanding ID membershipのみ保持）、旧UserModelとの別保存キー、Resolver境界、Reconciliation規則、段階移行方針はD-0009で設計済みです。Phase Aとして、FormalUserModel TypeScript型、型ガード、createEmptyFormalUserModel、Repository interface、LocalStorage Repository、`compass_formal_user_model_v1`への参照ID保存、Reconciler、Resolver、ResolvedFormalUserModel型、membership同期、orphan除去、layer移動は実装済みです。
 
-Compass Map正式反映、Reflection / Conversation接続、旧UserModel migration、旧UserModel廃止、旧フロー停止、maturity昇格、UserModel State判定、Understanding履歴、LLM生成は未実装です。
+Compass MapとFormal Reflectionの読み取り専用接続、Understanding履歴は実装済みです。Conversation、LLM、Calendar連携、ウェアラブル連携、学習型機械学習は未実装です。
 
 詳細は [Current State](docs/CURRENT_STATE.md) と [Current Implementation State](docs/ai/CURRENT_IMPLEMENTATION_STATE.md) を参照してください。
 
@@ -51,14 +53,15 @@ Compass/
 
 初めての方は、以下の順番で読むことを推奨します。
 
-1. [docs/README.md](docs/README.md)
-2. [Current State](docs/CURRENT_STATE.md)
-3. [AI Handoff](docs/development/AI_HANDOFF.md)
-4. [Compass Core Philosophy](docs/philosophy/Compass_Core_Philosophy.md)
-5. [UserModel](docs/ai/UserModel.md)
-6. [Analysis Architecture](docs/ai/Analysis/Analysis%20Architecture.md)
-7. [Understanding](docs/ai/Understanding/Understanding.md)
-8. [ADR](docs/設計決定.md)
+1. [Conversation-First Product Direction](docs/product/CONVERSATION_FIRST_PRODUCT_DIRECTION.md)
+2. [docs/README.md](docs/README.md)
+3. [Current State](docs/CURRENT_STATE.md)
+4. [AI Handoff](docs/development/AI_HANDOFF.md)
+5. [Compass Core Philosophy](docs/philosophy/Compass_Core_Philosophy.md)
+6. [UserModel](docs/ai/UserModel.md)
+7. [Analysis Architecture](docs/ai/Analysis/Analysis%20Architecture.md)
+8. [Understanding](docs/ai/Understanding/Understanding.md)
+9. [ADR](docs/設計決定.md)
 
 ## 開発環境
 

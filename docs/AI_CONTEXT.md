@@ -6,6 +6,8 @@
 
 Compassは、記録アプリやチャットAIではなく、「人を理解し、その理解を育て、現在を支え、未来を一緒に考えるAI」を目指す研究開発プロジェクトである。
 
+プロダクト体験のCanonical Documentは[`docs/product/CONVERSATION_FIRST_PRODUCT_DIRECTION.md`](product/CONVERSATION_FIRST_PRODUCT_DIRECTION.md)である。中心思想は「Compassは、自分自身の取扱説明書を一緒に育てる存在である」。ただしConversation、LLM、Calendar連携、ウェアラブル連携、学習型機械学習は未実装である。
+
 Core Philosophy v1.0は完成済みであり、現在はFeature-First構成のReact / TypeScript実装上で、DailyLog、SleepRecord、Analysis、Evidence、旧Insight系統、UserModel表示を統合している。
 
 ## 現在の正式フロー
@@ -56,9 +58,10 @@ Analysisは観測事実をEvidenceとして出力する。EvidenceからUserMode
 未実装:
 
 - ConversationをFormal UserModel Resolverへ正式接続する新フロー。
-- 旧UserModel migration / 廃止、旧フロー停止、maturity昇格、Understanding履歴。
-- Weather Domain Model MVP。D-0010に基づき、WeatherForecastSnapshot / ObservedWeatherRecordの別型、runtime guard、Factory、availability / missing / sourceType境界を実装済み。
-- LLM連携、機械学習、予測、Weather Repository、localStorage、Base Location、API Client、Analyzer、Predictionは未実装。
+- Conversation UI / Capture / consumer接続、LLM連携、Calendar連携、ウェアラブル連携、学習型機械学習。
+- 旧UserModel migration / 廃止、旧フロー停止、maturity昇格。
+
+Weather Domain / Repository / Base Location / Forecast・Historical取得、前日Historicalの限定的な自動取得、読み取り専用Relationship / Prediction、およびUnderstanding履歴は実装済みである。これらを汎用自動取得、Calendar、学習型機械学習、Conversationの実装と扱わない。
 
 ## 現在の主要ディレクトリ
 
@@ -84,7 +87,7 @@ src/
 
 ## 次のタスク
 
-次の実装対象候補は、D-0010に基づくWeather Repositoryである。Conversationは未実装のままである。既存Consumer接続については以下の境界も残る。
+Conversationは未実装のままである。既存Consumer接続については以下の境界も残る。
 
 ```text
 Formal UserModel Resolver

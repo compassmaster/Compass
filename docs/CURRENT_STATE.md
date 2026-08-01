@@ -2,9 +2,19 @@
 status: Active
 dependsOn: []
 usedBy: []
-lastUpdated: "2026-07-31"
+lastUpdated: "2026-08-01"
 ---
 # Current State (現在のプロジェクト状況)
+
+プロダクト体験の方向性は[Conversation-First Product Direction](product/CONVERSATION_FIRST_PRODUCT_DIRECTION.md)をCanonical Documentとする。以下は2026-08-01時点の`main`との照合結果であり、後続の日時別セクションは実装当時の履歴として読む。
+
+## Product Directionと実装状態
+
+- **採用済み方針**: ChatをPrimary Experience、Calendarを人生の時間軸、相談中の分析利用、根拠の段階的開示、早期個人化、Conversation Capture、同意に基づく自動取得、Personal Discovery Engine。
+- **一部実装済み**: DailyLog / SleepRecord、Weather取得・前日気象の限定的な自動取得、Evidence、Relationship Explorer、読み取り専用Prediction、Understanding確認・履歴、Formal UserModel、Compass Map / Formal Reflectionの読み取り専用接続、初回利用ガイド。
+- **未実装**: Conversation UI・会話履歴・Conversation Capture・Conversation consumer接続、LLM生成、Calendar UI・外部カレンダー連携、ウェアラブル連携、学習型機械学習・オンライン学習、Personal Discovery Engineとしての統合。
+
+`SleepRecord.source`の`SMARTWATCH`は将来互換の値にすぎず、ウェアラブル連携ではない。日付・timezone単位の集計はCalendar連携ではない。固定ルールによるAnalyzer / Relationship / Predictionは学習型機械学習ではない。
 
 ## 現在のVersion
 
@@ -55,7 +65,8 @@ lastUpdated: "2026-07-31"
 ### 未実装
 
 - ConversationをFormal UserModel Resolverへ正式接続する新フロー。
-- LLM生成・Prompt Version管理・Candidate Prioritizer・External Context永続化・PredictionなどFuture Architecture項目。D-0010に基づくWeather Domain ModelとWeather Repository MVP、およびD-0011に基づくBase Location MVPは実装済みだが、Weather API Client、Analyzer、Prediction、Machine Learningは未実装。
+- Conversation UI・Conversation Capture・LLM生成・Prompt Version管理・Candidate Prioritizer・Calendar連携・ウェアラブル連携・学習型Machine Learning。
+- WeatherのDomain / Repository / Base Location / Forecast・Historical取得、限定的な自動取得、読み取り専用のWeather × Fatigue ObservationとPredictionは実装済み。ただし、汎用External Context自動取得、WeatherからFormal Pipelineへの接続、学習型予測は未実装。
 
 ## 実装済み項目
 

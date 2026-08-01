@@ -2,11 +2,11 @@
 status: Active
 dependsOn: []
 usedBy: []
-lastUpdated: "2026-07-22"
+lastUpdated: "2026-08-01"
 ---
 # Documentation Index
 
-Compassのドキュメント群のインデックスです。現在のSingle Source of Truthは、実装状態・Accepted ADR・各設計文書を合わせて確認してください。
+Compassのドキュメント群のインデックスです。プロダクト体験は[Conversation-First Product Direction](product/CONVERSATION_FIRST_PRODUCT_DIRECTION.md)をCanonical Documentとし、実装状態はCurrent State・コード、データ境界はAccepted ADRと合わせて確認してください。
 
 ## Project State
 
@@ -19,10 +19,11 @@ Compassのドキュメント群のインデックスです。現在のSingle Sou
 - [ADR / 設計決定](設計決定.md)
 - [Documentation Architecture Audit](DOCUMENTATION_ARCHITECTURE_AUDIT.md)
 
-Current implementation includes Evidence, Understanding Candidate, Candidate Response storage, and the D-0008 MVP for Understanding Object type, factory, repository, AGREE-based generation, non-AGREE removal/reconciliation, and the Understanding Object Panel. D-0009 now designs the Formal UserModel reference-only aggregate boundary: it stores only Long-term / Short-term Understanding IDs, keeps `UnderstandingObjectRepository` as the content Source of Truth, separates `compass_formal_user_model_v1` from legacy `compass_user_model`, and defines Resolver/Reconciliation/migration boundaries. FormalUserModel TypeScript model, runtime guard, empty-model creation, repository interface, LocalStorage repository, `compass_formal_user_model_v1` reference-only storage, reconciler, resolver, ResolvedFormalUserModel, membership sync, orphan removal, layer repair, App startup reconcile, Object-change refresh, and read-only confirmation UI are implemented as Phase A/B. Compass Map integration, Reflection integration, Conversation connection, legacy migration/removal, old-flow shutdown, maturity promotion, UserModel State, Understanding history, LLM generation, machine learning, prediction, and External Context remain unimplemented. D-0010 has accepted the pre-implementation storage boundary for the first External Context candidate, Weather: Forecast Snapshot and Observed Weather are separated, Location/Privacy/Missing/API failure boundaries are defined, no Weather types or API client are implemented yet, and the next implementation target is the Weather Domain Model.
+Current implementation includes DailyLog / SleepRecord, Weather storage and acquisition, Evidence, read-only Relationship / Prediction, Understanding confirmation and history, Formal UserModel, and read-only Compass Map / Formal Reflection consumers. Conversation UI / Capture / consumer connection, LLM generation, Calendar integration, wearable integration, and learning-based machine learning remain unimplemented. Limited Weather auto-acquisition, date-based views, and fixed analyzers must not be described as implementations of those future capabilities.
 
 ## Core Documents
 
+- [Conversation-First Product Direction (Canonical)](product/CONVERSATION_FIRST_PRODUCT_DIRECTION.md)
 - [Vision](01_ビジョン.md)
 - [Core Philosophy](philosophy/Compass_Core_Philosophy.md)
 - [Design Principles](02_設計原則.md)
