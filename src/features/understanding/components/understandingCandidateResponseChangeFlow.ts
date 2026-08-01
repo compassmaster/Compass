@@ -52,10 +52,10 @@ export function describeResponseChange(
   draftAnswer: UnderstandingCandidateAnswer,
 ): string {
   if (currentAnswer !== 'AGREE' && draftAnswer === 'AGREE') {
-    return 'この回答に変更すると、この候補から理解が作られ、現在の理解に加わります。';
+    return 'この回答に変更すると、この候補から理解が現在の理解として作成される可能性があります。';
   }
   if (currentAnswer === 'AGREE' && draftAnswer !== 'AGREE') {
-    return 'この回答に変更すると、この候補から作られた理解が現在の理解から外れます。';
+    return 'この回答に変更すると、この候補から作られた理解が現在の理解から外れます。過去の履歴は削除されません。';
   }
   return '現在の理解への反映状態は変わりません。回答の変更は履歴に記録されます。';
 }

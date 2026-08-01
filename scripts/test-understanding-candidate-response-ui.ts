@@ -45,8 +45,8 @@ dispatch({ type: 'CANCEL' });
 assert.equal(state.step, 'VIEWING');
 assert.equal(respondedAnswers.length, 1, 'cancel must not call onRespond');
 
-assert.match(describeResponseChange('UNSURE', 'AGREE'), /理解が作られ/);
-assert.match(describeResponseChange('AGREE', 'UNSURE'), /理解が現在の理解から外れ/);
+assert.match(describeResponseChange('UNSURE', 'AGREE'), /現在の理解として作成される可能性があります/);
+assert.match(describeResponseChange('AGREE', 'UNSURE'), /理解が現在の理解から外れます。過去の履歴は削除されません/);
 assert.match(describeResponseChange('UNSURE', 'PARTIALLY_DISAGREE'), /反映状態は変わりません/);
 
 const panel = readFileSync(new URL('../src/features/understanding/components/UnderstandingCandidatePanel.tsx', import.meta.url), 'utf8');
