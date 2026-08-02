@@ -15,6 +15,7 @@ export type ConversationSessionEvent =
   | { type: 'RESET' };
 
 const WELCOME_MESSAGE = 'こんにちは。今の気持ちや考えていることを、まとまっていなくても自由に書けます。';
+const CAPTURE_SUPPRESSED_MESSAGE = '以前この候補は保存しないと選択されたため、再表示しませんでした。新しい内容を記録する場合は、もう一度「記録したい」と送ってください。';
 export function createConversationSession(): ConversationSession {
   return { messages: [{ id: 'message-0', role: 'assistant', text: WELCOME_MESSAGE }], nextMessageNumber: 1, activeCaptureCandidate: null, dailyLogCaptureFlow: null, rejectedDeduplicationKeys: [] };
 }
@@ -69,6 +70,16 @@ export function completeActiveDailyLogCaptureFlow(session: ConversationSession, 
   const result = completeDailyLogCaptureFlow(session.dailyLogCaptureFlow, { id: `capture-${session.nextMessageNumber}`, createdAt: now });
   if (!result.ok) return { session, error: result.reason };
   const presented = presentCaptureCandidate({ ...session, dailyLogCaptureFlow: null }, result.candidate);
+  if (presented.error === 'CAPTURE_SUPPRESSED') {
+    return {
+      session: {
+        ...presented.session,
+        messages: [...presented.session.messages, { id: `message-${session.nextMessageNumber}`, role: 'assistant', text: CAPTURE_SUPPRESSED_MESSAGE }],
+        nextMessageNumber: session.nextMessageNumber + 1,
+      },
+      error: presented.error,
+    };
+  }
   return { session: presented.session, error: presented.error };
 }
 

@@ -2,21 +2,20 @@ import { useEffect, useRef, useState } from 'react';
 import { dailyLogApplicationService } from '../services';
 import type { DailyLog, EntryId, Scale } from '../types/log';
 import './DailyLogList.css';
-import type { DailyLogNavigationTarget, DailyLogRecordChange } from '../types/navigation.ts';
+import { evaluateDailyLogNavigationCommand, resolveDailyLogNavigationTarget, type DailyLogEditState, type DailyLogNavigationTarget, type DailyLogRecordChange } from '../types/navigation.ts';
 
 const ANALYSIS_NOTICE = '過去に生成済みの分析結果は自動的に書き換わりません。変更内容は次回の分析で更新されます。';
 
-type EditState = { id: EntryId; date: string; mood: Scale; fatigue: Scale; note: string; events: string };
-
 export function DailyLogList({ revision = 0, onChanged, navigationTarget = null, onNavigationTargetConsumed, onRecordChanged }: { revision?: number; onChanged?: () => void; navigationTarget?: DailyLogNavigationTarget | null; onNavigationTargetConsumed?: () => void; onRecordChanged?: (change: DailyLogRecordChange) => void }) {
   const [localRevision, setLocalRevision] = useState(0);
-  const [editing, setEditing] = useState<EditState | null>(null);
+  const [editing, setEditing] = useState<DailyLogEditState | null>(null);
   const [deleting, setDeleting] = useState<DailyLog | null>(null);
   const [error, setError] = useState('');
   const recordRefs = useRef(new Map<EntryId, HTMLElement>());
   const firstEditFieldRef = useRef<HTMLInputElement>(null);
   const deleteHeadingRef = useRef<HTMLHeadingElement>(null);
   const deleteReturnRecordIdRef = useRef<EntryId | null>(null);
+  const handledNavigationCommandRef = useRef<string | null>(null);
   void revision;
   void localRevision;
   const logs = dailyLogApplicationService.listDailyLogs();
@@ -29,20 +28,27 @@ export function DailyLogList({ revision = 0, onChanged, navigationTarget = null,
     setEditing({ id: log.id, date: log.date, mood: log.mood, fatigue: log.fatigue, note: log.note, events: log.events.join(', ') });
     setError('');
   };
+  const openDelete = (log: DailyLog) => {
+    deleteReturnRecordIdRef.current = log.id;
+    setDeleting(log);
+  };
   /* Navigation commands intentionally synchronize transient App state into this UI's local edit/dialog state. */
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    if (!navigationTarget) return;
-    const result = dailyLogApplicationService.getDailyLog(navigationTarget.recordId);
-    if (!result.ok) {
+    const command = evaluateDailyLogNavigationCommand(handledNavigationCommandRef.current, navigationTarget);
+    handledNavigationCommandRef.current = command.nextIdentity;
+    if (!navigationTarget || !command.shouldHandle) return;
+    const resolved = resolveDailyLogNavigationTarget(logs, navigationTarget);
+    if (resolved.kind === 'NOT_FOUND') {
+      deleteReturnRecordIdRef.current = null;
       setEditing(null); setDeleting(null); setError('指定された保存済みの記録が見つかりませんでした。');
       onNavigationTargetConsumed?.();
       return;
     }
     setError('');
-    if (navigationTarget.action === 'VIEW') requestAnimationFrame(() => recordRefs.current.get(navigationTarget.recordId)?.focus());
-    else if (navigationTarget.action === 'EDIT') beginEdit(navigationTarget.recordId);
-    else { deleteReturnRecordIdRef.current = navigationTarget.recordId; setDeleting(result.log); }
+    if (resolved.kind === 'VIEW') requestAnimationFrame(() => recordRefs.current.get(resolved.record.id)?.focus());
+    else if (resolved.kind === 'EDIT') setEditing(resolved.editState);
+    else openDelete(resolved.record);
     onNavigationTargetConsumed?.();
   // The target identity is the one-shot command; service/callback identities are intentionally not dependencies.
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -64,11 +70,12 @@ export function DailyLogList({ revision = 0, onChanged, navigationTarget = null,
     if (!deleting) return;
     const result = dailyLogApplicationService.deleteDailyLog(deleting.id);
     if (!result.ok) { setError('記録が見つかりませんでした。'); return; }
-    const recordId = deleting.id; setDeleting(null); setError(''); refresh(); onRecordChanged?.({ recordId, kind: 'DELETED' });
+    const recordId = deleting.id; setDeleting(null); deleteReturnRecordIdRef.current = null; setError(''); refresh(); onRecordChanged?.({ recordId, kind: 'DELETED' });
   };
   const cancelDelete = () => {
     const recordId = deleteReturnRecordIdRef.current;
     setDeleting(null);
+    deleteReturnRecordIdRef.current = null;
     requestAnimationFrame(() => { if (recordId) recordRefs.current.get(recordId)?.focus(); });
   };
 
@@ -77,9 +84,9 @@ export function DailyLogList({ revision = 0, onChanged, navigationTarget = null,
     <p className="fatigue-help">疲労は1=元気、5=とても疲れている</p>
     {error && <p className="log-error" role="alert">{error}</p>}
     {logs.length === 0 ? <p className="log-empty">まだ記録がありません。今日のあなたを記録してみましょう。</p> : logs.map((log) => (
-      <article key={log.id} ref={(node) => { if (node) recordRefs.current.set(log.id, node); else recordRefs.current.delete(log.id); }} tabIndex={-1} className="log-card" aria-labelledby={`daily-log-heading-${log.id}`}>
+      <article key={log.id} ref={(node) => { if (node) recordRefs.current.set(log.id, node); else recordRefs.current.delete(log.id); }} tabIndex={-1} className="log-card" aria-labelledby={editing?.id === log.id ? `daily-log-edit-heading-${log.id}` : `daily-log-heading-${log.id}`}>
         {editing?.id === log.id ? <div className="edit-form">
-          <h3>記録を編集</h3>
+          <h3 id={`daily-log-edit-heading-${log.id}`}>記録を編集</h3>
           <p className="analysis-notice">{ANALYSIS_NOTICE}</p>
           <label>対象日<input ref={firstEditFieldRef} aria-label="編集する対象日" type="date" value={editing.date} onChange={(e) => setEditing({ ...editing, date: e.target.value })} /></label>
           <label>気分<select aria-label="編集する気分" value={editing.mood} onChange={(e) => setEditing({ ...editing, mood: Number(e.target.value) as Scale })}>{[1,2,3,4,5].map(v => <option key={v}>{v}</option>)}</select></label>
@@ -92,7 +99,7 @@ export function DailyLogList({ revision = 0, onChanged, navigationTarget = null,
           <div className="log-status"><div>😊 気分: <strong>{log.mood}</strong>/5</div><div>🔋 疲労: <strong>{log.fatigue}</strong>/5</div></div>
           <div className="log-note"><strong>メモ</strong><p>{log.note || '—'}</p></div>
           <div className="log-events"><strong>イベント</strong>{log.events.length ? log.events.map((event, index) => <span key={`${event}-${index}`} className="event-tag">{event}</span>) : <span>—</span>}</div>
-          <div className="log-actions"><button type="button" onClick={() => beginEdit(log.id)}>編集</button><button type="button" className="danger" onClick={() => setDeleting(log)}>削除</button></div>
+          <div className="log-actions"><button type="button" onClick={() => beginEdit(log.id)}>編集</button><button type="button" className="danger" onClick={() => openDelete(log)}>削除</button></div>
         </>}
       </article>
     ))}
