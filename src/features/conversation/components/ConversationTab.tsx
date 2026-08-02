@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import type { CaptureCommitOutcome, CaptureCommitRequest, DailyLogCapturePayload } from '../types/captureCandidate.ts';
 import type { ConversationSession } from '../session/conversationSession.ts';
-import { answerActiveDailyLogCaptureFlow, applyActiveCaptureCandidateEdit, applyCaptureCommitOutcome, backActiveDailyLogCaptureFlow, beginActiveCaptureCandidateEdit, cancelActiveCaptureCandidate, cancelActiveDailyLogCaptureFlow, completeActiveDailyLogCaptureFlow, confirmActiveProposedCaptureCandidate, markActiveCaptureCandidateReady, rejectActiveCaptureCandidate, requestActiveCaptureCandidateCommit, retryActiveCaptureCandidate, transitionConversationSession } from '../session/conversationSession.ts';
+import { answerActiveDailyLogCaptureFlow, applyActiveCaptureCandidateEdit, backActiveDailyLogCaptureFlow, beginActiveCaptureCandidateEdit, cancelActiveCaptureCandidate, cancelActiveDailyLogCaptureFlow, completeActiveDailyLogCaptureFlow, confirmActiveProposedCaptureCandidate, markActiveCaptureCandidateReady, rejectActiveCaptureCandidate, requestActiveCaptureCandidateCommit, retryActiveCaptureCandidate, transitionConversationSession } from '../session/conversationSession.ts';
 import { CaptureCandidateReviewCard } from './CaptureCandidateReviewCard.tsx';
 import { emptyCaptureCommitRequestGuard, recordCaptureCommitRequest, synchronizeCaptureCommitRequestGuard } from './captureCommitRequestGuard.ts';
 import { executeConversationAction, type ConversationActionCallbacks } from '../actions/conversationActionDispatcher.ts';
@@ -11,6 +11,7 @@ import { toConversationAnnouncement, type ConversationAnnouncement } from './con
 import './ConversationTab.css';
 import { DailyLogCaptureFlowCard } from './DailyLogCaptureFlowCard.tsx';
 import type { DailyLogCaptureAnswer } from '../session/dailyLogCaptureFlow.ts';
+import { executeCaptureCommit } from '../application/captureCommitExecutor.ts';
 
 type ConversationTabProps = {
   session: ConversationSession;
@@ -51,6 +52,11 @@ export function ConversationTab({
   const claimedActionIdsRef = useRef(new Set<string>());
   const captureCommitGuardRef = useRef(emptyCaptureCommitRequestGuard());
   const reviewRef = useRef<HTMLElement>(null);
+  const sessionRef = useRef(session);
+
+  useLayoutEffect(() => {
+    sessionRef.current = session;
+  }, [session]);
 
   useEffect(() => {
     submittingRef.current = false;
@@ -79,6 +85,7 @@ export function ConversationTab({
   const applySession = (nextSession: ConversationSession) => {
     const list = messagesRef.current;
     shouldFollowMessagesRef.current = list ? isNearConversationEnd(list) : true;
+    sessionRef.current = nextSession;
     onSessionChange(nextSession);
     setAnnouncement(toConversationAnnouncement(nextSession.messages.at(-1)));
   };
@@ -138,6 +145,21 @@ export function ConversationTab({
     return undefined;
   };
 
+  const commitActiveCandidate = (retry: boolean): CaptureCommitRequest | undefined => {
+    captureCommitGuardRef.current = synchronizeCaptureCommitRequestGuard(captureCommitGuardRef.current, sessionRef.current.activeCaptureCandidate);
+    if (captureCommitGuardRef.current.requestIssued) return undefined;
+    const base = retry ? retryActiveCaptureCandidate(sessionRef.current, new Date().toISOString()) : { session: sessionRef.current };
+    if ('error' in base && base.error) return undefined;
+    const begun = requestActiveCaptureCandidateCommit(base.session, new Date().toISOString());
+    if (!begun.commitRequest) return undefined;
+    captureCommitGuardRef.current = recordCaptureCommitRequest(begun.commitRequest.candidateId, begun.commitRequest.consentedAt);
+    applySession(begun.session);
+    void executeCaptureCommit(begun.commitRequest, onCaptureCommitRequest, () => sessionRef.current).then((finalSession) => {
+      if (finalSession !== sessionRef.current) applySession(finalSession);
+    });
+    return begun.commitRequest;
+  };
+
   return (
     <section className="conversation" aria-labelledby="conversation-title">
       <header className="conversation-heading">
@@ -173,8 +195,9 @@ export function ConversationTab({
         onConfirmProposed={() => { const result = confirmActiveProposedCaptureCandidate(session, new Date().toISOString()); onSessionChange(result.session); return { error: result.error, validationErrors: result.validationErrors }; }}
         onReject={() => { onSessionChange(rejectActiveCaptureCandidate(session, new Date().toISOString()).session); requestAnimationFrame(focusInput); }}
         onCancel={() => { onSessionChange(cancelActiveCaptureCandidate(session, new Date().toISOString()).session); requestAnimationFrame(focusInput); }}
-        onRetry={() => { const ready = retryActiveCaptureCandidate(session, new Date().toISOString()); if (!ready.error) { const begun = requestActiveCaptureCandidateCommit(ready.session, new Date().toISOString()); onSessionChange(begun.session); if (begun.commitRequest) void Promise.resolve(onCaptureCommitRequest(begun.commitRequest)).then((outcome) => onSessionChange(applyCaptureCommitOutcome(begun.session, begun.commitRequest!, outcome, new Date().toISOString()).session)); } }}
-        onRequestCommit={() => { if (captureCommitGuardRef.current.requestIssued) return undefined; const result = requestActiveCaptureCandidateCommit(session, new Date().toISOString()); onSessionChange(result.session); if (result.commitRequest) { captureCommitGuardRef.current = recordCaptureCommitRequest(session.activeCaptureCandidate!.id); void Promise.resolve(onCaptureCommitRequest(result.commitRequest)).then((outcome) => onSessionChange(applyCaptureCommitOutcome(result.session, result.commitRequest!, outcome, new Date().toISOString()).session)); } return result.commitRequest; }} />}
+        onRetry={() => { commitActiveCandidate(true); }}
+        onNavigateToLog={onNavigateToLog}
+        onRequestCommit={() => commitActiveCandidate(false)} />}
       <p className="conversation-live-region" aria-live="polite" aria-atomic="true">
         {announcement && <span key={announcement.messageId}>{announcement.text}</span>}
       </p>

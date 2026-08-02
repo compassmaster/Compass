@@ -383,3 +383,7 @@ Conversation sessionは未保存Capture Candidateを最大1件だけin-memoryで
 ## Conversation Capture → DailyLog commit（Issue #81）
 
 本人が最終確認した構造化Capture Candidateは、同意時刻を含む不変な`CaptureCommitRequest`としてDailyLog用adapterへ渡され、既存`DailyLogApplicationService`とRepository境界を通して指定日に保存される。保存成功時だけCandidateは`COMMITTED`となり、失敗時は内容を保持した`FAILED`となる。保存Recordには会話全文ではなく、確認表示したexcerpt、capture/consent時刻、抽出方式/versionだけの従属provenanceを保持する。
+
+### Issue #82 review follow-up
+
+指定日保存APIは従来互換の有限な数値または`null`の`sleepHours`を受け入れ、Conversation adapterだけが`null`へ固定する。Conversation UIの初回保存と再試行は同じexact-once executorを通り、callback例外や不正outcomeは安全なretryable failureとなる。非同期outcomeは現在のsessionとattemptに一致する場合だけ反映する。

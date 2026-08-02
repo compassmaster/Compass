@@ -84,7 +84,9 @@ export class DailyLogApplicationService {
 
   saveDailyLogForDate(input: { date: DateString; draft: DailyLogDraft; captureProvenance?: CaptureProvenance }): SaveDailyLogResult {
     if (!isValidDate(input.date)) return { ok: false, reason: 'INVALID_DATE' };
-    if (!isDraftValid(input.draft) || ![1, 2, 3, 4, 5].includes(input.draft.mood) || ![1, 2, 3, 4, 5].includes(input.draft.fatigue) || input.draft.sleepHours !== null || typeof input.draft.note !== 'string' ||
+    const validSleepHours = input.draft.sleepHours === null ||
+      (typeof input.draft.sleepHours === 'number' && Number.isFinite(input.draft.sleepHours));
+    if (!isDraftValid(input.draft) || ![1, 2, 3, 4, 5].includes(input.draft.mood) || ![1, 2, 3, 4, 5].includes(input.draft.fatigue) || !validSleepHours || typeof input.draft.note !== 'string' ||
         !Array.isArray(input.draft.events) || input.draft.events.some((event) => typeof event !== 'string')) return { ok: false, reason: 'INVALID_DRAFT' };
     if (input.captureProvenance !== undefined && !isValidCaptureProvenance(input.captureProvenance)) return { ok: false, reason: 'INVALID_PROVENANCE' };
     const timestamp = this.now();

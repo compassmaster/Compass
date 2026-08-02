@@ -79,9 +79,10 @@ assert.equal(canConfirmCaptureEdit(appliedPayload, null), false, 'confirmation r
 assert.match(captureReviewErrorMessages('NOT_READY', ['SENSITIVE_CAPTURE_NOT_SUPPORTED']).join(' '), /センシティブ/);
 assert.match(captureReviewErrorMessages('INVALID_TRANSITION').join(' '), /現在の状態/);
 assert.equal(emptyCaptureCommitRequestGuard().requestIssued, false);
-const guard = recordCaptureCommitRequest('same-id');
+const guard = recordCaptureCommitRequest('same-id', now);
 const committingCandidate = { ...make('same-id'), status: 'COMMITTING' as const };
 assert.equal(synchronizeCaptureCommitRequestGuard(guard, committingCandidate).requestIssued, true, 'same COMMITTING state retains double-request guard');
+assert.equal(synchronizeCaptureCommitRequestGuard(guard, { ...committingCandidate, updatedAt: '2026-08-02T10:01:00Z' }).requestIssued, false, 'a later attempt gets a fresh guard');
 assert.equal(synchronizeCaptureCommitRequestGuard(guard, null).requestIssued, false, 'reset clears guard');
 assert.equal(synchronizeCaptureCommitRequestGuard(guard, make('same-id')).requestIssued, false, 'same ID can request after reset');
 assert.equal(synchronizeCaptureCommitRequestGuard(guard, { ...committingCandidate, status: 'FAILED' }).requestIssued, false, 'FAILED clears guard for retry');

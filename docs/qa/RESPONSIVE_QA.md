@@ -98,3 +98,9 @@ Issue #68 の主要8画面を、同じ手順で再確認するための手動QA�
 - [ ] COMMITTEDでは「保存済み」と表示され、修正・却下・再保存できない。
 - [ ] FAILEDでCandidate本文が維持され、安全な日本語エラーが折り返される。
 - [ ] retryableなFAILEDだけ「もう一度保存する」を表示し、非retryableでは表示しない。
+
+### PR #82 review follow-up
+
+- [ ] 初回保存／再試行を連続クリックしても同一attemptが1回だけ発行される。
+- [ ] 保存待機中に会話をresetしても、遅れて完了した結果でCandidateが復活しない。
+- [ ] COMMITTEDの「日々の記録を見る」が既存navigationを1回だけ実行する。

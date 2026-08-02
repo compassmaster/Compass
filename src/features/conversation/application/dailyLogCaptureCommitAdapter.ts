@@ -15,7 +15,7 @@ export class DailyLogCaptureCommitAdapter {
       request.extraction.method !== 'USER_STRUCTURED_INPUT' || request.targetDate !== request.payload.date ||
       request.payload.mood.origin !== 'USER_EXPLICIT' || request.payload.fatigue.origin !== 'USER_EXPLICIT' ||
       request.payload.mood.value === null || request.payload.fatigue.value === null || !validTimestamp(request.consentedAt) ||
-      request.sourceExcerpt.trim() === '';
+      !validTimestamp(request.conversationOccurredAt) || request.extraction.version.trim() === '' || request.sourceExcerpt.trim() === '';
     if (invalid) return { ok: false, failure: { code: 'INVALID_CAPTURE_REQUEST', message: '保存内容を確認してください。', failedAt, retryable: false } };
 
     const draft: DailyLogDraft = { mood: request.payload.mood.value, fatigue: request.payload.fatigue.value, sleepHours: null, note: request.payload.note, events: [...request.payload.events] };
