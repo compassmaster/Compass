@@ -72,6 +72,10 @@ Conversation
 
 Conversation Capture、自由文抽出、会話保存は**未実装**であり、既存のUnderstanding Candidate確認境界を迂回してはならない。
 
+### Questioning principle
+
+Conversation Captureのために会話を質問票へ変えてはならない。質問は、保存fieldを埋めるためではなく、**その場の相談に役立つことと、本人への理解を深めることの両方**を満たすものにする。原則として一度に質問するのは1つとし、回答を受け取ってから次に進む。必要な情報を一括で尋ねたり、既に話された内容を形式的に聞き直したりせず、質問しないことが相談にとって自然な場合はCaptureを優先しない。
+
 ### Record boundary
 
 Conversationは入力チャネルであって、会話ターンそのものをすべて長期Recordにしない。Capture Candidateの確認後も、内容の責務に対応するRecord境界へ保存し、Conversation専用の万能RecordやFormal UserModelへ集約しない。
@@ -121,7 +125,13 @@ Conversationは入力チャネルであって、会話ターンそのものを�
 将来、自動取得した各Recordは、Domain固有の値に加えて少なくとも次のmetadataを追跡可能にする。これは概念要件であり、今回のPRで既存Recordや保存形式へfieldを追加しない。
 
 - `sourceType` / provider: 手入力、自動取得、provider、deviceまたはconnectionの識別。
-- `observedPeriod`: 何日・何時の事実か。timezoneと時間粒度を含む。
+- `device`: deviceの種類、modelまたは安定した識別子。個体識別が不要な場合は保存しない。
+- `metricDefinition`: 同名の指標が何を意味し、どの集計・算出定義による値か。
+- `unit`: 値の単位とscale。
+- `measurementMethod`: sensor、本人入力、providerによる推定・集計などの測定方式。
+- `observedAt` / `observedPeriod`: 何日・何時の事実か。timezoneと時間粒度を含む。
+- `timezone`: 観測日時とlocal dateを解釈したtimezone。
+- `quality`: providerのquality flag、精度、装着・測定状態等、値の利用可能性を判断する情報。
 - `fetchedAt` / `recordedAt`: Compassが取得・記録した時点。
 - `connectionId` / consent scope: どの接続と同意範囲で取得したかをたどる参照。
 - `availability` / missing reason: 完全、部分、利用不可、欠損理由、同期失敗の区別。
@@ -130,6 +140,8 @@ Conversationは入力チャネルであって、会話ターンそのものを�
 - `supersedes` / conflict state: 再取得や手入力との競合を無言で上書きせず説明するための状態。
 
 認証tokenや不要なraw payloadをprovenanceとして保存しない。必要なmetadataの具体的な型、保持期間、削除連鎖は各接続のADRで決める。
+
+同じ表示名の指標でも、`metricDefinition`、`unit`、`measurementMethod`、device、時間粒度が異なる値を無条件に比較・結合しない。比較可能性を確認し、必要な正規化とそのversionを明示できない場合は別系列として扱う。
 
 現在は、設定済みBase Locationを使うWeatherの一部取得（7日予報、前日Historical Weatherのbest-effort自動取得）が実装済みである。一方、汎用の自動取得基盤、カレンダー連携、ウェアラブル連携は**未実装**である。SleepRecordの`SMARTWATCH`というsource値は連携実装を意味しない。
 
@@ -144,6 +156,12 @@ Conversationは入力チャネルであって、会話ターンそのものを�
 - Weatherや将来のウェアラブル等、同意済みExternal Contextと本人の状態の関係。
 - 目標、価値観、選択と、実際の行動・満足・回復との一致やずれ。
 - 最近の変化点、以前の仮説が当てはまらない例、複数の理解が矛盾する条件。
+- 睡眠不足と予定密度、Weatherと活動量のような**複数条件の組み合わせ**。
+- ある日の入力が翌日以降へ現れる**時間差**と、状態が続く**連続日数**。
+- 短期変動をならす**移動平均**と、休息不足や予定等の**累積負荷**。
+- **曜日・時間帯**ごとの違いと、本人の通常時である**個人基準との差**。
+- 暦や生活環境による**季節差**と、別期間でも同じ傾向が現れる**再現性**。
+- 仮説に合わない**例外**、記録の**欠損**、第三の要因による**交絡可能性**。
 
 医療診断、能力評価、第三者との比較、センシティブ属性の推定は探索対象にしない。
 
@@ -160,15 +178,16 @@ Conversationは入力チャネルであって、会話ターンそのものを�
 ### Discovery learning loop
 
 ```text
-本人が選んだ問い / consented Records
-→ 説明可能な探索
-→ observation（反例・欠損を含む）
-→ Conversationで関連性を確認
-→ 必要な場合だけCapture / Understanding Candidate
-→ 本人の確認・修正・却下
-→ 探索条件、優先度、適用期間を更新
-→ 新しいRecordで再評価
+発見（反例・欠損・交絡可能性を含む）
+→ その発見が今の相談にどう役立つかを一緒に考える
+→ 本人が望む場合だけ、安全で小さく元に戻せる実験を選ぶ
+→ 実験後の結果を記録と本人の感覚の両方で確認する
+→ Conversationで予想との差、例外、続けるかを振り返る
+→ 確認できた条件付きの知見を本人固有の知恵へ反映する
+→ 新しいRecordで再評価し、必要なら修正・撤回する
 ```
+
+「小さな実験」は医療行為や行動命令ではなく、本人が選び、中止できる試行である。実験しない選択も保つ。「本人固有の知恵」は普遍的な真実や人格ラベルではなく、適用条件、期間、根拠、例外を伴い、本人が確認・修正・撤回できる知見として扱う。
 
 このloopで学ぶのは、まず「次に何を確かめると本人に役立つか」と仮説の適用条件である。本人のFeedbackを人格の正解ラベルとして扱わず、却下を隠して同じ結論へ収束させない。モデルを更新する段階へ進む場合も、評価前後のversion、使用Record、誤差を再現可能にする。
 
@@ -207,16 +226,17 @@ Conversationは入力チャネルであって、会話ターンそのものを�
 
 本人は、理解・分析・Capture Candidateについて訂正、保留、却下、削除、提示抑制ができなければならない。重要な変更は由来と変更履歴を確認可能にし、AIの説明だけを監査証跡の代わりにしない。
 
-## Staged Roadmap（6段階）
+## Staged Roadmap（Foundation + 6段階）
 
 各Stageは方向性であり、着手前に個別要件、プライバシー設計、必要なADRを定める。前段の信頼・訂正・削除境界を迂回して次段へ進まない。
 
-1. **Foundation（現在）**: 手入力記録、限定Weather取得、説明可能な固定Analyzer、確認済みUnderstanding、Understanding履歴、読み取り専用Relationship / Prediction / Reflection / Compass Mapを安定させる。
-2. **Conversation as Primary Experience**: 保存や人物理解を自動化しないConversation Shellを設け、既存機能への案内、早期個人化、根拠の段階的開示を検証する。
-3. **Capture into explicit Record boundaries**: Conversation Capture CandidateとRecord boundaryを実装し、保存先・目的を示した確認、修正、却下、削除を成立させる。
-4. **Calendar as the life timeline**: 記録、予定、出来事、理解を時間軸で参照し、Analysis Surfacing Policyに従って相談へ必要な文脈だけを届ける。
-5. **Consented Automatic Data Acquisition**: Calendar・ウェアラブル等を、接続単位の同意、Record metadata、鮮度、競合、停止・削除とともに段階導入する。
-6. **Personal Discovery and justified learning**: 反例と時間変化を扱うDiscovery learning loopと予測評価を導入し、十分なデータと評価方法がある場合だけ説明可能な軽量モデル、オンライン学習、共有モデルを順に検討する。
+- **Stage 0 — Foundation（現在）**: 手入力記録、限定Weather取得、説明可能な固定Analyzer、確認済みUnderstanding、Understanding履歴、読み取り専用Relationship / Prediction / Reflection / Compass Mapを安定させる。
+1. **Conversation Shell**: 保存や人物理解を自動化しない会話UIを設け、チャットをPrimary Experienceにする最小の相談体験を検証する。
+2. **Conversation Capture**: 質問票にしないQuestioning principleとRecord boundaryに従い、保存先・目的を示した確認、修正、却下、削除を成立させる。
+3. **Calendar / Life Timeline**: 記録、予定、出来事を人生の時間軸で参照し、過去・現在・未来を同じ相談文脈で扱う。
+4. **Understanding-aware Conversation**: 確認済みUnderstanding、早期個人化、根拠の段階的開示、Analysis Surfacing PolicyをConversationへ読み取り中心で統合する。
+5. **Automatic Data Acquisition**: Calendar・ウェアラブル等を、接続単位の同意、Record metadata、鮮度、比較可能性、競合、停止・削除とともに段階導入する。
+6. **Personal Discovery Engine**: 複数条件、時間差、累積負荷、再現性、例外等を扱うDiscovery learning loopを導入し、十分なデータと評価方法がある場合だけ説明可能な学習手段を検討する。
 
 ## Non-goals
 
