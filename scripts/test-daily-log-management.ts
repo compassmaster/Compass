@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { DailyLogApplicationService } from '../src/features/daily-log/services/dailyLogApplicationService.ts';
 import type { ILogRepository } from '../src/features/daily-log/services/logRepository.ts';
 import type { DailyLog, DateString, EntryId } from '../src/features/daily-log/types/log.ts';
-import { dailyLogNavigationCommandIdentity, evaluateDailyLogNavigationCommand, resolveDailyLogNavigationTarget, type DailyLogNavigationTarget } from '../src/features/daily-log/types/navigation.ts';
+import { canConfirmDailyLogDelete, dailyLogNavigationCommandIdentity, evaluateDailyLogNavigationCommand, resolveDailyLogNavigationTarget, type DailyLogNavigationTarget } from '../src/features/daily-log/types/navigation.ts';
 
 const original = [log('b','2026-07-28','2026-07-28T09:00:00Z'), log('c','2026-07-29','2026-07-29T08:00:00Z'), log('a','2026-07-28','2026-07-28T10:00:00Z')];
 original[2].captureProvenance = { source:'CONVERSATION_CAPTURE',capturedAt:'2026-07-28T09:59:00Z',consentedAt:'2026-07-28T10:00:00Z',extraction:{method:'USER_STRUCTURED_INPUT',version:'v1'},sourceExcerpt:'確認した範囲' };
@@ -58,6 +58,10 @@ for(let invocation=0;invocation<2;invocation++){const command=evaluateDailyLogNa
 assert.deepEqual({applied,consumed},{applied:1,consumed:1},'StrictMode-equivalent repeated effect handles and consumes once');
 guard=evaluateDailyLogNavigationCommand(guard,null).nextIdentity;
 assert.equal(evaluateDailyLogNavigationCommand(guard,target('a','DELETE')).shouldHandle,true,'null resets guard so a future identical command runs');
+assert.equal(canConfirmDailyLogDelete('a' as EntryId, false, 'a' as EntryId), false, 'opening a dialog never authorizes deletion in the same event boundary');
+assert.equal(canConfirmDailyLogDelete('a' as EntryId, true, 'b' as EntryId), false, 'an armed dialog cannot delete a different same-day record');
+assert.equal(canConfirmDailyLogDelete('a' as EntryId, true, 'a' as EntryId), true, 'only an explicit confirmation for the armed record can delete');
+assert.equal(canConfirmDailyLogDelete(null, true, 'a' as EntryId), false, 'cancel/remount without a pending record cannot delete');
 
 const ui = readFileSync('src/features/daily-log/components/DailyLogList.tsx','utf8');
 const logTab = readFileSync('src/features/daily-log/components/LogTab.tsx','utf8');

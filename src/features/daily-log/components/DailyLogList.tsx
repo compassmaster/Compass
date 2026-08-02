@@ -2,14 +2,15 @@ import { useEffect, useRef, useState } from 'react';
 import { dailyLogApplicationService } from '../services';
 import type { DailyLog, EntryId, Scale } from '../types/log';
 import './DailyLogList.css';
-import { evaluateDailyLogNavigationCommand, resolveDailyLogNavigationTarget, type DailyLogEditState, type DailyLogNavigationTarget, type DailyLogRecordChange } from '../types/navigation.ts';
+import { canConfirmDailyLogDelete, evaluateDailyLogNavigationCommand, resolveDailyLogNavigationTarget, type DailyLogEditState, type DailyLogNavigationTarget, type DailyLogRecordChange } from '../types/navigation.ts';
 
 const ANALYSIS_NOTICE = '過去に生成済みの分析結果は自動的に書き換わりません。変更内容は次回の分析で更新されます。';
 
 export function DailyLogList({ revision = 0, onChanged, navigationTarget = null, onNavigationTargetConsumed, onRecordChanged }: { revision?: number; onChanged?: () => void; navigationTarget?: DailyLogNavigationTarget | null; onNavigationTargetConsumed?: () => void; onRecordChanged?: (change: DailyLogRecordChange) => void }) {
   const [localRevision, setLocalRevision] = useState(0);
   const [editing, setEditing] = useState<DailyLogEditState | null>(null);
-  const [deleting, setDeleting] = useState<DailyLog | null>(null);
+  const [pendingDeleteRecordId, setPendingDeleteRecordId] = useState<EntryId | null>(null);
+  const [deleteConfirmationArmed, setDeleteConfirmationArmed] = useState(false);
   const [error, setError] = useState('');
   const recordRefs = useRef(new Map<EntryId, HTMLElement>());
   const firstEditFieldRef = useRef<HTMLInputElement>(null);
@@ -19,6 +20,9 @@ export function DailyLogList({ revision = 0, onChanged, navigationTarget = null,
   void revision;
   void localRevision;
   const logs = dailyLogApplicationService.listDailyLogs();
+  const pendingDeleteRecord = pendingDeleteRecordId === null
+    ? null
+    : logs.find(({ id }) => id === pendingDeleteRecordId) ?? null;
 
   const refresh = () => { setLocalRevision((value) => value + 1); onChanged?.(); };
   const beginEdit = (id: EntryId) => {
@@ -30,7 +34,8 @@ export function DailyLogList({ revision = 0, onChanged, navigationTarget = null,
   };
   const openDelete = (log: DailyLog) => {
     deleteReturnRecordIdRef.current = log.id;
-    setDeleting(log);
+    setDeleteConfirmationArmed(false);
+    setPendingDeleteRecordId(log.id);
   };
   /* Navigation commands intentionally synchronize transient App state into this UI's local edit/dialog state. */
   /* eslint-disable react-hooks/set-state-in-effect */
@@ -41,7 +46,7 @@ export function DailyLogList({ revision = 0, onChanged, navigationTarget = null,
     const resolved = resolveDailyLogNavigationTarget(logs, navigationTarget);
     if (resolved.kind === 'NOT_FOUND') {
       deleteReturnRecordIdRef.current = null;
-      setEditing(null); setDeleting(null); setError('指定された保存済みの記録が見つかりませんでした。');
+      setEditing(null); setPendingDeleteRecordId(null); setDeleteConfirmationArmed(false); setError('指定された保存済みの記録が見つかりませんでした。');
       onNavigationTargetConsumed?.();
       return;
     }
@@ -56,7 +61,15 @@ export function DailyLogList({ revision = 0, onChanged, navigationTarget = null,
   /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => { if (editing) firstEditFieldRef.current?.focus(); }, [editing]);
-  useEffect(() => { if (deleting) deleteHeadingRef.current?.focus(); }, [deleting]);
+  useEffect(() => {
+    if (!pendingDeleteRecordId) return;
+    deleteHeadingRef.current?.focus();
+    // Opening the dialog and enabling its destructive action must never share an
+    // event boundary. In particular, do not let the click/keypress which opened
+    // the dialog activate a newly mounted confirmation control.
+    const frame = requestAnimationFrame(() => setDeleteConfirmationArmed(true));
+    return () => cancelAnimationFrame(frame);
+  }, [pendingDeleteRecordId]);
   const saveEdit = () => {
     if (!editing) return;
     const result = dailyLogApplicationService.updateDailyLog(editing.id, {
@@ -67,14 +80,17 @@ export function DailyLogList({ revision = 0, onChanged, navigationTarget = null,
     const recordId = editing.id; setEditing(null); setError(''); refresh(); onRecordChanged?.({ recordId, kind: 'UPDATED' });
   };
   const confirmDelete = () => {
-    if (!deleting) return;
-    const result = dailyLogApplicationService.deleteDailyLog(deleting.id);
+    if (!pendingDeleteRecord || !canConfirmDailyLogDelete(pendingDeleteRecordId, deleteConfirmationArmed, pendingDeleteRecord.id)) return;
+    const recordId = pendingDeleteRecord.id;
+    setDeleteConfirmationArmed(false);
+    const result = dailyLogApplicationService.deleteDailyLog(recordId);
     if (!result.ok) { setError('記録が見つかりませんでした。'); return; }
-    const recordId = deleting.id; setDeleting(null); deleteReturnRecordIdRef.current = null; setError(''); refresh(); onRecordChanged?.({ recordId, kind: 'DELETED' });
+    setPendingDeleteRecordId(null); deleteReturnRecordIdRef.current = null; setError(''); refresh(); onRecordChanged?.({ recordId, kind: 'DELETED' });
   };
   const cancelDelete = () => {
     const recordId = deleteReturnRecordIdRef.current;
-    setDeleting(null);
+    setDeleteConfirmationArmed(false);
+    setPendingDeleteRecordId(null);
     deleteReturnRecordIdRef.current = null;
     requestAnimationFrame(() => { if (recordId) recordRefs.current.get(recordId)?.focus(); });
   };
@@ -103,9 +119,9 @@ export function DailyLogList({ revision = 0, onChanged, navigationTarget = null,
         </>}
       </article>
     ))}
-    {deleting && <div className="confirm-backdrop" role="presentation"><section className="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="delete-title">
-      <h3 ref={deleteHeadingRef} tabIndex={-1} id="delete-title">この記録を削除しますか？</h3><dl><div><dt>対象日</dt><dd>{deleting.date}</dd></div><div><dt>気分</dt><dd>{deleting.mood}/5</dd></div><div><dt>疲労</dt><dd>{deleting.fatigue}/5</dd></div></dl>
-      <p className="analysis-notice">{ANALYSIS_NOTICE}</p><div className="log-actions"><button type="button" className="danger" onClick={confirmDelete}>削除する</button><button type="button" className="secondary" onClick={cancelDelete}>キャンセル</button></div>
+    {pendingDeleteRecord && <div className="confirm-backdrop" role="presentation"><section className="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="delete-title">
+      <h3 ref={deleteHeadingRef} tabIndex={-1} id="delete-title">この記録を削除しますか？</h3><dl><div><dt>対象日</dt><dd>{pendingDeleteRecord.date}</dd></div><div><dt>気分</dt><dd>{pendingDeleteRecord.mood}/5</dd></div><div><dt>疲労</dt><dd>{pendingDeleteRecord.fatigue}/5</dd></div></dl>
+      <p className="analysis-notice">{ANALYSIS_NOTICE}</p><div className="log-actions"><button type="button" className="danger" disabled={!deleteConfirmationArmed} onClick={confirmDelete}>削除する</button><button type="button" className="secondary" onClick={cancelDelete}>キャンセル</button></div>
     </section></div>}
   </section>;
 }
