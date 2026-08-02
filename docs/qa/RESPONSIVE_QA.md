@@ -1,5 +1,9 @@
 # レスポンシブ QA チェックリスト
 
+## Issue #83 Conversation Capture / DailyLog導線
+
+360px、390px、768px、desktopで、COMMITTED cardの「保存した記録を見る／編集する／削除する」が横にはみ出さずkeyboardで操作できることを確認する。VIEWは対象article、EDITは対象日のfield、DELETEはdialog headingへfocusし、取消後は元Recordへ戻る。存在しないRecordでは日本語alertを一度だけ表示し、別Recordを開かない。自動テストとCSS契約は実施し、実ブラウザ4幅の確認は未実施。
+
 Issue #68 の主要8画面を、同じ手順で再確認するための手動QA表です。ブラウザを起動し、DevTools の Responsive Design Mode で **360px、390px、768px、desktop（800px以上）** をそれぞれ選択してください。ズーム100%、縦向きを基本とします。
 
 ## 今回の実施状況

@@ -1,5 +1,13 @@
 # AI Handoff Document
 
+## 2026-08-02 PR #84 review follow-up
+
+Suppressionでflow cardが消えた後も安全な案内をConversation messageへ残す。DailyLog targetは純粋resolverでRecordを厳密に選択し、command identity guardによりStrictModeのeffect再実行でも一度だけ適用・consumeする。通常削除とtarget削除は同じfocus-return設定を利用し、return IDを操作終了時に破棄する。
+
+## 2026-08-02 Stage 2 Capture boundaries completion（Issue #83）
+
+同一session内のreject suppression、COMMITTED receiptから保存済みDailyLogを直接VIEW / EDIT / DELETEするone-shot navigation、Record更新・削除後の一致receipt解消を実装した。抑制情報はdeduplication keyだけで、reset時に破棄される。navigation targetもApp内のtransient stateである。どちらもRepository、localStorage、backup、restoreへ追加していない。DailyLogの更新はCaptureProvenanceを保持し、削除はRecordに従属するprovenanceごと既存Application Service経由で削除する。
+
 ## Product Direction (2026-08-01)
 
 プロダクト体験は[`docs/product/CONVERSATION_FIRST_PRODUCT_DIRECTION.md`](../product/CONVERSATION_FIRST_PRODUCT_DIRECTION.md)をCanonical Documentとする。Chat、Calendar、Conversation Capture、自動取得、Personal Discovery Engineはいずれも採用済みの方向性と現在実装を区別すること。Conversation、LLM、Calendar連携、ウェアラブル連携、学習型機械学習は未実装として維持する。Weatherの限定的な自動取得、日付ベースの集計、固定Analyzer / Predictionをこれらの実装とみなさない。
