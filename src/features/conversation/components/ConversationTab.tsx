@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import type { ConversationSession } from '../session/conversationSession.ts';
 import { transitionConversationSession } from '../session/conversationSession.ts';
+import { executeConversationAction, type ConversationActionCallbacks } from '../actions/conversationActionDispatcher.ts';
 import { shouldSubmitConversationKey } from './conversationKeyboard.ts';
 import './ConversationTab.css';
 
@@ -8,23 +9,30 @@ type ConversationTabProps = {
   session: ConversationSession;
   onSessionChange: (session: ConversationSession) => void;
   onNavigateToLog: () => void;
+  onNavigateToSleep: () => void;
   onNavigateToPrediction: () => void;
   onNavigateToCompassMap: () => void;
   onNavigateToDetails: () => void;
+  onNavigateToWeather: () => void;
+  onNavigateToBackup: () => void;
 };
 
 export function ConversationTab({
   session,
   onSessionChange,
   onNavigateToLog,
+  onNavigateToSleep,
   onNavigateToPrediction,
   onNavigateToCompassMap,
   onNavigateToDetails,
+  onNavigateToWeather,
+  onNavigateToBackup,
 }: ConversationTabProps) {
   const [draft, setDraft] = useState('');
   const [announcement, setAnnouncement] = useState('');
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const submittingRef = useRef(false);
+  const claimedActionIdsRef = useRef(new Set<string>());
 
   useEffect(() => {
     submittingRef.current = false;
@@ -55,8 +63,27 @@ export function ConversationTab({
   const handleReset = () => {
     submittingRef.current = false;
     setDraft('');
+    claimedActionIdsRef.current.clear();
     applySession(transitionConversationSession(session, { type: 'RESET' }));
     focusInput();
+  };
+
+  const actionCallbacks: ConversationActionCallbacks = {
+      RECORD_DAILY_LOG: onNavigateToLog,
+      RECORD_SLEEP: onNavigateToSleep,
+      VIEW_PREDICTION: onNavigateToPrediction,
+      VIEW_COMPASS_MAP: onNavigateToCompassMap,
+      VIEW_DETAILS: onNavigateToDetails,
+      VIEW_WEATHER: onNavigateToWeather,
+      VIEW_BACKUP: onNavigateToBackup,
+  };
+
+  const handleMessageAction = (messageId: string) => {
+    if (claimedActionIdsRef.current.has(messageId)) return;
+    claimedActionIdsRef.current.add(messageId);
+    const result = executeConversationAction(session, messageId, actionCallbacks);
+    if (!result.executed) return;
+    onSessionChange(result.session);
   };
 
   return (
@@ -71,6 +98,16 @@ export function ConversationTab({
           <div key={message.id} className={`conversation-message conversation-message-${message.role}`}>
             <span className="conversation-speaker">{message.role === 'assistant' ? 'Compass' : 'あなた'}</span>
             <p>{message.text}</p>
+            {message.action && (
+              <button
+                type="button"
+                className="conversation-message-action"
+                disabled={message.action.executed}
+                onClick={() => handleMessageAction(message.id)}
+              >
+                {message.action.executed ? '移動しました' : message.action.label}
+              </button>
+            )}
           </div>
         ))}
       </div>

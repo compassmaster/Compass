@@ -1,4 +1,7 @@
 import type { Message } from '../types/message.ts';
+import type { ActionableConversationIntent } from '../types/intent.ts';
+import { interpretConversationInput } from '../interpreter/conversationInterpreter.ts';
+import { buildConversationResponse } from '../interpreter/conversationResponseBuilder.ts';
 
 export type ConversationSession = { messages: Message[]; nextMessageNumber: number };
 export type ConversationSessionEvent =
@@ -6,8 +9,6 @@ export type ConversationSessionEvent =
   | { type: 'RESET' };
 
 const WELCOME_MESSAGE = 'こんにちは。今の気持ちや考えていることを、まとまっていなくても自由に書けます。';
-const CAPABILITY_BOUNDARY_MESSAGE = '受け取りました。この画面はまだ会話の入口です。入力内容の理解・分析・保存は行っていません。記録や既存機能を使う場合は、下のクイックアクションを選んでください。';
-
 export function createConversationSession(): ConversationSession {
   return { messages: [{ id: 'message-0', role: 'assistant', text: WELCOME_MESSAGE }], nextMessageNumber: 1 };
 }
@@ -19,12 +20,32 @@ export function transitionConversationSession(session: ConversationSession, even
   if (text.length === 0) return session;
   const userMessageNumber = session.nextMessageNumber;
   const assistantMessageNumber = userMessageNumber + 1;
+  const response = buildConversationResponse(interpretConversationInput(text));
   return {
     messages: [
       ...session.messages,
       { id: `message-${userMessageNumber}`, role: 'user', text },
-      { id: `message-${assistantMessageNumber}`, role: 'assistant', text: CAPABILITY_BOUNDARY_MESSAGE },
+      { id: `message-${assistantMessageNumber}`, role: 'assistant', ...response },
     ],
     nextMessageNumber: assistantMessageNumber + 1,
+  };
+}
+
+export type ClaimConversationActionResult = {
+  session: ConversationSession;
+  intent?: ActionableConversationIntent;
+};
+
+export function claimConversationAction(session: ConversationSession, messageId: string): ClaimConversationActionResult {
+  const message = session.messages.find(({ id }) => id === messageId);
+  if (!message?.action || message.action.executed) return { session };
+  return {
+    session: {
+      ...session,
+      messages: session.messages.map((current) => current.id === messageId
+        ? { ...current, action: { ...current.action!, executed: true } }
+        : current),
+    },
+    intent: message.action.intent,
   };
 }

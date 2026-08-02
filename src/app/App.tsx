@@ -273,6 +273,7 @@ export function App() {
             session={conversationSession}
             onSessionChange={setConversationSession}
             onNavigateToLog={() => setActiveTab('log')}
+            onNavigateToSleep={() => setActiveTab('log')}
             onNavigateToPrediction={() => setActiveTab('prediction')}
             onNavigateToCompassMap={() => {
               refreshUserModelUpdateCandidates();
@@ -280,6 +281,11 @@ export function App() {
               setActiveTab('compassMap');
             }}
             onNavigateToDetails={() => setActiveTab('home')}
+            onNavigateToWeather={() => {
+              setActiveTab('home');
+              requestAnimationFrame(() => document.getElementById('home-weather-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+            }}
+            onNavigateToBackup={() => setActiveTab('backup')}
           />
         )}
         {activeTab === 'home' && (
