@@ -1,0 +1,92 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { executeConversationAction, type ConversationActionCallbacks } from '../src/features/conversation/actions/conversationActionDispatcher.ts';
+import { presentDailyLogCaptureFlowError } from '../src/features/conversation/components/dailyLogCaptureFlowErrorPresentation.ts';
+import { answerDailyLogCaptureStep, cancelDailyLogCaptureFlow, completeDailyLogCaptureFlow, moveBackDailyLogCaptureFlow, normalizeEvents, startDailyLogCaptureFlow } from '../src/features/conversation/session/dailyLogCaptureFlow.ts';
+import { answerActiveDailyLogCaptureFlow, completeActiveDailyLogCaptureFlow, confirmActiveProposedCaptureCandidate, createConversationSession, requestActiveCaptureCandidateCommit, transitionConversationSession } from '../src/features/conversation/session/conversationSession.ts';
+
+const occurredAt = '2026-08-02T09:00:00.000Z';
+const submit = (session: ReturnType<typeof createConversationSession>, text: string, time = occurredAt) => transitionConversationSession(session, { type: 'SUBMIT_TEXT', text, occurredAt: time });
+const initial = createConversationSession();
+assert.equal(submit(initial, '今日は少し疲れています').dailyLogCaptureFlow, null);
+assert.equal(submit(initial, '疲れているので相談したい').dailyLogCaptureFlow, null);
+let session = submit(initial, '今日の体調を記録したい');
+assert.equal(session.dailyLogCaptureFlow?.step, 'DATE');
+assert.equal(session.activeCaptureCandidate, null);
+assert.equal(session.dailyLogCaptureFlow?.sourceMessageId, 'message-1');
+assert.equal(session.dailyLogCaptureFlow?.sourceExcerpt, '今日の体調を記録したい');
+assert.equal(session.dailyLogCaptureFlow?.startedAt, occurredAt);
+const existingFlow = session.dailyLogCaptureFlow;
+session = submit(session, '日記を記録したい', '2026-08-02T09:01:00.000Z');
+assert.equal(session.dailyLogCaptureFlow, existingFlow);
+assert.match(session.messages.at(-1)?.text ?? '', /記録を進めています/);
+assert.equal(session.messages.at(-1)?.action, undefined);
+assert.deepEqual(answerDailyLogCaptureStep(null, { step: 'DATE', value: '2026-08-02' }), { ok: false, reason: 'NO_ACTIVE_FLOW' });
+assert.deepEqual(answerDailyLogCaptureStep(existingFlow, { step: 'MOOD', value: 3 }), { ok: false, reason: 'STEP_MISMATCH' });
+assert.deepEqual(answerDailyLogCaptureStep(existingFlow, { step: 'DATE', value: '2026-02-30' }), { ok: false, reason: 'INVALID_DATE' });
+assert.deepEqual(moveBackDailyLogCaptureFlow(existingFlow), { ok: false, reason: 'ALREADY_AT_FIRST_STEP' });
+let result = answerActiveDailyLogCaptureFlow(session, { step: 'DATE', value: '2026-08-02' }); session = result.session;
+assert.equal(session.dailyLogCaptureFlow?.step, 'MOOD');
+assert.equal(answerActiveDailyLogCaptureFlow(session, { step: 'MOOD', value: 0 }).error, 'INVALID_SCALE');
+result = answerActiveDailyLogCaptureFlow(session, { step: 'MOOD', value: 4 }); session = result.session;
+result = answerActiveDailyLogCaptureFlow(session, { step: 'FATIGUE', value: 5 }); session = result.session;
+const backed = moveBackDailyLogCaptureFlow(session.dailyLogCaptureFlow); assert.equal(backed.ok && backed.flow?.step, 'FATIGUE');
+result = answerActiveDailyLogCaptureFlow(session, { step: 'NOTE', value: '' }); session = result.session;
+assert.equal(completeActiveDailyLogCaptureFlow(session, '2026-08-02T10:00:00.000Z').error, 'FLOW_INCOMPLETE');
+result = answerActiveDailyLogCaptureFlow(session, { step: 'EVENTS', value: '  散歩  \n\n  読書\n ' }); session = result.session;
+session = completeActiveDailyLogCaptureFlow(session, '2026-08-02T10:00:00.000Z').session;
+assert.equal(session.dailyLogCaptureFlow, null);
+assert.equal(session.activeCaptureCandidate?.status, 'PROPOSED');
+assert.equal(session.activeCaptureCandidate?.conversationOccurredAt, occurredAt);
+assert.deepEqual(session.activeCaptureCandidate?.proposedPayload, { date: '2026-08-02', mood: { value: 4, origin: 'USER_EXPLICIT' }, fatigue: { value: 5, origin: 'USER_EXPLICIT' }, note: '', events: ['散歩', '読書'] });
+const structuredSnapshot = structuredClone(session.activeCaptureCandidate!);
+assert.equal(requestActiveCaptureCandidateCommit(session, occurredAt).commitRequest, undefined);
+const structuredConfirmed = confirmActiveProposedCaptureCandidate(session, occurredAt);
+assert.equal(structuredConfirmed.session.activeCaptureCandidate?.status, 'READY');
+assert.deepEqual(structuredConfirmed.session.activeCaptureCandidate?.proposedPayload, structuredSnapshot.proposedPayload);
+assert.equal(structuredConfirmed.session.activeCaptureCandidate?.sourceExcerpt, structuredSnapshot.sourceExcerpt);
+assert.notEqual(structuredConfirmed.session.activeCaptureCandidate?.status, 'COMMITTING');
+assert.ok(requestActiveCaptureCandidateCommit(structuredConfirmed.session, occurredAt).commitRequest);
+session = structuredConfirmed.session;
+const candidateBlocked = submit(session, '日記を記録したい');
+assert.equal(candidateBlocked.dailyLogCaptureFlow, null);
+assert.match(candidateBlocked.messages.at(-1)?.text ?? '', /確認中の記録/);
+assert.equal(candidateBlocked.messages.at(-1)?.action, undefined);
+assert.equal(transitionConversationSession(session, { type: 'RESET' }).dailyLogCaptureFlow, null);
+const invalidTime = submit(initial, '今日の体調を記録したい', 'not-a-time');
+assert.equal(invalidTime.dailyLogCaptureFlow, null);
+assert.match(invalidTime.messages.at(-1)?.text ?? '', /送信時刻/);
+assert.equal(invalidTime.messages.at(-1)?.action, undefined);
+const start = startDailyLogCaptureFlow(null, { sourceMessageId: 'm1', sourceExcerpt: '記録する', startedAt: occurredAt, deduplicationKey: 'session-1' });
+assert.equal(start.ok, true);
+if (start.ok) assert.equal(cancelDailyLogCaptureFlow(start.flow).ok, true);
+assert.deepEqual(cancelDailyLogCaptureFlow(null), { ok: false, reason: 'NO_ACTIVE_FLOW' });
+assert.deepEqual(completeDailyLogCaptureFlow(null, { id: 'x', createdAt: occurredAt }), { ok: false, reason: 'NO_ACTIVE_FLOW' });
+assert.deepEqual(normalizeEvents(''), []);
+
+for (const [code, text, target] of [
+  ['INVALID_DATE', '有効な日付', 'DATE'], ['INVALID_SCALE', '1〜5', 'SCALE'], ['STEP_MISMATCH', '現在表示', 'CARD'],
+  ['FLOW_INCOMPLETE', '未回答', 'CARD'], ['CANDIDATE_CREATION_FAILED', '記録候補', 'CARD'], ['ACTIVE_CANDIDATE_EXISTS', '確認中', 'CARD'],
+  ['NO_ACTIVE_FLOW', '進行中', 'CARD'], ['UNEXPECTED', '予期しない', 'CARD'],
+] as const) { const value = presentDailyLogCaptureFlowError(code); assert.match(value.message, new RegExp(text)); assert.equal(value.target, target); }
+
+let navigationSession = submit(initial, '明日の見通しを見たい', '2026-08-02T08:00:00.000Z');
+const navigationMessageId = navigationSession.messages.at(-1)!.id;
+navigationSession = submit(navigationSession, '今日の体調を記録したい');
+let navigations = 0;
+const callbacks = new Proxy({}, { get: () => () => { navigations += 1; } }) as ConversationActionCallbacks;
+assert.equal(executeConversationAction(navigationSession, navigationMessageId, callbacks).executed, false);
+assert.equal(navigations, 0);
+assert.equal(executeConversationAction({ ...navigationSession, dailyLogCaptureFlow: null }, navigationMessageId, callbacks).executed, true);
+assert.equal(navigations, 1);
+
+const flowUi = readFileSync(new URL('../src/features/conversation/components/DailyLogCaptureFlowCard.tsx', import.meta.url), 'utf8');
+const tabUi = readFileSync(new URL('../src/features/conversation/components/ConversationTab.tsx', import.meta.url), 'utf8');
+const reviewUi = readFileSync(new URL('../src/features/conversation/components/CaptureCandidateReviewCard.tsx', import.meta.url), 'utf8');
+assert.match(flowUi, /firstControlRef\.current\?\.focus/);
+assert.match(flowUi, /presented\.target === 'DATE' \|\| presented\.target === 'SCALE'/);
+assert.match(tabUi, /<CaptureCandidateReviewCard ref=\{reviewRef\}/);
+assert.match(reviewUi, /<article ref=\{reviewRef\} tabIndex=\{-1\}[^>]*aria-labelledby=/);
+const captureSources = [flowUi, readFileSync(new URL('../src/features/conversation/session/dailyLogCaptureFlow.ts', import.meta.url), 'utf8')].join('\n');
+assert.doesNotMatch(captureSources, /localStorage|Repository|DailyLogApplicationService|backup/);
+console.log('daily log capture flow tests passed');

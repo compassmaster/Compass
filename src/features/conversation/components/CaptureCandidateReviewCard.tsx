@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { forwardRef, useEffect, useRef, useState } from 'react';
 import type { CaptureCandidate, CaptureCommitRequest, DailyLogCapturePayload } from '../types/captureCandidate.ts';
 import type { CaptureCandidateValidationError } from '../session/captureCandidateLifecycle.ts';
 import {
@@ -19,13 +19,14 @@ type Props = {
   onBeginEdit: () => void;
   onApplyEdit: (payload: DailyLogCapturePayload) => CaptureReviewOperationResult;
   onMarkReady: () => CaptureReviewOperationResult;
+  onConfirmProposed: () => CaptureReviewOperationResult;
   onReject: () => void;
   onCancel: () => void;
   onRequestCommit: () => CaptureCommitRequest | undefined;
 };
 
-export function CaptureCandidateReviewCard(props: Props) {
-  const { candidate, onBeginEdit, onApplyEdit, onMarkReady, onReject, onCancel, onRequestCommit } = props;
+export const CaptureCandidateReviewCard = forwardRef<HTMLElement, Props>(function CaptureCandidateReviewCard(props, reviewRef) {
+  const { candidate, onBeginEdit, onApplyEdit, onMarkReady, onConfirmProposed, onReject, onCancel, onRequestCommit } = props;
   const model = presentCaptureCandidateReview(candidate);
   const candidateSignature = capturePayloadSignature(candidate.proposedPayload);
   const synchronizationKey = `${candidate.id}:${candidateSignature}`;
@@ -74,10 +75,15 @@ export function CaptureCandidateReviewCard(props: Props) {
     setOperationError(result);
     if (result.error || result.validationErrors?.length) focusFirstError(result.validationErrors ?? []);
   };
+  const confirmProposed = () => {
+    const result = onConfirmProposed();
+    setOperationError(result);
+    if (result.error || result.validationErrors?.length) focusFirstError(result.validationErrors ?? []);
+  };
   const editing = candidate.status === 'EDITING';
 
   return (
-    <article className="capture-review" aria-labelledby={`capture-title-${candidate.id}`}>
+    <article ref={reviewRef} tabIndex={-1} className="capture-review" aria-labelledby={`capture-title-${candidate.id}`}>
       <header><p className="capture-review-destination">保存先: 日々の記録</p><h3 id={`capture-title-${candidate.id}`}>保存する内容を確認</h3></header>
       <p className="capture-review-status" role="status" aria-live="polite">{model.statusLabel}</p>
       {model.isUnsaved && <p className="capture-review-unsaved">この内容はまだ保存されていません。</p>}
@@ -103,8 +109,8 @@ export function CaptureCandidateReviewCard(props: Props) {
         <div><dt>note</dt><dd>{candidate.proposedPayload.note || 'なし'}</dd></div>
         <div><dt>events</dt><dd>{candidate.proposedPayload.events.length ? <ul>{candidate.proposedPayload.events.map((event, index) => <li key={`${event}-${index}`}>{event}</li>)}</ul> : 'なし'}</dd></div>
       </dl>}
-      <section className="capture-review-source" aria-labelledby={`capture-source-${candidate.id}`}><h4 id={`capture-source-${candidate.id}`}>本人に提示する会話からの引用</h4><blockquote>{candidate.sourceExcerpt}</blockquote></section>
-      <div className="capture-review-actions">{editing ? <><button type="button" onClick={apply}>修正を適用する</button><button type="button" disabled={!confirmEnabled} onClick={ready}>この内容を確認する</button><button type="button" onClick={onCancel}>取消</button></> : <><button type="button" disabled={model.controlsDisabled || candidate.status === 'COMMITTED'} onClick={onBeginEdit}>修正する</button><button type="button" disabled={!model.saveAllowed} onClick={onRequestCommit}>保存する</button><button type="button" disabled={model.controlsDisabled || candidate.status === 'COMMITTED'} onClick={onReject}>今回は保存しない</button></>}</div>
+      <section className="capture-review-source" aria-labelledby={`capture-source-${candidate.id}`}><h4 id={`capture-source-${candidate.id}`}>記録を始めた本人の発言</h4><blockquote>{candidate.sourceExcerpt}</blockquote></section>
+      <div className="capture-review-actions">{editing ? <><button type="button" onClick={apply}>修正を適用する</button><button type="button" disabled={!confirmEnabled} onClick={ready}>この内容を確認する</button><button type="button" onClick={onCancel}>取消</button></> : candidate.status === 'PROPOSED' ? <><button type="button" onClick={confirmProposed}>この内容を確認する</button><button type="button" onClick={onBeginEdit}>修正する</button><button type="button" onClick={onReject}>今回は保存しない</button></> : <><button type="button" disabled={model.controlsDisabled || candidate.status === 'COMMITTED'} onClick={onBeginEdit}>修正する</button>{candidate.status === 'READY' && <button type="button" onClick={onRequestCommit}>保存する</button>}<button type="button" disabled={model.controlsDisabled || candidate.status === 'COMMITTED'} onClick={onReject}>今回は保存しない</button></>}</div>
     </article>
   );
-}
+});
