@@ -398,3 +398,7 @@ DailyLogの編集・削除成功時は`DailyLogList`の`onChanged`から`LogTab`
 Conversation sessionの所有境界は`App`であり、Conversationタブのunmount/remountでは保持されるが、RepositoryやlocalStorageへ保存しないためブラウザ再読込で消える。`SUBMIT_TEXT`と`RESET`は純粋なsession transitionで扱う。Quick ActionはApp callbackのみを使い、Compass Map導線では既存のFormal UserModel refreshを維持する。
 
 現在の自由会話は入力内容を理解・分類・分析しておらず、Conversation Capture、会話永続化、LLM接続も未実装である。これらを実装済みに見せる応答や、Conversation featureから既存Application Service / Repositoryへ直接接続する変更を行わないこと。
+
+## 2026-08-02 Deterministic guidance handoff (Issue #67)
+
+Issue #66の能力境界を維持したまま、純粋なInterpreterとResponse Builderで限定された既存画面案内だけを分類する。判定は副作用を起こさず、Message actionの明示クリック時だけ分離したdispatcherが対応するApp callbackを一度実行する。人物理解、分析、Capture、永続化、外部API、LLM接続は未実装である。

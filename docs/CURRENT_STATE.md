@@ -11,7 +11,7 @@ lastUpdated: "2026-08-02"
 ## Product Directionと実装状態
 
 - **採用済み方針**: ChatをPrimary Experience、Calendarを人生の時間軸、相談中の分析利用、根拠の段階的開示、早期個人化、Conversation Capture、同意に基づく自動取得、Personal Discovery Engine。
-- **一部実装済み**: in-memory Conversation Shell、DailyLog / SleepRecord、Weather取得・前日気象の限定的な自動取得、Evidence、Relationship Explorer、読み取り専用Prediction、Understanding確認・履歴、Formal UserModel、Compass Map / Formal Reflectionの読み取り専用接続、初回利用ガイド。
+- **一部実装済み**: in-memory Conversation Shellと決定論的な既存画面案内、DailyLog / SleepRecord、Weather取得・前日気象の限定的な自動取得、Evidence、Relationship Explorer、読み取り専用Prediction、Understanding確認・履歴、Formal UserModel、Compass Map / Formal Reflectionの読み取り専用接続、初回利用ガイド。
 - **未実装**: 自由会話理解、永続的な会話履歴、Conversation Capture、Conversation consumer接続、LLM生成、Calendar UI・外部カレンダー連携、ウェアラブル連携、学習型機械学習・オンライン学習、Personal Discovery Engineとしての統合。
 
 `SleepRecord.source`の`SMARTWATCH`は将来互換の値にすぎず、ウェアラブル連携ではない。日付・timezone単位の集計はCalendar連携ではない。固定ルールによるAnalyzer / Relationship / Predictionは学習型機械学習ではない。
@@ -351,3 +351,8 @@ Candidate回答の実変更とUnderstanding Objectの生成・意味のある更
 - Conversationを先頭タブかつ初期表示とする最小UIを追加した。会話sessionはAppのメモリ内だけに置き、同一ページ内のタブ移動では保持し、ブラウザ再読込では消える。
 - 自由文は画面内にそのまま表示し、内容の理解、keyword / intent判定、分析、Conversation Capture、永続化、LLM生成は行わない。定型応答でもこの能力境界を明示する。
 - Quick ActionはAppから渡されたcallbackだけで既存画面へ移動する。Conversation featureはRepository、localStorage、Application Serviceへアクセスしない。
+
+## 2026-08-02 決定論的なConversation案内 (Issue #67)
+
+- 純粋なInterpreterとResponse Builderが限定された案内intentだけを判定し、Assistant Messageのactionを本人が押した場合だけApp callbackを一度実行する。
+- 人物理解、分析、Conversation Capture、永続化、外部API、LLM接続は追加しない。

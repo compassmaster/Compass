@@ -6,7 +6,7 @@ const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf
 const app = read('../src/app/App.tsx');
 const tab = read('../src/features/conversation/components/ConversationTab.tsx');
 const css = read('../src/features/conversation/components/ConversationTab.css');
-const featureSource = [tab, read('../src/features/conversation/session/conversationSession.ts'), read('../src/features/conversation/types/message.ts')].join('\n');
+const featureSource = [tab, read('../src/features/conversation/session/conversationSession.ts'), read('../src/features/conversation/types/message.ts'), read('../src/features/conversation/interpreter/conversationInterpreter.ts'), read('../src/features/conversation/interpreter/conversationResponseBuilder.ts'), read('../src/features/conversation/actions/conversationActionDispatcher.ts')].join('\n');
 
 assert.match(app, /useState\(createConversationSession\)/, 'App owns the session so tab unmounts do not discard it');
 assert.match(app, /session=\{conversationSession\}/);
@@ -21,6 +21,8 @@ assert.equal(shouldSubmitConversationKey({ key: 'Enter', shiftKey: true, isCompo
 assert.equal(shouldSubmitConversationKey({ key: 'Enter', shiftKey: false, isComposing: true }), false);
 assert.equal(shouldSubmitConversationKey({ key: 'a', shiftKey: false, isComposing: false }), false);
 assert.match(tab, /submittingRef\.current/);
+assert.match(tab, /claimedActionIdsRef\.current\.has\(messageId\)/);
+assert.match(tab, /executeConversationAction\(session, messageId, actionCallbacks\)/);
 assert.match(tab, /requestSubmit\(\)/);
 assert.match(tab, /focusInput\(\)/);
 assert.match(tab, /aria-live="polite"/);
