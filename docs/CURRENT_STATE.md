@@ -12,7 +12,8 @@ lastUpdated: "2026-08-02"
 
 - **採用済み方針**: ChatをPrimary Experience、Calendarを人生の時間軸、相談中の分析利用、根拠の段階的開示、早期個人化、Conversation Capture、同意に基づく自動取得、Personal Discovery Engine。
 - **一部実装済み**: in-memory Conversation Shellと決定論的な既存画面案内、DailyLog / SleepRecord、Weather取得・前日気象の限定的な自動取得、Evidence、Relationship Explorer、読み取り専用Prediction、Understanding確認・履歴、Formal UserModel、Compass Map / Formal Reflectionの読み取り専用接続、初回利用ガイド。
-- **未実装**: 自由会話理解、永続的な会話履歴、Conversation Capture、Conversation consumer接続、LLM生成、Calendar UI・外部カレンダー連携、ウェアラブル連携、学習型機械学習・オンライン学習、Personal Discovery Engineとしての統合。
+- **設計開始**: Conversation-First Roadmap Stage 2 Conversation Capture。D-0016で保存同意、Capture Candidate lifecycle、Record / provenance / privacy / backup境界を設計済み。
+- **未実装**: Capture CandidateのDomain / Application model、確認UI、保存処理、自由会話理解、永続的な会話履歴、Conversation consumer接続、LLM生成、Calendar UI・外部カレンダー連携、ウェアラブル連携、学習型機械学習・オンライン学習、Personal Discovery Engineとしての統合。
 
 `SleepRecord.source`の`SMARTWATCH`は将来互換の値にすぎず、ウェアラブル連携ではない。日付・timezone単位の集計はCalendar連携ではない。固定ルールによるAnalyzer / Relationship / Predictionは学習型機械学習ではない。
 
@@ -20,7 +21,7 @@ lastUpdated: "2026-08-02"
 
 **v0.1.0-alpha / Conversation-First Roadmap Stage 1: Conversation Shell**
 
-現在はFoundationの機能に加え、保存や人物理解を自動化しないin-memory Conversation Shellを含む。Conversation Capture以降は未実装である。
+現在はFoundationの機能に加え、保存や人物理解を自動化しないin-memory Conversation Shellを含む。Stage 2 Conversation Captureは設計を開始し、D-0016の境界だけがAcceptedである。Capture Candidate、UI、保存処理は未実装である。
 
 ## 完了済み
 
@@ -63,11 +64,12 @@ lastUpdated: "2026-08-02"
 - D-0007によるFormal Understanding Pipeline。
 - D-0010によるExternal ContextとWeather Recordの保存境界。
 - D-0011によるユーザー確認済みBase Locationと履歴Location Snapshotの境界。
+- D-0016によるConversation Captureの保存同意、Candidate lifecycle、Record / provenance / privacy / backup境界。
 
 ### 未実装
 
 - ConversationをFormal UserModel Resolverへ正式接続する新フロー。
-- 自由会話理解・永続的な会話履歴・Conversation Capture・LLM生成・Prompt Version管理・Candidate Prioritizer・Calendar連携・ウェアラブル連携・学習型Machine Learning。
+- Capture CandidateのDomain / Application model、確認UI、保存処理、自由会話理解・永続的な会話履歴・LLM生成・Prompt Version管理・Candidate Prioritizer・Calendar連携・ウェアラブル連携・学習型Machine Learning。
 - WeatherのDomain / Repository / Base Location / Forecast・Historical取得、限定的な自動取得、読み取り専用のWeather × Fatigue ObservationとPredictionは実装済み。ただし、汎用External Context自動取得、WeatherからFormal Pipelineへの接続、学習型予測は未実装。
 
 ## 実装済み項目
