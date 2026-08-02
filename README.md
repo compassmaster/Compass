@@ -16,12 +16,11 @@ Compassが目指す未来と目的については、[Vision](docs/01_ビジョ�
 
 ## 現在の開発フェーズ
 
-Compass Core Philosophy v1.0は完成済みです。
-現在は、SleepRecord基盤、Formal Analysis Framework、Evidence生成・保存、D-0007に基づくUnderstanding Candidate生成・保存・ユーザー回答保存、D-0008に基づくUnderstanding Object TypeScript型・Factory・Repository・Application Service・最小表示UIまで進んでいます。
+現在はConversation-First Roadmapの**Stage 1: Foundation**です。DailyLog / SleepRecordの記録・管理、backup / restore、初回利用ガイド、WeatherのDomain・保存・Forecast / Historical取得、日次・7日間の読み取り専用表示、固定Analyzer、Evidence、Relationship Explorer、翌日疲労Predictionを実装しています。
 
-実装済み範囲はEvidence、Understanding Candidate、Candidate Response保存、AGREE回答からのHypothesis段階Understanding Object生成・保存・表示です。Formal UserModelの参照ID集約境界（Object本体を複製せず、Long-term / Short-term Understanding ID membershipのみ保持）、旧UserModelとの別保存キー、Resolver境界、Reconciliation規則、段階移行方針はD-0009で設計済みです。Phase Aとして、FormalUserModel TypeScript型、型ガード、createEmptyFormalUserModel、Repository interface、LocalStorage Repository、`compass_formal_user_model_v1`への参照ID保存、Reconciler、Resolver、ResolvedFormalUserModel型、membership同期、orphan除去、layer移動は実装済みです。
+理解PipelineはUnderstanding Candidate / Response / Object、回答変更、append-only Understanding履歴、Formal UserModelの参照ID集約・整合・解決まで実装済みです。Compass MapとFormal ReflectionはResolvedFormalUserModelへ読み取り専用で接続されています。主要7画面のレスポンシブ基盤も実装済みです。
 
-Compass MapとFormal Reflectionの読み取り専用接続、Understanding履歴は実装済みです。Conversation、LLM、Calendar連携、ウェアラブル連携、学習型機械学習は未実装です。
+Stage 2以降のConversation UI・会話履歴・Conversation Capture・Conversation consumer接続、LLM生成、Calendar UI・外部Calendar連携、ウェアラブル連携、汎用自動取得、Personal Discovery Engine、学習型機械学習・オンライン学習は未実装です。
 
 詳細は [Current State](docs/CURRENT_STATE.md) と [Current Implementation State](docs/ai/CURRENT_IMPLEMENTATION_STATE.md) を参照してください。
 

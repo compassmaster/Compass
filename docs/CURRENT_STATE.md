@@ -2,11 +2,11 @@
 status: Active
 dependsOn: []
 usedBy: []
-lastUpdated: "2026-08-01"
+lastUpdated: "2026-08-02"
 ---
 # Current State (現在のプロジェクト状況)
 
-プロダクト体験の方向性は[Conversation-First Product Direction](product/CONVERSATION_FIRST_PRODUCT_DIRECTION.md)をCanonical Documentとする。以下は2026-08-01時点の`main`との照合結果であり、後続の日時別セクションは実装当時の履歴として読む。
+プロダクト体験の方向性は[Conversation-First Product Direction](product/CONVERSATION_FIRST_PRODUCT_DIRECTION.md)をCanonical Documentとする。以下は2026-08-02時点の`main`との照合結果であり、後続の日時別セクションは実装当時の履歴として読む。
 
 ## Product Directionと実装状態
 
@@ -18,7 +18,9 @@ lastUpdated: "2026-08-01"
 
 ## 現在のVersion
 
-**v0.1.0-alpha**（Formal Analysis Framework / Understanding Candidate MVP / Understanding Object MVP実装済み）
+**v0.1.0-alpha / Conversation-First Roadmap Stage 1: Foundation**
+
+現在のFoundationは、記録・編集・backup、Weather限定取得、日次・7日間集計、固定分析、Relationship / Prediction、正式Understanding Pipelineと履歴、Formal UserModel、読み取り専用Compass Map / Reflection、および主要7画面のレスポンシブ基盤までを含む。ConversationをPrimary ExperienceにするStage 2以降は未実装である。
 
 ## 完了済み
 

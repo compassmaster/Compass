@@ -6,7 +6,7 @@ usedBy:
   - docs/01_ビジョン.md
   - docs/03_要件定義.md
   - docs/conversation/  Conversation_Philosophy.md
-lastUpdated: "2026-08-01"
+lastUpdated: "2026-08-02"
 ---
 
 # Conversation-First Product Direction
@@ -72,9 +72,28 @@ Conversation
 
 Conversation Capture、自由文抽出、会話保存は**未実装**であり、既存のUnderstanding Candidate確認境界を迂回してはならない。
 
+### Record boundary
+
+Conversationは入力チャネルであって、会話ターンそのものをすべて長期Recordにしない。Capture Candidateの確認後も、内容の責務に対応するRecord境界へ保存し、Conversation専用の万能RecordやFormal UserModelへ集約しない。
+
+| 会話から得た内容 | 保存先の境界 | 取り扱い |
+| --- | --- | --- |
+| その日の状態、出来事、本人が残したいメモ | 既存のDailyLog等、該当するDomain Record | 本人が保存内容を確認する。Conversation transcriptとは分離する。 |
+| 睡眠等、既存の専用Domainがある事実 | SleepRecord等の専用Record | 専用Application Serviceとvalidationを迂回しない。 |
+| 予定、目標、節目 | 将来のCalendar / Goal用Record | 現在は保存先未実装。DailyLogやUnderstandingへ代用保存しない。 |
+| 一時的な相談文脈 | Session / Working Context | 原則として会話中だけ利用し、長期理解へ自動昇格しない。 |
+| 長期・短期の人物理解になり得る解釈 | Understanding Candidate | Evidence、本人確認、既存Response / Object境界を通す。直接Formal UserModelへ書かない。 |
+| 原文の会話 | 将来のConversation Record | 保存の必要性、範囲、保持期間への明示的同意がある場合だけ。CaptureしたDomain Recordの代替Source of Truthにしない。 |
+
+上表の「将来のRecord」は概念上の責務を示すものであり、型、Repository、localStorage key、保存形式の採用を決定するものではない。
+
 ## Analysis Surfacing Policy
 
 分析は「生成できたから表示する」のではなく、現在の相談に関連し、利用者の判断を助ける場合にだけ自然に提示する。
+
+> **AnalysisはPrimary Experienceでも独立した目的地でもない。バックグラウンドで相談の文脈を支え、関連性があり、本人に役立ち、適切なタイミングである場合にだけConversationへsurfacingする。**
+
+分析結果を会話へ持ち込まない場合も正常な判断である。Analysisの存在を理由に話題を変えたり、全結果の消化を利用者へ要求したりしない。
 
 - **Relevance first**: 相談の主題、対象期間、本人が求めた支援に関係する分析を優先する。
 - **Permission and timing**: センシティブな推測や会話を中断する分析は、先に見てもよいか確認する。緊急性を装って注意を引かない。
@@ -97,11 +116,36 @@ Conversation Capture、自由文抽出、会話保存は**未実装**であり�
 - 必要最小限の粒度と保持期間を採用し、新しい用途への転用時は改めて同意を得る。
 - 外部データは観測であり、Analysis、Understanding、Formal UserModelへ無条件に接続しない。
 
+### Automatically acquired Record metadata
+
+将来、自動取得した各Recordは、Domain固有の値に加えて少なくとも次のmetadataを追跡可能にする。これは概念要件であり、今回のPRで既存Recordや保存形式へfieldを追加しない。
+
+- `sourceType` / provider: 手入力、自動取得、provider、deviceまたはconnectionの識別。
+- `observedPeriod`: 何日・何時の事実か。timezoneと時間粒度を含む。
+- `fetchedAt` / `recordedAt`: Compassが取得・記録した時点。
+- `connectionId` / consent scope: どの接続と同意範囲で取得したかをたどる参照。
+- `availability` / missing reason: 完全、部分、利用不可、欠損理由、同期失敗の区別。
+- `sourceRecordId` / provenance: provider側識別子、重複判定、再取得元をたどるための参照。
+- `schemaVersion` / normalizerVersion: どの変換規則でDomain Recordになったか。
+- `supersedes` / conflict state: 再取得や手入力との競合を無言で上書きせず説明するための状態。
+
+認証tokenや不要なraw payloadをprovenanceとして保存しない。必要なmetadataの具体的な型、保持期間、削除連鎖は各接続のADRで決める。
+
 現在は、設定済みBase Locationを使うWeatherの一部取得（7日予報、前日Historical Weatherのbest-effort自動取得）が実装済みである。一方、汎用の自動取得基盤、カレンダー連携、ウェアラブル連携は**未実装**である。SleepRecordの`SMARTWATCH`というsource値は連携実装を意味しない。
 
 ## Personal Discovery Engine
 
 長期的にはCompassを、本人の記録と確認済み理解を使って「まだ言葉になっていない自分の傾向」を一緒に発見する**Personal Discovery Engine**へ育てる。
+
+### 探索対象
+
+- 睡眠、疲労、気分、活動、出来事の間にある本人内の関係。
+- 曜日、季節、生活フェーズ、Calendar上の予定密度等による時間的変化。
+- Weatherや将来のウェアラブル等、同意済みExternal Contextと本人の状態の関係。
+- 目標、価値観、選択と、実際の行動・満足・回復との一致やずれ。
+- 最近の変化点、以前の仮説が当てはまらない例、複数の理解が矛盾する条件。
+
+医療診断、能力評価、第三者との比較、センシティブ属性の推定は探索対象にしない。
 
 - 仮説を探索し、反証や例外も探す。
 - 時期、状況、データ出典を保持し、一時的状態を人格へ固定しない。
@@ -113,11 +157,26 @@ Conversation Capture、自由文抽出、会話保存は**未実装**であり�
 - 発見には適用期間・条件・反例を持たせ、古くなった理解を再確認できるようにする。
 - 有用だった／違った／今は扱わないというFeedbackを、真偽の採点ではなく次の探索範囲の調整に使う。
 
+### Discovery learning loop
+
+```text
+本人が選んだ問い / consented Records
+→ 説明可能な探索
+→ observation（反例・欠損を含む）
+→ Conversationで関連性を確認
+→ 必要な場合だけCapture / Understanding Candidate
+→ 本人の確認・修正・却下
+→ 探索条件、優先度、適用期間を更新
+→ 新しいRecordで再評価
+```
+
+このloopで学ぶのは、まず「次に何を確かめると本人に役立つか」と仮説の適用条件である。本人のFeedbackを人格の正解ラベルとして扱わず、却下を隠して同じ結論へ収束させない。モデルを更新する段階へ進む場合も、評価前後のversion、使用Record、誤差を再現可能にする。
+
 固定Analyzerと読み取り専用Relationship / Predictionの一部は実装済みだが、学習型機械学習、オンライン学習、個人モデルの自動更新、Discovery Engineとしての統合は**未実装**である。
 
 ## 採用済み方針と現在の実装境界
 
-| 項目 | 方針 | 2026-08-01の実装状態 |
+| 項目 | 方針 | 2026-08-02の実装状態 |
 | --- | --- | --- |
 | ChatをPrimary Experienceにする | 採用済み | 未実装 |
 | Calendarを人生の時間軸にする | 採用済み | 未実装 |
@@ -148,17 +207,16 @@ Conversation Capture、自由文抽出、会話保存は**未実装**であり�
 
 本人は、理解・分析・Capture Candidateについて訂正、保留、却下、削除、提示抑制ができなければならない。重要な変更は由来と変更履歴を確認可能にし、AIの説明だけを監査証跡の代わりにしない。
 
-## Staged Roadmap
+## Staged Roadmap（6段階）
 
 各Stageは方向性であり、着手前に個別要件、プライバシー設計、必要なADRを定める。前段の信頼・訂正・削除境界を迂回して次段へ進まない。
 
-1. **Foundation（現在）**: 手入力記録、限定Weather取得、説明可能な固定Analyzer、確認済みUnderstanding、読み取り専用Reflection / Compass Mapを安定させる。
-2. **Conversation Shell**: 保存や人物理解を自動化しない会話UIを設け、既存機能への案内と相談文脈での読み取りを検証する。
-3. **Capture with Confirmation**: Conversation Capture Candidate、保存先の明示、確認・訂正・却下・削除を実装する。
-4. **Contextual Assistance**: Analysis Surfacing Policy、Calendarの人生時間軸、根拠の段階的開示、早期個人化を統合する。
-5. **Consented Connections**: Calendar・ウェアラブル等を接続単位の同意、鮮度表示、停止・削除とともに段階導入する。
-6. **Personal Discovery**: 反例と時間変化を扱うDiscovery loop、予測評価、説明可能な個人適応を導入する。
-7. **Learning only when justified**: 十分な個人データと評価方法がある場合のみ、軽量モデル、オンライン学習、共有モデルの順に検討する。
+1. **Foundation（現在）**: 手入力記録、限定Weather取得、説明可能な固定Analyzer、確認済みUnderstanding、Understanding履歴、読み取り専用Relationship / Prediction / Reflection / Compass Mapを安定させる。
+2. **Conversation as Primary Experience**: 保存や人物理解を自動化しないConversation Shellを設け、既存機能への案内、早期個人化、根拠の段階的開示を検証する。
+3. **Capture into explicit Record boundaries**: Conversation Capture CandidateとRecord boundaryを実装し、保存先・目的を示した確認、修正、却下、削除を成立させる。
+4. **Calendar as the life timeline**: 記録、予定、出来事、理解を時間軸で参照し、Analysis Surfacing Policyに従って相談へ必要な文脈だけを届ける。
+5. **Consented Automatic Data Acquisition**: Calendar・ウェアラブル等を、接続単位の同意、Record metadata、鮮度、競合、停止・削除とともに段階導入する。
+6. **Personal Discovery and justified learning**: 反例と時間変化を扱うDiscovery learning loopと予測評価を導入し、十分なデータと評価方法がある場合だけ説明可能な軽量モデル、オンライン学習、共有モデルを順に検討する。
 
 ## Non-goals
 
@@ -170,6 +228,15 @@ Conversation Capture、自由文抽出、会話保存は**未実装**であり�
 - LLM、Deep Learning、予測精度そのものをプロダクト価値または実装目的にすること。
 - Analysis、外部データ、Conversation、LLMからFormal UserModelへ直接書き込むこと。
 - 採用済み方針を、ADR、プライバシー、同意、保持・削除設計なしに一括実装すること。
+
+### 今回のPRにおけるNon-goals
+
+- Conversation、Conversation Capture、Calendar、Personal Discovery EngineのUIやApplication Serviceを実装すること。
+- LLM/API連携、prompt、会話生成、会話履歴保存を追加すること。
+- Calendar provider、ウェアラブル、Weather等の新しい外部接続やbackground jobを追加すること。
+- Analyzer、Relationship、Prediction、機械学習、オンライン学習の挙動を変更すること。
+- TypeScript型、Domain Record、Repository、localStorage key、schema、backup対象、migrationを追加・変更すること。
+- 本書の将来Record名やroadmapをAccepted ADR、実装順、期日、コミットメントとして確定すること。
 
 ## 非交渉原則
 
