@@ -4,32 +4,67 @@ Issue #68 の主要8画面を、同じ手順で再確認するための手動QA�
 
 ## 今回の実施状況
 
-この実行環境ではブラウザによる手動確認を実施していません。以下は利用者が実施する具体的な手順であり、未確認の項目を合格扱いにはしていません。自動テスト、lint、production build により構造・CSS契約は検証します。
+2026-08-02に利用者のWindows版Chromeで、ローカル開発サーバーを使ってConversation Shellの手動QAを実施しました。
+
+実施済み:
+
+- Conversationを360px、390px、768px、desktopで表示。
+- 曖昧な「記録したい」への1問確認と、送信時の末尾追従。
+- Message actionによる「明日の見通し」への移動と、移動先見出しへのfocus。
+- Conversationへ戻った際のsession、action実行済み状態、scroll位置の保持。
+- Message一覧、composer、reset、送信、Quick ActionへのTab移動とfocus ring。
+- Message一覧をPageUp / PageDownまたは矢印キーでスクロール。
+- resetによるsession初期化とcomposerへのfocus復帰。
+- backup export / restore後も、開いているin-memory Conversation sessionを保持。
+
+未実施:
+
+- 物理端末のsoft keyboardを使った確認。
+- スクリーンリーダーによる実際の読み上げ確認。
+- 既存7画面すべてを、4つの幅それぞれで通し確認する回帰QA。
+- OSのライト／ダーク設定切り替え確認。
+
+自動テスト、lint、production buildでは、session、intent、action二重実行防止、scroll境界、focus・ARIA契約、backup境界、既存機能の主要契約を検証します。
 
 ## 各幅での共通確認
 
-各幅について次の欄を `未実施` / `OK` / `NG（現象を記載）` で記録します。
+以下は主要8画面全体の通し確認表です。今回Conversation以外は全幅での通し確認を行っていないため、未確認の項目を合格扱いにはしていません。
 
 | 確認項目 | 360px | 390px | 768px | 800px以上 |
 | --- | --- | --- | --- | --- |
-| ページ全体に意図しない横スクロールがない | 未実施 | 未実施 | 未実施 | 未実施 |
+| ページ全体に意図しない横スクロールがない | ConversationのみOK | ConversationのみOK | ConversationのみOK | ConversationのみOK |
 | 1行のタブレールを横スクロールして全8タブへ移動できる（desktopは中央寄せ） | 未実施 | 未実施 | 未実施 | 未実施 |
-| active tabが背景・太字で識別でき、DOM上で `aria-current="page"` になっている | 未実施 | 未実施 | 未実施 | 未実施 |
-| Tabキーで各タブへ移動でき、フォーカス表示が見える | 未実施 | 未実施 | 未実施 | 未実施 |
-| 主要ボタンを押せ、フォームへ入力できる | 未実施 | 未実施 | 未実施 | 未実施 |
+| active tabが背景・太字で識別でき、DOM上で `aria-current="page"` になっている | ConversationのみOK | ConversationのみOK | ConversationのみOK | ConversationのみOK |
+| Tabキーで各タブへ移動でき、フォーカス表示が見える | 未実施 | 未実施 | Conversation内OK | Conversation内OK |
+| 主要ボタンを押せ、フォームへ入力できる | ConversationのみOK | ConversationのみOK | ConversationのみOK | ConversationのみOK |
 | 長いID・日時・ファイル名・エラー文をカード内で読める | 未実施 | 未実施 | 未実施 | 未実施 |
 | detailsを開閉できる | 未実施 | 未実施 | 未実施 | 未実施 |
 
-## Conversation固有の確認（全幅とも未実施）
+## Conversation固有の確認
 
 | 確認項目 | 360px | 390px | 768px | 800px以上 |
 | --- | --- | --- | --- | --- |
-| Conversationが先頭かつ初期activeで `aria-current="page"` を持つ | 未実施 | 未実施 | 未実施 | 未実施 |
-| 長文Message、話者ラベル、Message actionが幅内に収まる | 未実施 | 未実施 | 未実施 | 未実施 |
-| textareaと送信/resetが重ならず、quick actionが1列化または折り返す | 未実施 | 未実施 | 未実施 | 未実施 |
+| Conversationが先頭かつ初期activeで `aria-current="page"` を持つ | OK | OK | OK | OK |
+| 長文Message、話者ラベル、Message actionが幅内に収まる | OK | OK | OK | OK |
+| textareaと送信/resetが重ならず、quick actionが1列化または折り返す | OK | OK | OK | OK |
 | soft keyboard表示中もcomposerをスクロールして操作できる | 未実施 | 未実施 | 未実施 | 未実施 |
-| 末尾付近では新着へ追従し、過去を読んでいる場合は位置を奪わない | 未実施 | 未実施 | 未実施 | 未実施 |
-| Tab / Shift+Tabでcomposer、送信、reset、quick/message actionへ移動しfocus ringが見える | 未実施 | 未実施 | 未実施 | 未実施 |
+| 末尾付近では新着へ追従し、過去を読んでいる場合は位置を奪わない | 未実施 | 未実施 | 未実施 | OK |
+| Tab / Shift+Tabでcomposer、送信、reset、quick/message actionへ移動しfocus ringが見える | 未実施 | 未実施 | OK | OK |
+| Message一覧をキーボードでスクロールできる | 未実施 | 未実施 | OK | OK |
+
+## Conversation動作QA
+
+| 確認項目 | 結果 |
+| --- | --- |
+| 「記録したい」で自動移動せず、状態と睡眠のどちらかを1問だけ確認する | OK |
+| Message actionを押したときだけ「明日の見通し」へ移動する | OK |
+| 移動先の主要見出しへfocusする | OK |
+| Conversationへ戻っただけではcomposerへ強制focusしない | OK |
+| Conversationへ戻ってもsession、action実行済み状態、scroll位置を保持する | OK |
+| resetで最初のCompass Messageだけに戻り、draftを消し、composerへfocusする | OK |
+| backup restore後も開いているConversation sessionを保持する | OK |
+| Conversation sessionをbackup export / preview / restore対象へ含めない | 自動テストOK |
+| 同一本文のAssistant MessageもMessage IDで別の新着として扱う | 自動テストOK（実読み上げ未実施） |
 
 ## 状態別・画面別手順
 
