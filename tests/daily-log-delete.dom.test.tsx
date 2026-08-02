@@ -81,20 +81,32 @@ describe('DailyLog delete confirmation DOM boundary', () => {
     expect(dailyLogApplicationService.getDailyLog(secondId).ok).toBe(true);
   });
 
-  for (const activation of ['Enter', 'Space'] as const) {
-    it(`${activation} opens the Conversation dialog but its continuing activation cannot confirm`, async () => {
-      const user = userEvent.setup();
-      const deleteSpy = vi.spyOn(dailyLogApplicationService, 'deleteDailyLog');
-      render(<ConversationDeleteHarness />);
-      const opener = screen.getByRole('button', { name: '保存した記録を削除する' });
-      opener.focus();
-      await user.keyboard(activation === 'Enter' ? '[Enter>]' : '[Space>]');
-      expect(screen.getByRole('dialog')).toBeTruthy();
-      await user.keyboard(activation === 'Enter' ? '[/Enter]' : '[/Space]');
-      expect(deleteSpy).not.toHaveBeenCalled();
-      expect(countRecords()).toBe(2);
-    });
-  }
+  it('Enter opens the Conversation dialog on keydown and the matching keyup cannot confirm it', async () => {
+    const user = userEvent.setup();
+    const deleteSpy = vi.spyOn(dailyLogApplicationService, 'deleteDailyLog');
+    render(<ConversationDeleteHarness />);
+    const opener = screen.getByRole('button', { name: '保存した記録を削除する' });
+    opener.focus();
+    await user.keyboard('[Enter>]');
+    expect(screen.getByRole('dialog')).toBeTruthy();
+    await user.keyboard('[/Enter]');
+    expect(deleteSpy).not.toHaveBeenCalled();
+    expect(countRecords()).toBe(2);
+  });
+
+  it('Space opens the Conversation dialog on keyup and the same keypress cannot confirm it', async () => {
+    const user = userEvent.setup();
+    const deleteSpy = vi.spyOn(dailyLogApplicationService, 'deleteDailyLog');
+    render(<ConversationDeleteHarness />);
+    const opener = screen.getByRole('button', { name: '保存した記録を削除する' });
+    opener.focus();
+    await user.keyboard('[Space>]');
+    expect(screen.queryByRole('dialog')).toBeNull();
+    await user.keyboard('[/Space]');
+    expect(screen.getByRole('dialog')).toBeTruthy();
+    expect(deleteSpy).not.toHaveBeenCalled();
+    expect(countRecords()).toBe(2);
+  });
 
   it('StrictMode effect replay opens only the dialog', () => {
     const deleteSpy = vi.spyOn(dailyLogApplicationService, 'deleteDailyLog');
