@@ -379,3 +379,7 @@ Conversation sessionは未保存Capture Candidateを最大1件だけin-memoryで
 ### PROPOSED Candidateの明示確認（PR #80 review follow-up）
 
 構造化flowが生成したPROPOSED Candidateは、編集を開始せず「この内容を確認する」で既存lifecycleのBEGIN_EDIT → APPLY_EDIT → MARK_READYを通ってREADYへ進める。途中失敗時は元sessionを保持し、sensitive、本人明示でない尺度、不正値、date不一致はREADYにしない。READYは確認済み・未保存であり、保存操作を行うまでCOMMITTINGには進まない。
+
+## Conversation Capture → DailyLog commit（Issue #81）
+
+本人が最終確認した構造化Capture Candidateは、同意時刻を含む不変な`CaptureCommitRequest`としてDailyLog用adapterへ渡され、既存`DailyLogApplicationService`とRepository境界を通して指定日に保存される。保存成功時だけCandidateは`COMMITTED`となり、失敗時は内容を保持した`FAILED`となる。保存Recordには会話全文ではなく、確認表示したexcerpt、capture/consent時刻、抽出方式/versionだけの従属provenanceを保持する。

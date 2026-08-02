@@ -441,3 +441,10 @@ Conversationには最大1件のCapture Candidate確認カードが接続され�
 ### PROPOSED explicit confirmation follow-up
 
 修正不要のPROPOSED Candidateは`confirmActiveProposedCaptureCandidate`で明示確認できる。このhelperは既存lifecycleの3遷移を順に実行し、全成功時だけsessionをREADYへ置換する。途中失敗時の部分遷移を公開せず、保存やCOMMITTING遷移は行わない。
+
+## Conversation Capture commit handoff（Issue #81）
+
+- commit境界は`src/features/conversation/application/dailyLogCaptureCommitAdapter.ts`。Repositoryを直接参照させない。
+- `CaptureCommitRequest.consentedAt`は`requestActiveCaptureCandidateCommit`へ渡した時刻であり、adapterで再生成しない。
+- DailyLogの`captureProvenance`は従属値。clone時は`extraction`までdeep copyし、update/delete/既存dailyLogs backup境界を維持する。
+- outcomeはCOMMITTING session snapshotへ適用し、Candidate ID、stale request、status不整合を拒否する。

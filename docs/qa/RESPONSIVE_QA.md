@@ -91,3 +91,10 @@ Issue #68 の主要8画面を、同じ手順で再確認するための手動QA�
 | 完了後に確認カードへfocusし、Message listのscroll領域を変えない | source契約テストのみ | source契約テストのみ | source契約テストのみ | source契約テストのみ |
 
 実ブラウザでのfocus、keyboard、scroll、視覚確認は全幅で未実施。表の結果はコードまたは自動テストで確認できる範囲だけを示し、手動QA成功を意味しない。各幅でDATEからEVENTSまで進み、「なし」、複数行events、back、cancel、完了後の確認カードを確認すること。
+
+## Conversation Capture commit（Issue #81）
+
+- [ ] narrow/wide viewportでCOMMITTINGの「保存処理中」が読み取れ、全操作が無効である。
+- [ ] COMMITTEDでは「保存済み」と表示され、修正・却下・再保存できない。
+- [ ] FAILEDでCandidate本文が維持され、安全な日本語エラーが折り返される。
+- [ ] retryableなFAILEDだけ「もう一度保存する」を表示し、非retryableでは表示しない。

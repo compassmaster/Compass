@@ -54,7 +54,12 @@ export interface CaptureCommitRequest {
   conversationOccurredAt: string;
   extraction: CaptureExtraction;
   sensitivity: CaptureSensitivityClassification;
+  consentedAt: string;
 }
+
+export type CaptureCommitOutcome =
+  | { ok: true; reference: CaptureCommitResultReference }
+  | { ok: false; failure: CaptureFailureInformation };
 
 export interface CaptureFailureInformation {
   code: string;

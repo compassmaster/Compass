@@ -156,3 +156,7 @@ Conversation session内だけのDailyLog flowを実装済み。Interpreterの`RE
 ### PROPOSED explicit confirmation
 
 PROPOSED Candidateの現在payloadを変更せず、既存BEGIN_EDIT / APPLY_EDIT / MARK_READYを原子的に委譲するsession helperを実装済み。失敗時は元sessionを返し、READYは未保存のまま。DailyLogApplicationServiceへの接続はない。
+
+## Issue #81: DailyLog Capture Commit
+
+Conversationの構造化DailyLog Candidateは、専用adapterから`saveDailyLogForDate`を呼び出して実保存できる。adapterは保存先、非センシティブ分類、本人明示値、日付一致、同意時刻を検証する。Repository/storage障害はretryableな安全なfailureへ変換し、session helperが`COMMITTING` snapshotへoutcomeを適用する。Conversation transcript、message/candidate ID、deduplication keyは保存しない。

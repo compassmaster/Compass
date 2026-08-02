@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
-import type { CaptureCommitRequest, DailyLogCapturePayload } from '../types/captureCandidate.ts';
+import type { CaptureCommitOutcome, CaptureCommitRequest, DailyLogCapturePayload } from '../types/captureCandidate.ts';
 import type { ConversationSession } from '../session/conversationSession.ts';
-import { answerActiveDailyLogCaptureFlow, applyActiveCaptureCandidateEdit, backActiveDailyLogCaptureFlow, beginActiveCaptureCandidateEdit, cancelActiveCaptureCandidate, cancelActiveDailyLogCaptureFlow, completeActiveDailyLogCaptureFlow, confirmActiveProposedCaptureCandidate, markActiveCaptureCandidateReady, rejectActiveCaptureCandidate, requestActiveCaptureCandidateCommit, transitionConversationSession } from '../session/conversationSession.ts';
+import { answerActiveDailyLogCaptureFlow, applyActiveCaptureCandidateEdit, applyCaptureCommitOutcome, backActiveDailyLogCaptureFlow, beginActiveCaptureCandidateEdit, cancelActiveCaptureCandidate, cancelActiveDailyLogCaptureFlow, completeActiveDailyLogCaptureFlow, confirmActiveProposedCaptureCandidate, markActiveCaptureCandidateReady, rejectActiveCaptureCandidate, requestActiveCaptureCandidateCommit, retryActiveCaptureCandidate, transitionConversationSession } from '../session/conversationSession.ts';
 import { CaptureCandidateReviewCard } from './CaptureCandidateReviewCard.tsx';
 import { emptyCaptureCommitRequestGuard, recordCaptureCommitRequest, synchronizeCaptureCommitRequestGuard } from './captureCommitRequestGuard.ts';
 import { executeConversationAction, type ConversationActionCallbacks } from '../actions/conversationActionDispatcher.ts';
@@ -24,7 +24,7 @@ type ConversationTabProps = {
   onNavigateToDetails: () => void;
   onNavigateToWeather: () => void;
   onNavigateToBackup: () => void;
-  onCaptureCommitRequest: (request: CaptureCommitRequest) => void;
+  onCaptureCommitRequest: (request: CaptureCommitRequest) => CaptureCommitOutcome | Promise<CaptureCommitOutcome>;
 };
 
 export function ConversationTab({
@@ -173,7 +173,8 @@ export function ConversationTab({
         onConfirmProposed={() => { const result = confirmActiveProposedCaptureCandidate(session, new Date().toISOString()); onSessionChange(result.session); return { error: result.error, validationErrors: result.validationErrors }; }}
         onReject={() => { onSessionChange(rejectActiveCaptureCandidate(session, new Date().toISOString()).session); requestAnimationFrame(focusInput); }}
         onCancel={() => { onSessionChange(cancelActiveCaptureCandidate(session, new Date().toISOString()).session); requestAnimationFrame(focusInput); }}
-        onRequestCommit={() => { if (captureCommitGuardRef.current.requestIssued) return undefined; const result = requestActiveCaptureCandidateCommit(session, new Date().toISOString()); onSessionChange(result.session); if (result.commitRequest) { captureCommitGuardRef.current = recordCaptureCommitRequest(session.activeCaptureCandidate!.id); onCaptureCommitRequest(result.commitRequest); } return result.commitRequest; }} />}
+        onRetry={() => { const ready = retryActiveCaptureCandidate(session, new Date().toISOString()); if (!ready.error) { const begun = requestActiveCaptureCandidateCommit(ready.session, new Date().toISOString()); onSessionChange(begun.session); if (begun.commitRequest) void Promise.resolve(onCaptureCommitRequest(begun.commitRequest)).then((outcome) => onSessionChange(applyCaptureCommitOutcome(begun.session, begun.commitRequest!, outcome, new Date().toISOString()).session)); } }}
+        onRequestCommit={() => { if (captureCommitGuardRef.current.requestIssued) return undefined; const result = requestActiveCaptureCandidateCommit(session, new Date().toISOString()); onSessionChange(result.session); if (result.commitRequest) { captureCommitGuardRef.current = recordCaptureCommitRequest(session.activeCaptureCandidate!.id); void Promise.resolve(onCaptureCommitRequest(result.commitRequest)).then((outcome) => onSessionChange(applyCaptureCommitOutcome(result.session, result.commitRequest!, outcome, new Date().toISOString()).session)); } return result.commitRequest; }} />}
       <p className="conversation-live-region" aria-live="polite" aria-atomic="true">
         {announcement && <span key={announcement.messageId}>{announcement.text}</span>}
       </p>

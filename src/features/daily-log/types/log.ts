@@ -30,6 +30,14 @@ export type Scale = 1 | 2 | 3 | 4 | 5;
 /** 現在のスキーマバージョン */
 export const CURRENT_SCHEMA_VERSION = 1 as const;
 
+export interface CaptureProvenance {
+  source: 'CONVERSATION_CAPTURE';
+  capturedAt: string;
+  consentedAt: string;
+  extraction: { method: 'USER_STRUCTURED_INPUT'; version: string };
+  sourceExcerpt: string;
+}
+
 // ── ヘルパー関数 ────────────────────────────────────────────
 
 /** Date オブジェクトから DateString を生成 */
@@ -130,6 +138,9 @@ export interface DailyLog {
    * 将来的にイベント×気分/疲労度の相関分析に活用。
    */
   events: string[];
+
+  /** 会話全文ではなく、本人が確認した最小限の保存由来。 */
+  captureProvenance?: CaptureProvenance;
 }
 
 // ── DailyLogDraft ───────────────────────────────────────────
@@ -164,10 +175,9 @@ export function isDraftValid(draft: DailyLogDraft): draft is DailyLogDraft & { m
 }
 
 /** DailyLogDraft → DailyLog への変換（isDraftValid 通過後に使用） */
-export function draftToLog(draft: DailyLogDraft & { mood: Scale; fatigue: Scale }, date: DateString): DailyLog {
-  const now = new Date().toISOString();
+export function draftToLog(draft: DailyLogDraft & { mood: Scale; fatigue: Scale }, date: DateString, now = new Date().toISOString(), id = generateEntryId()): DailyLog {
   return {
-    id: generateEntryId(),
+    id,
     date,
     createdAt: now,
     updatedAt: now,
