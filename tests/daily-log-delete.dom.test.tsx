@@ -143,4 +143,25 @@ describe('DailyLog delete confirmation DOM boundary', () => {
     expect(dailyLogApplicationService.getDailyLog(firstId).ok).toBe(false);
     expect(dailyLogApplicationService.getDailyLog(secondId).ok).toBe(true);
   });
+
+  it('failed deletion closes the dialog, preserves every record, reports an alert, and emits no change notification', async () => {
+    const deleteSpy = vi.spyOn(dailyLogApplicationService, 'deleteDailyLog').mockReturnValueOnce({ ok: false, reason: 'NOT_FOUND' });
+    const recordChanged = vi.fn();
+    const changed = vi.fn();
+    render(<DailyLogList onRecordChanged={recordChanged} onChanged={changed} />);
+
+    fireEvent.click(within(screen.getByText('first record').closest('article')!).getByRole('button', { name: '削除' }));
+    await waitFor(() => expect((screen.getByRole('button', { name: '削除する' }) as HTMLButtonElement).disabled).toBe(false));
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: '削除する' })); });
+
+    expect(deleteSpy).toHaveBeenCalledTimes(1);
+    expect(deleteSpy).toHaveBeenCalledWith(firstId);
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.getByRole('alert').textContent).toContain('記録を削除できませんでした。記録は保持されています。');
+    expect(countRecords()).toBe(2);
+    expect(dailyLogApplicationService.getDailyLog(firstId).ok).toBe(true);
+    expect(dailyLogApplicationService.getDailyLog(secondId).ok).toBe(true);
+    expect(recordChanged).not.toHaveBeenCalled();
+    expect(changed).not.toHaveBeenCalled();
+  });
 });
