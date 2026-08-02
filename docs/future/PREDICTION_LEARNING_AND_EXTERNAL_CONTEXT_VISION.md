@@ -1,3 +1,7 @@
+# Prediction, Learning and External Context Vision
+
+本書は将来構想であり実装仕様ではない。プロダクト体験は[Conversation-First Product Direction](../product/CONVERSATION_FIRST_PRODUCT_DIRECTION.md)を正とする。現在、Calendar連携、ウェアラブル連携、学習型機械学習・オンライン学習は未実装である。Weatherの限定的な取得と固定ルールのRelationship / Predictionが実装されていることを、これらの実装完了と解釈しない。
+
 最終目標:
 予測 → 実測 → 誤差評価 → モデル改善
 

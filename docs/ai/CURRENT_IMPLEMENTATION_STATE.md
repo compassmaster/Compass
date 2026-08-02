@@ -1,5 +1,14 @@
 # Compass Agent Instructions
 
+## 2026-08-01 Product Direction
+
+- プロダクト体験は[`docs/product/CONVERSATION_FIRST_PRODUCT_DIRECTION.md`](../product/CONVERSATION_FIRST_PRODUCT_DIRECTION.md)をCanonical Documentとする。
+- ChatをPrimary Experienceとする方針は採用済みだが、Conversation UI / Capture / consumer接続とLLMは未実装である。
+- Calendarを人生の時間軸とする方針は採用済みだが、Calendar UI / 外部カレンダー連携は未実装である。
+- Weatherの限定的な自動取得は実装済みだが、ウェアラブル連携と汎用自動取得基盤は未実装である。
+- 固定Analyzer、Relationship、読み取り専用Predictionは存在するが、学習型機械学習・オンライン学習は未実装である。
+- Understanding履歴はIssue #57で実装済みである。過去の日時別記録にある「Understanding履歴は未実装」は当時の履歴であり、現在状態ではない。
+
 ## Source of Truth
 
 - 最新の実装は必ず origin/main を基準とする

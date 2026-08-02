@@ -4,7 +4,7 @@ dependsOn:
   - docs/future/FUTURE_ARCHITECTURE.md
   - docs/ai/Understanding/Understanding Object.md
 usedBy: []
-lastUpdated: "2026-07-22"
+lastUpdated: "2026-08-01"
 ---
 # Machine Learning, Prediction, and External Context
 
@@ -12,15 +12,19 @@ lastUpdated: "2026-07-22"
 
 この文書は、Compassが将来的に機械学習、予測、External Contextを扱う場合の構想を保存する。ここに書かれた内容はAccepted ADRではなく、現在実装済みの仕様でもない。実装する場合は、別途ADR、プライバシー設計、データ保持方針、ユーザー同意設計を必要とする。
 
+プロダクト体験とAutomatic Data Acquisitionの原則は[Conversation-First Product Direction](../product/CONVERSATION_FIRST_PRODUCT_DIRECTION.md)を正とする。
+
 ## Current Status
 
 - **Classification:** Future Concept
-- **Implemented:** No
-- **MVP Scope:** No
-- **Current code dependency:** No
+- **Implemented:** Partially（Weatherと固定ルールの読み取り専用機能のみ）
+- **MVP Scope:** Weather / Relationship / Predictionの限定MVPのみ
+- **Current code dependency:** Weather、Relationship Explorer、Predictionにあり
 - **ADR status:** Not Accepted
 
-この文書全体はFuture Conceptであり、実装済み機能として扱わない。WeatherについてはD-0010で保存境界のみAcceptedになったが、Weather Type、Repository、API Client、Analyzer、Prediction、Machine Learningは未実装である。コード変更も行わない。
+将来の学習構想は実装済み機能として扱わない。現在はWeather Domain / Repository / Base Location / Forecast・Historical取得、前日Historicalの限定的な自動取得、固定ルールのWeather × Fatigue Observation、Relationship Explorer、読み取り専用Predictionが実装済みである。一方、Calendar連携、ウェアラブル連携、汎用自動取得、Prediction Evaluation保存、個人学習モデル、オンライン学習、共有モデルは未実装である。
+
+`SleepRecord.source`の`SMARTWATCH`は将来互換の識別値であってウェアラブル連携ではない。固定Analyzerや決定論的Queryは学習型機械学習ではない。
 
 ## Core Idea
 
@@ -152,6 +156,8 @@ Prediction Snapshotは、後から「その予測はどの情報に基づいて�
 
 人間が定義した固定Analyzerを増やす。
 
+**Current:** Sleep × Fatigue等の固定分析とWeather × Fatigue Observationを一部実装済み。
+
 例:
 
 - Event × Fatigue
@@ -162,9 +168,13 @@ Prediction Snapshotは、後から「その予測はどの情報に基づいて�
 
 汎用Relationship Explorerを導入し、入力変数と出力変数の関係を自動探索する。
 
+**Current:** 睡眠×疲労、雨×疲労を既存Queryで表示する限定的な読み取り専用Explorerを実装済み。任意変数の自動探索は未実装。
+
 ### Stage 3: Prediction Evaluation Storage
 
 Prediction / Prediction Evaluationを保存し、精度指標を追跡する。
+
+**Current:** 保存しない読み取り専用の翌日疲労Prediction MVPのみ実装済み。Prediction / Evaluationの保存は未実装。
 
 ### Stage 4: Lightweight Personal Models
 
@@ -221,6 +231,9 @@ Prediction / Prediction Evaluationを保存し、精度指標を追跡する。
 - 個人情報・位置情報・健康情報は最小化し、保存目的・保存期間・削除方法を明示する。
 - MLモデルの出力は説明可能性を持たせ、根拠となる入力範囲を表示する。
 - Compassは「こうすべき」と命令せず、「こういう傾向があるかもしれない」と確認する。
+- 接続ごとにデータ種別と利用目的への同意を得て、取得元、鮮度、欠損、同期失敗を表示する。
+- 自動取得と手入力を識別し、競合時に無言で上書きしない。接続停止と取得済みデータ削除を別々に選べるようにする。
+- Conversationで分析を提示する場合はCanonical DocumentのAnalysis Surfacing Policyに従う。
 
 ## Open Design Questions
 

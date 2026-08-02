@@ -1,5 +1,9 @@
 # AI Handoff Document
 
+## Product Direction (2026-08-01)
+
+プロダクト体験は[`docs/product/CONVERSATION_FIRST_PRODUCT_DIRECTION.md`](../product/CONVERSATION_FIRST_PRODUCT_DIRECTION.md)をCanonical Documentとする。Chat、Calendar、Conversation Capture、自動取得、Personal Discovery Engineはいずれも採用済みの方向性と現在実装を区別すること。Conversation、LLM、Calendar連携、ウェアラブル連携、学習型機械学習は未実装として維持する。Weatherの限定的な自動取得、日付ベースの集計、固定Analyzer / Predictionをこれらの実装とみなさない。
+
 This document is the permanent handoff file for all future AI assistants working on Compass.
 Every AI assistant must read this document before starting work and update it before finishing work.
 

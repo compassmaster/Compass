@@ -8,6 +8,8 @@ lastUpdated: "2026-07-15"
 ---
 # 📜 Compass Core Philosophy v1.0
 
+> プロダクト体験のCanonical Documentは[Conversation-First Product Direction](../product/CONVERSATION_FIRST_PRODUCT_DIRECTION.md)である。その中心思想は「Compassは、自分自身の取扱説明書を一緒に育てる存在である」。本書の原則はその土台として維持する。
+
 ## 🌌 イントロダクション：Compassの存在意義
 
 Compassは、単なる「便利な道具（AIチャットや記録ツール）」ではありません。
