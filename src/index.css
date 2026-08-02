@@ -22,6 +22,7 @@ html {
 }
 
 body {
+  overflow-x: hidden;
   min-width: 0;
   margin: 0;
   overflow-wrap: anywhere;

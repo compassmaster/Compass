@@ -40,6 +40,11 @@
   margin-bottom: 30px;
 }
 
+.app-nav:focus-visible, .app-nav button:focus-visible {
+  outline: 3px solid #d97706;
+  outline-offset: 3px;
+}
+
 .tab-button {
   min-height: 44px;
   padding: 10px 20px;
@@ -66,7 +71,13 @@
 
 .app-main {
   padding: 10px;
+  min-width: 0;
 }
+
+#home-primary-heading:focus-visible, #home-weather-section:focus-visible,
+#log-primary-heading:focus-visible, #sleep-primary-heading:focus-visible,
+#prediction-primary-heading:focus-visible, #compass-map-primary-heading:focus-visible,
+#backup-primary-heading:focus-visible { outline: 3px solid #d97706; outline-offset: 4px; }
 
 @media (max-width: 600px) {
   .app-container {

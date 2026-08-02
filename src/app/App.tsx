@@ -38,6 +38,11 @@ import './App.css';
 
 type AppTab = 'conversation' | 'home' | 'log' | 'weeklySummary' | 'relationships' | 'prediction' | 'compassMap' | 'backup';
 
+const TAB_FOCUS_TARGETS: Partial<Record<AppTab, string>> = {
+  home: 'home-primary-heading', log: 'log-primary-heading', prediction: 'prediction-primary-heading',
+  compassMap: 'compass-map-primary-heading', backup: 'backup-primary-heading',
+};
+
 
 function loadInitialUnderstandingCandidates(): UnderstandingCandidate[] {
   const storedEvidence = analysisApplicationService.listEvidence();
@@ -93,6 +98,7 @@ function loadInitialUserModel(): UserModel {
 export function App() {
   const [activeTab, setActiveTab] = useState<AppTab>('conversation');
   const [conversationSession, setConversationSession] = useState(createConversationSession);
+  const [conversationScrollPosition, setConversationScrollPosition] = useState(0);
   const [firstUseGuide, setFirstUseGuide] = useState(() => firstUseGuideQueryService.get());
   const [logs, setLogs] = useState<DailyLog[]>(() => dailyLogApplicationService.listDailyLogs());
   const [, setUserModel] = useState<UserModel>(() => loadInitialUserModel());
@@ -135,6 +141,15 @@ export function App() {
   };
 
   const refreshFirstUseGuide = () => setFirstUseGuide(firstUseGuideQueryService.get());
+  const navigateFromConversation = (tab: AppTab, targetId = TAB_FOCUS_TARGETS[tab]) => {
+    setActiveTab(tab);
+    if (!targetId) return;
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const target = document.getElementById(targetId);
+      target?.focus();
+      target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }));
+  };
   const handleFirstUseNavigate = (step: FirstUseGuideStepId) => {
     if (step === 'BASE_LOCATION') {
       document.getElementById('home-weather-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -272,20 +287,21 @@ export function App() {
           <ConversationTab
             session={conversationSession}
             onSessionChange={setConversationSession}
-            onNavigateToLog={() => setActiveTab('log')}
-            onNavigateToSleep={() => setActiveTab('log')}
-            onNavigateToPrediction={() => setActiveTab('prediction')}
+            scrollPosition={conversationScrollPosition}
+            onScrollPositionChange={setConversationScrollPosition}
+            onNavigateToLog={() => navigateFromConversation('log')}
+            onNavigateToSleep={() => navigateFromConversation('log', 'sleep-primary-heading')}
+            onNavigateToPrediction={() => navigateFromConversation('prediction')}
             onNavigateToCompassMap={() => {
               refreshUserModelUpdateCandidates();
               refreshResolvedFormalUserModel();
-              setActiveTab('compassMap');
+              navigateFromConversation('compassMap');
             }}
-            onNavigateToDetails={() => setActiveTab('home')}
+            onNavigateToDetails={() => navigateFromConversation('home')}
             onNavigateToWeather={() => {
-              setActiveTab('home');
-              requestAnimationFrame(() => document.getElementById('home-weather-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+              navigateFromConversation('home', 'home-weather-section');
             }}
-            onNavigateToBackup={() => setActiveTab('backup')}
+            onNavigateToBackup={() => navigateFromConversation('backup')}
           />
         )}
         {activeTab === 'home' && (

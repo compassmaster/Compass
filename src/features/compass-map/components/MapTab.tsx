@@ -18,7 +18,7 @@ export function MapTab({ resolvedFormalUserModel }: MapTabProps) {
   return (
     <div>
       <div className="map-intro">
-        <h2 className="section-title">🧭 あなたの航海図 (Compass Map)</h2>
+        <h2 id="compass-map-primary-heading" tabIndex={-1} className="section-title">🧭 あなたの航海図 (Compass Map)</h2>
         <p className="map-description">
           固定されたプロフィールではなく、あなたとの対話を通して書き換わっていく未完の地図です。
         </p>

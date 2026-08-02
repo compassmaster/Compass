@@ -120,7 +120,7 @@ export function HomeTab({
       {/* 今日のCompass */}
       <section className="home-section today-compass-section">
         <p className="section-eyebrow">今日のCompass</p>
-        <h2 className="section-title">理解が育っていく様子</h2>
+        <h2 id="home-primary-heading" tabIndex={-1} className="section-title">理解が育っていく様子</h2>
         <p className="home-description">
           Compassは答えを決めつけず、記録・Reflection・根拠・理解候補を一緒に確認しながら航海図を育てます。
         </p>
@@ -141,7 +141,7 @@ export function HomeTab({
         onNavigateToCompassMap={onNavigateToCompassMap}
       />
 
-      <div id="home-weather-section">
+      <div id="home-weather-section" tabIndex={-1}>
         <BaseLocationPanel onSaved={() => { setForecastAcquisitionRequestId((current) => current + 1); onFirstUseDataChanged(); }} />
         <WeatherForecastPanel acquisitionRequestId={forecastAcquisitionRequestId} />
       </div>
