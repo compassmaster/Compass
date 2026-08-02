@@ -2,8 +2,8 @@ import type { Message } from '../types/message.ts';
 import type { ActionableConversationIntent } from '../types/intent.ts';
 import { interpretConversationInput } from '../interpreter/conversationInterpreter.ts';
 import { buildConversationResponse, buildDailyLogCaptureBlockedResponse, buildDailyLogFlowInProgressResponse, buildInvalidConversationOccurredAtResponse } from '../interpreter/conversationResponseBuilder.ts';
-import type { CaptureCandidate, CaptureCommitRequest, DailyLogCapturePayload } from '../types/captureCandidate.ts';
-import { applyCaptureCandidateEdit, beginCaptureCandidateCommit, beginCaptureCandidateEdit, cancelCaptureCandidate, createCaptureCommitRequest, markCaptureCandidateReady, rejectCaptureCandidate, type CaptureCandidateValidationError } from './captureCandidateLifecycle.ts';
+import type { CaptureCandidate, CaptureCommitOutcome, CaptureCommitRequest, DailyLogCapturePayload } from '../types/captureCandidate.ts';
+import { applyCaptureCandidateEdit, beginCaptureCandidateCommit, beginCaptureCandidateEdit, cancelCaptureCandidate, createCaptureCommitRequest, markCaptureCandidateCommitted, markCaptureCandidateFailed, markCaptureCandidateReady, rejectCaptureCandidate, retryCaptureCandidate, type CaptureCandidateValidationError } from './captureCandidateLifecycle.ts';
 import { answerDailyLogCaptureStep, cancelDailyLogCaptureFlow, completeDailyLogCaptureFlow, moveBackDailyLogCaptureFlow, startDailyLogCaptureFlow, type DailyLogCaptureAnswer, type DailyLogCaptureFlow } from './dailyLogCaptureFlow.ts';
 
 export type ConversationSession = { messages: Message[]; nextMessageNumber: number; activeCaptureCandidate: CaptureCandidate | null; dailyLogCaptureFlow: DailyLogCaptureFlow | null };
@@ -101,9 +101,23 @@ export function requestActiveCaptureCandidateCommit(session: ConversationSession
   if (!session.activeCaptureCandidate) return { session, error: 'NO_ACTIVE_CANDIDATE' };
   const begun = beginCaptureCandidateCommit(session.activeCaptureCandidate, now);
   if (!begun.ok) return { session, error: begun.reason };
-  const request = createCaptureCommitRequest(begun.candidate);
+  const request = createCaptureCommitRequest(begun.candidate, now);
   if (!request.ok) return { session, error: request.reason };
   return { session: { ...session, activeCaptureCandidate: begun.candidate }, commitRequest: request.request };
+}
+
+export function applyCaptureCommitOutcome(session: ConversationSession, request: CaptureCommitRequest, outcome: CaptureCommitOutcome, now: string): CaptureSessionResult {
+  const candidate = session.activeCaptureCandidate;
+  if (!candidate) return { session, error: 'NO_ACTIVE_CANDIDATE' };
+  if (candidate.id !== request.candidateId) return { session, error: 'CANDIDATE_ID_MISMATCH' };
+  if (candidate.status !== 'COMMITTING' || candidate.updatedAt !== request.consentedAt) return { session, error: 'STALE_COMMIT_REQUEST' };
+  return updateCandidate(session, outcome.ok
+    ? markCaptureCandidateCommitted(candidate, outcome.reference, now)
+    : markCaptureCandidateFailed(candidate, outcome.failure, now));
+}
+
+export function retryActiveCaptureCandidate(session: ConversationSession, now: string): CaptureSessionResult {
+  return session.activeCaptureCandidate ? updateCandidate(session, retryCaptureCandidate(session.activeCaptureCandidate, now)) : { session, error: 'NO_ACTIVE_CANDIDATE' };
 }
 
 export type ClaimConversationActionResult = {

@@ -32,9 +32,11 @@ import { firstUseGuideQueryService } from '../features/first-use-guide/services/
 import type { FirstUseGuideStepId } from '../features/first-use-guide/types/firstUseGuide.ts';
 import { ConversationTab } from '../features/conversation/components/ConversationTab.tsx';
 import { createConversationSession } from '../features/conversation/session/conversationSession.ts';
+import { DailyLogCaptureCommitAdapter } from '../features/conversation/application/dailyLogCaptureCommitAdapter.ts';
 
 import './App.css';
 
+const dailyLogCaptureCommitAdapter = new DailyLogCaptureCommitAdapter(dailyLogApplicationService);
 
 type AppTab = 'conversation' | 'home' | 'log' | 'weeklySummary' | 'relationships' | 'prediction' | 'compassMap' | 'backup';
 
@@ -302,7 +304,11 @@ export function App() {
               navigateFromConversation('home', 'home-weather-section');
             }}
             onNavigateToBackup={() => navigateFromConversation('backup')}
-            onCaptureCommitRequest={() => { /* Persistence is intentionally outside Issue #77. */ }}
+            onCaptureCommitRequest={(request) => {
+              const outcome = dailyLogCaptureCommitAdapter.commit(request);
+              if (outcome.ok) refreshLogs();
+              return outcome;
+            }}
           />
         )}
         {activeTab === 'home' && (

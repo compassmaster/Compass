@@ -4,6 +4,7 @@ import {
   todayDateString,
   type DailyLog,
   type DailyLogDraft,
+  type CaptureProvenance,
   type DateString,
   type EntryId,
   type Scale,
@@ -17,7 +18,7 @@ export type SaveDailyLogResult =
     }
   | {
       ok: false;
-      reason: 'INVALID_DRAFT';
+      reason: 'INVALID_DRAFT' | 'INVALID_DATE' | 'INVALID_PROVENANCE' | 'PERSISTENCE_FAILED';
     };
 
 export interface UpdateDailyLogInput {
@@ -35,13 +36,25 @@ export type UpdateDailyLogResult =
 export type DeleteDailyLogResult = { ok: true } | { ok: false; reason: 'NOT_FOUND' };
 
 function cloneLog(log: DailyLog): DailyLog {
-  return { ...log, events: [...log.events] };
+  return { ...log, events: [...log.events], captureProvenance: log.captureProvenance ? { ...log.captureProvenance, extraction: { ...log.captureProvenance.extraction } } : undefined };
 }
 
 function isValidDate(value: string): value is DateString {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const parsed = new Date(`${value}T00:00:00Z`);
   return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+}
+
+function isTimestamp(value: string): boolean {
+  return typeof value === 'string' && value.trim() !== '' && !Number.isNaN(Date.parse(value));
+}
+
+export function isValidCaptureProvenance(value: unknown): value is CaptureProvenance {
+  if (!value || typeof value !== 'object') return false;
+  const p = value as CaptureProvenance;
+  return p.source === 'CONVERSATION_CAPTURE' && isTimestamp(p.capturedAt) && isTimestamp(p.consentedAt) &&
+    p.extraction?.method === 'USER_STRUCTURED_INPUT' && typeof p.extraction.version === 'string' && p.extraction.version.trim() !== '' &&
+    typeof p.sourceExcerpt === 'string' && p.sourceExcerpt.trim() !== '';
 }
 
 /**
@@ -61,31 +74,30 @@ export class DailyLogApplicationService {
   private readonly logRepository: ILogRepository;
 
   private readonly now: () => string;
+  private readonly generateId: () => EntryId;
 
-  constructor(logRepository: ILogRepository, now: () => string = () => new Date().toISOString()) {
+  constructor(logRepository: ILogRepository, now: () => string = () => new Date().toISOString(), generateId: () => EntryId = () => crypto.randomUUID() as EntryId) {
     this.logRepository = logRepository;
     this.now = now;
+    this.generateId = generateId;
+  }
+
+  saveDailyLogForDate(input: { date: DateString; draft: DailyLogDraft; captureProvenance?: CaptureProvenance }): SaveDailyLogResult {
+    if (!isValidDate(input.date)) return { ok: false, reason: 'INVALID_DATE' };
+    const validSleepHours = input.draft.sleepHours === null ||
+      (typeof input.draft.sleepHours === 'number' && Number.isFinite(input.draft.sleepHours));
+    if (!isDraftValid(input.draft) || ![1, 2, 3, 4, 5].includes(input.draft.mood) || ![1, 2, 3, 4, 5].includes(input.draft.fatigue) || !validSleepHours || typeof input.draft.note !== 'string' ||
+        !Array.isArray(input.draft.events) || input.draft.events.some((event) => typeof event !== 'string')) return { ok: false, reason: 'INVALID_DRAFT' };
+    if (input.captureProvenance !== undefined && !isValidCaptureProvenance(input.captureProvenance)) return { ok: false, reason: 'INVALID_PROVENANCE' };
+    const timestamp = this.now();
+    const log = draftToLog(input.draft, input.date, timestamp, this.generateId());
+    if (input.captureProvenance) log.captureProvenance = { ...input.captureProvenance, extraction: { ...input.captureProvenance.extraction } };
+    try { this.logRepository.save(cloneLog(log)); } catch { return { ok: false, reason: 'PERSISTENCE_FAILED' }; }
+    return { ok: true, log: cloneLog(log) };
   }
 
   saveDailyLog(draft: DailyLogDraft): SaveDailyLogResult {
-    if (!isDraftValid(draft)) {
-      return {
-        ok: false,
-        reason: 'INVALID_DRAFT',
-      };
-    }
-
-    const log = draftToLog(
-      draft,
-      todayDateString()
-    );
-
-    this.logRepository.save(log);
-
-    return {
-      ok: true,
-      log,
-    };
+    return this.saveDailyLogForDate({ date: todayDateString(), draft });
   }
 
   listDailyLogs(): DailyLog[] {

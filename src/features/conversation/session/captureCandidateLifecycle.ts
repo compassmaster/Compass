@@ -164,7 +164,7 @@ export function markCaptureCandidateReady(candidate: CaptureCandidate, now: stri
 export const beginCaptureCandidateCommit = (candidate: CaptureCandidate, now: string): CaptureCandidateTransitionResult =>
   transition(candidate, 'BEGIN_COMMIT', ['READY'], 'COMMITTING', now);
 
-export function createCaptureCommitRequest(candidate: CaptureCandidate): CreateCaptureCommitRequestResult {
+export function createCaptureCommitRequest(candidate: CaptureCandidate, consentedAt: string): CreateCaptureCommitRequestResult {
   if (candidate.status !== 'COMMITTING') {
     return {
       ok: false,
@@ -185,6 +185,7 @@ export function createCaptureCommitRequest(candidate: CaptureCandidate): CreateC
       conversationOccurredAt: candidate.conversationOccurredAt,
       extraction: { ...candidate.extraction },
       sensitivity: candidate.sensitivity,
+      consentedAt,
     },
   };
 }

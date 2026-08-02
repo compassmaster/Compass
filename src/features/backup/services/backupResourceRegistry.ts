@@ -33,9 +33,12 @@ const period = (value: unknown) => record(value) && /^\d{4}-\d{2}-\d{2}$/.test(S
 const sourceReference = (value: unknown) => record(value) && ['daily_log', 'sleep_record'].includes(String(value.sourceType)) && text(value.id) && /^\d{4}-\d{2}-\d{2}$/.test(String(value.date));
 const evidenceRef = (value: unknown) => record(value) && value.sourceType === 'daily_log' && text(value.logId) && text(value.analyzerId) && text(value.rationale) && text(value.excerpt) && iso(value.sourceCreatedAt);
 
+const captureProvenance = (value: unknown) => record(value) && value.source === 'CONVERSATION_CAPTURE' && iso(value.capturedAt) && iso(value.consentedAt)
+  && record(value.extraction) && value.extraction.method === 'USER_STRUCTURED_INPUT' && text(value.extraction.version) && text(value.sourceExcerpt);
 const dailyLog = (value: unknown) => record(value) && value.schemaVersion === 1 && text(value.id) && /^\d{4}-\d{2}-\d{2}$/.test(String(value.date))
   && iso(value.createdAt) && iso(value.updatedAt) && [1, 2, 3, 4, 5].includes(value.mood as number) && [1, 2, 3, 4, 5].includes(value.fatigue as number)
-  && (value.sleepHours === null || (typeof value.sleepHours === 'number' && Number.isFinite(value.sleepHours))) && typeof value.note === 'string' && strings(value.events);
+  && (value.sleepHours === null || (typeof value.sleepHours === 'number' && Number.isFinite(value.sleepHours))) && typeof value.note === 'string' && strings(value.events)
+  && (value.captureProvenance === undefined || captureProvenance(value.captureProvenance));
 const sleepRecord = (value: unknown) => record(value) && text(value.id) && /^\d{4}-\d{2}-\d{2}$/.test(String(value.sleepDate)) && text(value.bedtime)
   && text(value.wakeTime) && integer(value.durationMinutes, 1) && ['MANUAL', 'SMARTWATCH'].includes(String(value.source)) && iso(value.createdAt) && iso(value.updatedAt);
 const evidence = (value: unknown) => record(value) && text(value.id) && value.type === 'SLEEP_FATIGUE_OBSERVATION' && text(value.analyzerId) && text(value.title)

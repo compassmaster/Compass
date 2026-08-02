@@ -6,6 +6,7 @@ import type { DailyLog, DateString, EntryId } from '../types/log.ts';
 import type { ILogRepository } from './logRepository.ts';
 
 const STORAGE_KEY = 'compass_daily_logs';
+const cloneLog = (log: DailyLog): DailyLog => ({ ...log, events: [...log.events], captureProvenance: log.captureProvenance ? { ...log.captureProvenance, extraction: { ...log.captureProvenance.extraction } } : undefined });
 
 /**
  * localStorage を使った DailyLog の永続化。
@@ -42,7 +43,7 @@ export class LocalStorageLogRepository implements ILogRepository {
 
   save(log: DailyLog): void {
     const logs = this.load();
-    logs.push(log);
+    logs.push(cloneLog(log));
     this.persist(logs);
   }
 
@@ -53,7 +54,7 @@ export class LocalStorageLogRepository implements ILogRepository {
       console.warn(`[Compass] Log not found for update: ${log.id}`);
       return;
     }
-    logs[index] = { ...log, events: [...log.events] };
+    logs[index] = cloneLog(log);
     this.persist(logs);
   }
 
@@ -102,7 +103,7 @@ export class LocalStorageLogRepository implements ILogRepository {
       }
 
       // 日付降順 → 同日内は作成日時降順
-      return (data as DailyLog[]).sort((a, b) => {
+      return (data as DailyLog[]).map(cloneLog).sort((a, b) => {
         const dateCompare = b.date.localeCompare(a.date);
         if (dateCompare !== 0) return dateCompare;
         return b.createdAt.localeCompare(a.createdAt);
