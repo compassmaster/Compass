@@ -1,9 +1,16 @@
 # Compass Agent Instructions
 
+## 2026-08-02 Capture Candidate model (Issue #75)
+
+- D-0016準拠のCapture Candidate型、構造化DailyLog payload、8状態lifecycleと純粋な遷移関数を実装済み。
+- `READY`はmood / fatigueがともに`USER_EXPLICIT`で必須値を持つ場合だけ許可する。編集後は`EDITING`に留まり、再確認が必要である。
+- `READY`と`COMMITTED`を分離し、`COMMITTING`中の二重commitを拒否する。失敗時もpayload、source、deduplicationKeyをin-memoryで保持し、`FAILED → READY`の再試行を提供する。
+- UI、Repository、localStorage、backup schema、DailyLog型、DailyLogApplicationServiceへの接続、Conversation transcript保存は未実装である。
+
 ## 2026-08-01 Product Direction
 
 - プロダクト体験は[`docs/product/CONVERSATION_FIRST_PRODUCT_DIRECTION.md`](../product/CONVERSATION_FIRST_PRODUCT_DIRECTION.md)をCanonical Documentとする。
-- ChatをPrimary ExperienceとするStage 1 Conversation Shell UI、in-memory session、Quick Action、限定的な決定論的Navigation intentは実装済みである。自由会話理解、Conversation Capture、会話履歴永続化、Understanding-aware consumer接続、LLMは未実装である。
+- ChatをPrimary ExperienceとするStage 1 Conversation Shell UI、in-memory session、Quick Action、限定的な決定論的Navigation intent、および保存処理に未接続のCapture Candidate modelは実装済みである。自由会話理解、Capture確認UI・実保存、会話履歴永続化、Understanding-aware consumer接続、LLMは未実装である。
 - Calendarを人生の時間軸とする方針は採用済みだが、Calendar UI / 外部カレンダー連携は未実装である。
 - Weatherの限定的な自動取得は実装済みだが、ウェアラブル連携と汎用自動取得基盤は未実装である。
 - 固定Analyzer、Relationship、読み取り専用Predictionは存在するが、学習型機械学習・オンライン学習は未実装である。

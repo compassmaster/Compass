@@ -7,11 +7,11 @@
 This document is the permanent handoff file for all future AI assistants working on Compass.
 Every AI assistant must read this document before starting work and update it before finishing work.
 
-## 2026-08-02 Stage 2 Conversation Capture設計 (Issue #73)
+## 2026-08-02 Stage 2 Capture Candidate model (Issue #75)
 
-D-0016で、保存同意、in-memory Capture Candidateの8状態lifecycle、既存Domain Recordへの保存境界、最小provenance、privacy、backup対象外境界をAcceptedとした。これは設計済みであって実装済みではない。
+D-0016で設計したin-memory Capture CandidateのDomain / Application modelを実装した。構造化DailyLog payloadはdate、mood、fatigue、note、eventsと値の由来を持ち、mood / fatigueは本人明示値だけがREADYになれる。
 
-次の実装対象は、D-0016に従う**Capture CandidateのDomain / Application model**である。最初のvertical sliceは構造化DailyLog flowとし、UIや永続化へ先行せず、READYとCOMMITTEDの分離、COMMITTING中の二重保存防止、FAILEDからの再試行をモデルで表現する。
+実装済みなのは型と純粋な状態遷移だけである。READY / COMMITTEDの分離、COMMITTING中の二重保存拒否、FAILED後の値保持と再試行、編集後の再確認、終端状態をモデルで保証する。次の段階は別Issueで確認UIと既存DailyLogApplicationServiceへのcommit adapterを設計する。
 
 次の実装では、以下を禁止する。
 
@@ -19,7 +19,7 @@ D-0016で、保存同意、in-memory Capture Candidateの8状態lifecycle、既�
 - Candidate Repository、localStorage key、backup resource / schemaの追加。
 - LLMまたは自由文抽出の導入。
 - ConversationからFormal UserModel、Evidence、既存Understanding Candidateへの直接更新。
-- 本人確認前のDomain Record保存、および既存`DailyLogApplicationService`、validation、Repositoryの迂回。
+- 本人確認前のDomain Record保存、および既存`DailyLogApplicationService`、validation、Repositoryの迂回。現時点ではApplication Service自体へ接続しない。
 - mood / fatigueの推測値による補完。
 
 ## 2026-07-31 Responsive App Shell (Issue #55)

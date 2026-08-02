@@ -12,8 +12,8 @@ lastUpdated: "2026-08-02"
 
 - **採用済み方針**: ChatをPrimary Experience、Calendarを人生の時間軸、相談中の分析利用、根拠の段階的開示、早期個人化、Conversation Capture、同意に基づく自動取得、Personal Discovery Engine。
 - **一部実装済み**: in-memory Conversation Shellと決定論的な既存画面案内、DailyLog / SleepRecord、Weather取得・前日気象の限定的な自動取得、Evidence、Relationship Explorer、読み取り専用Prediction、Understanding確認・履歴、Formal UserModel、Compass Map / Formal Reflectionの読み取り専用接続、初回利用ガイド。
-- **設計開始**: Conversation-First Roadmap Stage 2 Conversation Capture。D-0016で保存同意、Capture Candidate lifecycle、Record / provenance / privacy / backup境界を設計済み。
-- **未実装**: Capture CandidateのDomain / Application model、確認UI、保存処理、自由会話理解、永続的な会話履歴、Conversation consumer接続、LLM生成、Calendar UI・外部カレンダー連携、ウェアラブル連携、学習型機械学習・オンライン学習、Personal Discovery Engineとしての統合。
+- **一部実装済み（Conversation Capture）**: D-0016準拠のin-memory Capture Candidate型、DailyLog capture payload、8状態の純粋なlifecycleと明示的な遷移失敗。保存処理とは未接続。
+- **未実装**: Capture Candidate確認UI、DailyLogApplicationServiceへのcommit接続、Candidate / 会話の永続化、自由会話理解、永続的な会話履歴、Conversation consumer接続、LLM生成、Calendar UI・外部カレンダー連携、ウェアラブル連携、学習型機械学習・オンライン学習、Personal Discovery Engineとしての統合。
 
 `SleepRecord.source`の`SMARTWATCH`は将来互換の値にすぎず、ウェアラブル連携ではない。日付・timezone単位の集計はCalendar連携ではない。固定ルールによるAnalyzer / Relationship / Predictionは学習型機械学習ではない。
 
@@ -21,11 +21,12 @@ lastUpdated: "2026-08-02"
 
 **v0.1.0-alpha / Conversation-First Roadmap Stage 1: Conversation Shell**
 
-現在はFoundationの機能に加え、保存や人物理解を自動化しないin-memory Conversation Shellを含む。Stage 2 Conversation Captureは設計を開始し、D-0016の境界だけがAcceptedである。Capture Candidate、UI、保存処理は未実装である。
+現在はFoundationの機能に加え、保存や人物理解を自動化しないin-memory Conversation Shellと、保存前だけを表すCapture Candidate modelを含む。Capture UI、永続化、DailyLogの実保存は未実装である。
 
 ## 完了済み
 
 - Issue #55: 主要7画面のレスポンシブ基盤。600px以下では7タブを44px以上の1行横スクロールレールとし、active tabを`aria-current`でも識別可能にした。共通の幅計算・長文折り返しと主要grid/form/cardの狭幅対応、および再利用可能な手動QA手順を追加した。
+- Issue #75: Capture CandidateのDomain / Application model。DailyLog payloadの値由来、8状態lifecycle、READY確認、二重commit防止、FAILEDからの再試行、終端状態を純粋関数で実装した。
 - 初期開発体制のセットアップ。
 - AI Collaboration Protocol v1.0の制定。
 - Compass Core Philosophy v1.0の策定。
@@ -69,7 +70,7 @@ lastUpdated: "2026-08-02"
 ### 未実装
 
 - ConversationをFormal UserModel Resolverへ正式接続する新フロー。
-- Capture CandidateのDomain / Application model、確認UI、保存処理、自由会話理解・永続的な会話履歴・LLM生成・Prompt Version管理・Candidate Prioritizer・Calendar連携・ウェアラブル連携・学習型Machine Learning。
+- Capture Candidateの確認UI、保存処理、DailyLogApplicationService接続、自由会話理解・永続的な会話履歴・LLM生成・Prompt Version管理・Candidate Prioritizer・Calendar連携・ウェアラブル連携・学習型Machine Learning。Domain / Application modelのみ実装済み。
 - WeatherのDomain / Repository / Base Location / Forecast・Historical取得、限定的な自動取得、読み取り専用のWeather × Fatigue ObservationとPredictionは実装済み。ただし、汎用External Context自動取得、WeatherからFormal Pipelineへの接続、学習型予測は未実装。
 
 ## 実装済み項目
