@@ -11,7 +11,7 @@ Every AI assistant must read this document before starting work and update it be
 
 D-0016で設計したin-memory Capture CandidateのDomain / Application modelを実装した。構造化DailyLog payloadはdate、mood、fatigue、note、eventsと値の由来を持ち、mood / fatigueは本人明示値だけがREADYになれる。
 
-実装済みなのは型と純粋な状態遷移だけである。READY / COMMITTEDの分離、COMMITTING中の二重保存拒否、FAILED後の値保持と再試行、編集後の再確認、終端状態をモデルで保証する。次の段階は別Issueで確認UIと既存DailyLogApplicationServiceへのcommit adapterを設計する。
+実装済みなのは型と純粋な状態遷移、およびCOMMITTINGから生成するdeep-copy `CaptureCommitRequest`までである。READY / COMMITTEDの分離、COMMITTING中の二重保存拒否、retryableなFAILED後の値保持と再試行、編集後の再確認、終端状態、commit / failure metadata検証をモデルで保証する。別同意フローがないためセンシティブ候補はREADYにできない。次の段階は別Issueで確認UIと既存DailyLogApplicationServiceへのcommit adapterを設計する。
 
 次の実装では、以下を禁止する。
 

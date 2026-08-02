@@ -1,6 +1,7 @@
 import type {
   CaptureCandidate,
   CaptureCandidateStatus,
+  CaptureCommitRequest,
   CaptureCommitResultReference,
   CaptureFailureInformation,
   CreateCaptureCandidateInput,
@@ -32,13 +33,16 @@ export type CaptureCandidateValidationError =
   | 'INVALID_MOOD'
   | 'INVALID_FATIGUE'
   | 'INVALID_NOTE'
-  | 'INVALID_EVENTS';
+  | 'INVALID_EVENTS'
+  | 'SENSITIVE_CAPTURE_NOT_SUPPORTED'
+  | 'INVALID_COMMIT_RESULT'
+  | 'INVALID_FAILURE_INFORMATION';
 
 export type CaptureCandidateTransitionResult =
   | { ok: true; candidate: CaptureCandidate }
   | {
       ok: false;
-      reason: 'INVALID_TRANSITION' | 'TERMINAL_STATE' | 'NOT_READY';
+      reason: 'INVALID_TRANSITION' | 'TERMINAL_STATE' | 'NOT_READY' | 'NOT_RETRYABLE' | 'INVALID_METADATA';
       event: CaptureCandidateEvent;
       from: CaptureCandidateStatus;
       validationErrors?: CaptureCandidateValidationError[];
@@ -47,6 +51,10 @@ export type CaptureCandidateTransitionResult =
 export type CreateCaptureCandidateResult =
   | { ok: true; candidate: CaptureCandidate }
   | { ok: false; reason: 'INVALID_CANDIDATE'; validationErrors: CaptureCandidateValidationError[] };
+
+export type CreateCaptureCommitRequestResult =
+  | { ok: true; request: CaptureCommitRequest }
+  | { ok: false; reason: 'INVALID_TRANSITION' | 'TERMINAL_STATE'; from: CaptureCandidateStatus };
 
 const TERMINAL_STATUSES: ReadonlySet<CaptureCandidateStatus> = new Set(['COMMITTED', 'REJECTED', 'CANCELLED']);
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -91,6 +99,7 @@ function readinessErrors(candidate: CaptureCandidate): CaptureCandidateValidatio
   if (candidate.proposedPayload.date !== candidate.targetDate) errors.push('PAYLOAD_DATE_MISMATCH');
   if (candidate.proposedPayload.mood.value === null || candidate.proposedPayload.mood.origin !== 'USER_EXPLICIT') errors.push('INVALID_MOOD');
   if (candidate.proposedPayload.fatigue.value === null || candidate.proposedPayload.fatigue.origin !== 'USER_EXPLICIT') errors.push('INVALID_FATIGUE');
+  if (candidate.sensitivity === 'SENSITIVE_REQUIRES_SEPARATE_CONSENT') errors.push('SENSITIVE_CAPTURE_NOT_SUPPORTED');
   return [...new Set(errors)];
 }
 
@@ -155,18 +164,50 @@ export function markCaptureCandidateReady(candidate: CaptureCandidate, now: stri
 export const beginCaptureCandidateCommit = (candidate: CaptureCandidate, now: string): CaptureCandidateTransitionResult =>
   transition(candidate, 'BEGIN_COMMIT', ['READY'], 'COMMITTING', now);
 
+export function createCaptureCommitRequest(candidate: CaptureCandidate): CreateCaptureCommitRequestResult {
+  if (candidate.status !== 'COMMITTING') {
+    return {
+      ok: false,
+      reason: TERMINAL_STATUSES.has(candidate.status) ? 'TERMINAL_STATE' : 'INVALID_TRANSITION',
+      from: candidate.status,
+    };
+  }
+  return {
+    ok: true,
+    request: {
+      candidateId: candidate.id,
+      destinationType: candidate.destinationType,
+      targetDate: candidate.targetDate,
+      payload: clonePayload(candidate.proposedPayload),
+      purpose: candidate.purpose,
+      sourceMessageId: candidate.sourceMessageId,
+      sourceExcerpt: candidate.sourceExcerpt,
+      conversationOccurredAt: candidate.conversationOccurredAt,
+      extraction: { ...candidate.extraction },
+      sensitivity: candidate.sensitivity,
+    },
+  };
+}
+
 export function markCaptureCandidateCommitted(candidate: CaptureCandidate, reference: CaptureCommitResultReference, now: string): CaptureCandidateTransitionResult {
   if (candidate.status !== 'COMMITTING') return rejectTransition(candidate, 'MARK_COMMITTED');
+  if (reference.recordId.trim() === '' || !isTimestamp(reference.committedAt) || reference.destinationType !== candidate.destinationType) {
+    return { ok: false, reason: 'INVALID_METADATA', event: 'MARK_COMMITTED', from: candidate.status, validationErrors: ['INVALID_COMMIT_RESULT'] };
+  }
   return { ok: true, candidate: { ...candidate, status: 'COMMITTED', updatedAt: now, commitResultReference: { ...reference }, failure: null } };
 }
 
 export function markCaptureCandidateFailed(candidate: CaptureCandidate, failure: CaptureFailureInformation, now: string): CaptureCandidateTransitionResult {
   if (candidate.status !== 'COMMITTING') return rejectTransition(candidate, 'MARK_FAILED');
+  if (failure.code.trim() === '' || failure.message.trim() === '' || !isTimestamp(failure.failedAt)) {
+    return { ok: false, reason: 'INVALID_METADATA', event: 'MARK_FAILED', from: candidate.status, validationErrors: ['INVALID_FAILURE_INFORMATION'] };
+  }
   return { ok: true, candidate: { ...candidate, status: 'FAILED', updatedAt: now, failure: { ...failure }, commitResultReference: null } };
 }
 
 export function retryCaptureCandidate(candidate: CaptureCandidate, now: string): CaptureCandidateTransitionResult {
   if (candidate.status !== 'FAILED') return rejectTransition(candidate, 'RETRY');
+  if (candidate.failure?.retryable !== true) return { ok: false, reason: 'NOT_RETRYABLE', event: 'RETRY', from: candidate.status };
   const errors = readinessErrors(candidate);
   if (errors.length > 0) return { ok: false, reason: 'NOT_READY', event: 'RETRY', from: candidate.status, validationErrors: errors };
   return { ok: true, candidate: { ...candidate, status: 'READY', updatedAt: now, failure: null } };

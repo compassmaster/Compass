@@ -5,6 +5,7 @@
 - D-0016準拠のCapture Candidate型、構造化DailyLog payload、8状態lifecycleと純粋な遷移関数を実装済み。
 - `READY`はmood / fatigueがともに`USER_EXPLICIT`で必須値を持つ場合だけ許可する。編集後は`EDITING`に留まり、再確認が必要である。
 - `READY`と`COMMITTED`を分離し、`COMMITTING`中の二重commitを拒否する。失敗時もpayload、source、deduplicationKeyをin-memoryで保持し、`FAILED → READY`の再試行を提供する。
+- COMMITTING Candidateからだけ、将来のadapter向け`CaptureCommitRequest`をdeep copyで生成できる。commit成功・失敗metadataを検証し、非retryable failureの再試行とセンシティブ候補のREADY化を拒否する。
 - UI、Repository、localStorage、backup schema、DailyLog型、DailyLogApplicationServiceへの接続、Conversation transcript保存は未実装である。
 
 ## 2026-08-01 Product Direction

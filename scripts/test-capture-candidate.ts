@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import {
   applyCaptureCandidateEdit, beginCaptureCandidateCommit, beginCaptureCandidateEdit,
-  cancelCaptureCandidate, createCaptureCandidate, markCaptureCandidateCommitted,
+  cancelCaptureCandidate, createCaptureCandidate, createCaptureCommitRequest, markCaptureCandidateCommitted,
   markCaptureCandidateFailed, markCaptureCandidateReady, rejectCaptureCandidate,
   retryCaptureCandidate,
 } from '../src/features/conversation/session/captureCandidateLifecycle.ts';
@@ -51,6 +51,21 @@ if (!ready.ok) throw new Error('mark ready failed');
 const committing = beginCaptureCandidateCommit(ready.candidate, at(5));
 assert.equal(committing.ok, true);
 if (!committing.ok) throw new Error('begin commit failed');
+const commitRequest = createCaptureCommitRequest(committing.candidate);
+assert.equal(commitRequest.ok, true, 'COMMITTING can produce a commit request');
+if (!commitRequest.ok) throw new Error('commit request failed');
+assert.equal(commitRequest.request.candidateId, committing.candidate.id);
+assert.deepEqual(commitRequest.request.payload, committing.candidate.proposedPayload);
+assert.equal(createCaptureCommitRequest(ready.candidate).ok, false, 'READY cannot produce a commit request');
+assert.equal(createCaptureCommitRequest(created.candidate).ok, false, 'PROPOSED cannot produce a commit request');
+commitRequest.request.payload.events.push('requestだけの変更');
+commitRequest.request.payload.mood.value = 1;
+assert.deepEqual(committing.candidate.proposedPayload.events, ['散歩'], 'request mutation does not affect candidate');
+assert.equal(committing.candidate.proposedPayload.mood.value, 4);
+committing.candidate.proposedPayload.events.push('candidateだけの変更');
+committing.candidate.proposedPayload.fatigue.value = 5;
+assert.deepEqual(commitRequest.request.payload.events, ['散歩', 'requestだけの変更'], 'candidate mutation does not affect request');
+assert.equal(commitRequest.request.payload.fatigue.value, 2);
 assert.deepEqual(beginCaptureCandidateCommit(committing.candidate, at(6)), {
   ok: false, reason: 'INVALID_TRANSITION', event: 'BEGIN_COMMIT', from: 'COMMITTING',
 }, 'double commit is explicitly rejected');
@@ -61,6 +76,26 @@ assert.equal(committed.ok, true, 'READY -> COMMITTING -> COMMITTED');
 if (!committed.ok) throw new Error('mark committed failed');
 assert.equal(committed.candidate.commitResultReference?.recordId, 'daily-log-1');
 assert.equal(beginCaptureCandidateEdit(committed.candidate, at(7)).ok, false, 'COMMITTED is terminal');
+
+for (const invalidReference of [
+  { destinationType: 'DAILY_LOG' as const, recordId: '', committedAt: at(6) },
+  { destinationType: 'DAILY_LOG' as const, recordId: 'log-1', committedAt: 'not-a-date' },
+  { destinationType: 'OTHER' as 'DAILY_LOG', recordId: 'log-1', committedAt: at(6) },
+]) {
+  const result = markCaptureCandidateCommitted(committing.candidate, invalidReference, at(6));
+  assert.equal(result.ok, false, 'invalid commit result is rejected');
+  if (!result.ok) assert.equal(result.reason, 'INVALID_METADATA');
+}
+
+for (const invalidFailure of [
+  { code: '', message: '失敗', failedAt: at(8), retryable: true },
+  { code: 'SAVE_FAILED', message: '', failedAt: at(8), retryable: true },
+  { code: 'SAVE_FAILED', message: '失敗', failedAt: 'not-a-date', retryable: true },
+]) {
+  const result = markCaptureCandidateFailed(committing.candidate, invalidFailure, at(8));
+  assert.equal(result.ok, false, 'invalid failure information is rejected');
+  if (!result.ok) assert.equal(result.reason, 'INVALID_METADATA');
+}
 
 const committingForFailure = beginCaptureCandidateCommit(ready.candidate, at(7));
 if (!committingForFailure.ok) throw new Error('failure fixture commit failed');
@@ -77,6 +112,14 @@ const retried = retryCaptureCandidate(failed.candidate, at(9));
 assert.equal(retried.ok, true, 'FAILED -> READY');
 if (!retried.ok) throw new Error('retry failed');
 assert.equal(beginCaptureCandidateCommit(retried.candidate, at(10)).ok, true, 'retry can begin commit again');
+
+const nonRetryable = markCaptureCandidateFailed(committingForFailure.candidate, {
+  code: 'PERMANENT_FAILURE', message: '再試行できません', failedAt: at(8), retryable: false,
+}, at(8));
+if (!nonRetryable.ok) throw new Error('non-retryable fixture failed');
+const refusedRetry = retryCaptureCandidate(nonRetryable.candidate, at(9));
+assert.equal(refusedRetry.ok, false, 'retryable false cannot retry');
+if (!refusedRetry.ok) assert.equal(refusedRetry.reason, 'NOT_RETRYABLE');
 
 assert.equal(beginCaptureCandidateCommit(created.candidate, at(5)).ok, false, 'only READY can commit');
 assert.equal(markCaptureCandidateReady(created.candidate, at(5)).ok, false, 'invalid transition is rejected');
@@ -97,6 +140,17 @@ const inferredFatigue = applyCaptureCandidateEdit(editing.candidate, {
 }, at(3));
 if (!inferredFatigue.ok) throw new Error('fatigue fixture failed');
 assert.equal(markCaptureCandidateReady(inferredFatigue.candidate, at(4)).ok, false, 'inferred fatigue must not become READY');
+
+const sensitiveCreated = createCaptureCandidate({
+  ...validInput, id: 'sensitive-1', sensitivity: 'SENSITIVE_REQUIRES_SEPARATE_CONSENT', proposedPayload: explicitPayload,
+});
+if (!sensitiveCreated.ok) throw new Error('sensitive fixture creation failed');
+const sensitiveEditing = beginCaptureCandidateEdit(sensitiveCreated.candidate, at(2));
+if (!sensitiveEditing.ok) throw new Error('sensitive edit failed');
+const sensitiveReady = markCaptureCandidateReady(sensitiveEditing.candidate, at(3));
+assert.equal(sensitiveReady.ok, false, 'sensitive candidate cannot become READY in Stage 2 v1');
+if (!sensitiveReady.ok) assert.ok(sensitiveReady.validationErrors?.includes('SENSITIVE_CAPTURE_NOT_SUPPORTED'));
+assert.equal(beginCaptureCandidateCommit(sensitiveEditing.candidate, at(4)).ok, false, 'sensitive candidate cannot reach COMMITTING');
 
 const implementation = await readFile(new URL('../src/features/conversation/session/captureCandidateLifecycle.ts', import.meta.url), 'utf8');
 assert.doesNotMatch(implementation, /localStorage|Repository|backup|DailyLogApplicationService/, 'model remains dependency-free');

@@ -42,6 +42,20 @@ export interface CaptureCommitResultReference {
   committedAt: string;
 }
 
+/** 将来のcommit adapterへ渡す、COMMITTING開始時点の不変な値のコピー。 */
+export interface CaptureCommitRequest {
+  candidateId: CaptureCandidateId;
+  destinationType: CaptureDestinationType;
+  targetDate: DateString;
+  payload: DailyLogCapturePayload;
+  purpose: string;
+  sourceMessageId: string;
+  sourceExcerpt: string;
+  conversationOccurredAt: string;
+  extraction: CaptureExtraction;
+  sensitivity: CaptureSensitivityClassification;
+}
+
 export interface CaptureFailureInformation {
   code: string;
   message: string;
