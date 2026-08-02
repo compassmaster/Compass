@@ -392,3 +392,9 @@ DailyLogの編集・削除成功時は`DailyLogList`の`onChanged`から`LogTab`
 - AGREEへの変更は理解の作成、AGREEからの変更は現在の理解からの解除、それ以外は反映状態不変と履歴記録を説明する。
 - Responseの`answer`または`respondedAt`が外部更新された場合はcontrolsをremountして未保存編集を破棄する。確認はキャンセル/Escape/フォーカス移動と復帰を提供し、SUBMITTING状態と同期refで連打を防ぐ。
 - テストは状態遷移を操作し、一時選択・保存・キャンセルではcallback 0回、確定と確定連打では合計1回であることを検証する。
+
+## 2026-08-02 Conversation Shell handoff (Issue #66)
+
+Conversation sessionの所有境界は`App`であり、Conversationタブのunmount/remountでは保持されるが、RepositoryやlocalStorageへ保存しないためブラウザ再読込で消える。`SUBMIT_TEXT`と`RESET`は純粋なsession transitionで扱う。Quick ActionはApp callbackのみを使い、Compass Map導線では既存のFormal UserModel refreshを維持する。
+
+現在の自由会話は入力内容を理解・分類・分析しておらず、Conversation Capture、会話永続化、LLM接続も未実装である。これらを実装済みに見せる応答や、Conversation featureから既存Application Service / Repositoryへ直接接続する変更を行わないこと。
