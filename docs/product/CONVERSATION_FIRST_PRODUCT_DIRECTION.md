@@ -231,12 +231,12 @@ Conversationは入力チャネルであって、会話ターンそのものを�
 各Stageは方向性であり、着手前に個別要件、プライバシー設計、必要なADRを定める。前段の信頼・訂正・削除境界を迂回して次段へ進まない。
 
 - **Stage 0 — Foundation（現在）**: 手入力記録、限定Weather取得、説明可能な固定Analyzer、確認済みUnderstanding、Understanding履歴、読み取り専用Relationship / Prediction / Reflection / Compass Mapを安定させる。
-1. **Conversation Shell**: 保存や人物理解を自動化しない会話UIを設け、チャットをPrimary Experienceにする最小の相談体験を検証する。
-2. **Conversation Capture**: 質問票にしないQuestioning principleとRecord boundaryに従い、保存先・目的を示した確認、修正、却下、削除を成立させる。
-3. **Calendar / Life Timeline**: 記録、予定、出来事を人生の時間軸で参照し、過去・現在・未来を同じ相談文脈で扱う。
-4. **Understanding-aware Conversation**: 確認済みUnderstanding、早期個人化、根拠の段階的開示、Analysis Surfacing PolicyをConversationへ読み取り中心で統合する。
-5. **Automatic Data Acquisition**: Calendar・ウェアラブル等を、接続単位の同意、Record metadata、鮮度、比較可能性、競合、停止・削除とともに段階導入する。
-6. **Personal Discovery Engine**: 複数条件、時間差、累積負荷、再現性、例外等を扱うDiscovery learning loopを導入し、十分なデータと評価方法がある場合だけ説明可能な学習手段を検討する。
+- **Stage 1 — Conversation Shell**: 保存や人物理解を自動化しない会話UIを設け、チャットをPrimary Experienceにする最小の相談体験を検証する。
+- **Stage 2 — Conversation Capture**: 質問票にしないQuestioning principleとRecord boundaryに従い、保存先・目的を示した確認、修正、却下、削除を成立させる。
+- **Stage 3 — Calendar / Life Timeline**: 記録、予定、出来事を人生の時間軸で参照し、過去・現在・未来を同じ相談文脈で扱う。
+- **Stage 4 — Understanding-aware Conversation**: 確認済みUnderstanding、早期個人化、根拠の段階的開示、Analysis Surfacing PolicyをConversationへ読み取り中心で統合する。
+- **Stage 5 — Automatic Data Acquisition**: Calendar・ウェアラブル等を、接続単位の同意、Record metadata、鮮度、比較可能性、競合、停止・削除とともに段階導入する。
+- **Stage 6 — Personal Discovery Engine**: 複数条件、時間差、累積負荷、再現性、例外等を扱うDiscovery learning loopを導入し、十分なデータと評価方法がある場合だけ説明可能な学習手段を検討する。
 
 ## Non-goals
 

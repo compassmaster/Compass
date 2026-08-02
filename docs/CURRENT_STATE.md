@@ -18,9 +18,9 @@ lastUpdated: "2026-08-02"
 
 ## 現在のVersion
 
-**v0.1.0-alpha / Conversation-First Roadmap Stage 1: Foundation**
+**v0.1.0-alpha / Conversation-First Roadmap Stage 0: Foundation**
 
-現在のFoundationは、記録・編集・backup、Weather限定取得、日次・7日間集計、固定分析、Relationship / Prediction、正式Understanding Pipelineと履歴、Formal UserModel、読み取り専用Compass Map / Reflection、および主要7画面のレスポンシブ基盤までを含む。ConversationをPrimary ExperienceにするStage 2以降は未実装である。
+現在のFoundationは、記録・編集・backup、Weather限定取得、日次・7日間集計、固定分析、Relationship / Prediction、正式Understanding Pipelineと履歴、Formal UserModel、読み取り専用Compass Map / Reflection、および主要7画面のレスポンシブ基盤までを含む。ConversationをPrimary ExperienceにするStage 1: Conversation Shell以降は未実装である。
 
 ## 完了済み
 
