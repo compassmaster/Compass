@@ -1,14 +1,14 @@
 import type { Message } from '../types/message.ts';
 import type { ActionableConversationIntent } from '../types/intent.ts';
 import { interpretConversationInput } from '../interpreter/conversationInterpreter.ts';
-import { buildConversationResponse } from '../interpreter/conversationResponseBuilder.ts';
+import { buildConversationResponse, buildDailyLogCaptureBlockedResponse, buildDailyLogFlowInProgressResponse, buildInvalidConversationOccurredAtResponse } from '../interpreter/conversationResponseBuilder.ts';
 import type { CaptureCandidate, CaptureCommitRequest, DailyLogCapturePayload } from '../types/captureCandidate.ts';
 import { applyCaptureCandidateEdit, beginCaptureCandidateCommit, beginCaptureCandidateEdit, cancelCaptureCandidate, createCaptureCommitRequest, markCaptureCandidateReady, rejectCaptureCandidate, type CaptureCandidateValidationError } from './captureCandidateLifecycle.ts';
 import { answerDailyLogCaptureStep, cancelDailyLogCaptureFlow, completeDailyLogCaptureFlow, moveBackDailyLogCaptureFlow, startDailyLogCaptureFlow, type DailyLogCaptureAnswer, type DailyLogCaptureFlow } from './dailyLogCaptureFlow.ts';
 
 export type ConversationSession = { messages: Message[]; nextMessageNumber: number; activeCaptureCandidate: CaptureCandidate | null; dailyLogCaptureFlow: DailyLogCaptureFlow | null };
 export type ConversationSessionEvent =
-  | { type: 'SUBMIT_TEXT'; text: string }
+  | { type: 'SUBMIT_TEXT'; text: string; occurredAt: string }
   | { type: 'RESET' };
 
 const WELCOME_MESSAGE = 'こんにちは。今の気持ちや考えていることを、まとまっていなくても自由に書けます。';
@@ -24,10 +24,15 @@ export function transitionConversationSession(session: ConversationSession, even
   const userMessageNumber = session.nextMessageNumber;
   const assistantMessageNumber = userMessageNumber + 1;
   const intent = interpretConversationInput(text);
-  const response = buildConversationResponse(intent);
+  const validOccurredAt = event.occurredAt.trim() !== '' && !Number.isNaN(Date.parse(event.occurredAt));
+  let response = session.dailyLogCaptureFlow
+    ? buildDailyLogFlowInProgressResponse()
+    : buildConversationResponse(intent);
   let dailyLogCaptureFlow = session.dailyLogCaptureFlow;
-  if (intent === 'RECORD_DAILY_LOG' && !session.activeCaptureCandidate && !dailyLogCaptureFlow) {
-    const started = startDailyLogCaptureFlow(null, { sourceMessageId: `message-${userMessageNumber}`, sourceExcerpt: text, startedAt: new Date().toISOString(), deduplicationKey: `daily-log-flow-${userMessageNumber}` });
+  if (intent === 'RECORD_DAILY_LOG' && !dailyLogCaptureFlow && session.activeCaptureCandidate) response = buildDailyLogCaptureBlockedResponse();
+  else if (intent === 'RECORD_DAILY_LOG' && !dailyLogCaptureFlow && !validOccurredAt) response = buildInvalidConversationOccurredAtResponse();
+  else if (intent === 'RECORD_DAILY_LOG' && !session.activeCaptureCandidate && !dailyLogCaptureFlow) {
+    const started = startDailyLogCaptureFlow(null, { sourceMessageId: `message-${userMessageNumber}`, sourceExcerpt: text, startedAt: event.occurredAt, deduplicationKey: `daily-log-flow-${userMessageNumber}` });
     if (started.ok) dailyLogCaptureFlow = started.flow;
   }
   return {
@@ -94,6 +99,7 @@ export type ClaimConversationActionResult = {
 };
 
 export function claimConversationAction(session: ConversationSession, messageId: string): ClaimConversationActionResult {
+  if (session.dailyLogCaptureFlow) return { session };
   const message = session.messages.find(({ id }) => id === messageId);
   if (!message?.action || message.action.executed) return { session };
   return {

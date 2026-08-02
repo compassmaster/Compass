@@ -36,7 +36,7 @@ assert.match(tab, /role="list" aria-label="メッセージ一覧"/);
 assert.match(tab, /aria-label="メッセージ一覧" tabIndex=\{0\}/);
 assert.match(tab, /role="listitem"/);
 assert.match(tab, /<article key=\{message\.id\}/);
-assert.match(tab, /aria-disabled=\{draft\.trim\(\)\.length === 0\}/);
+assert.match(tab, /aria-disabled=\{draft\.trim\(\)\.length === 0 \|\| Boolean\(session\.dailyLogCaptureFlow\)\}/);
 assert.match(app, /TAB_FOCUS_TARGETS/);
 assert.match(app, /target\?\.focus\(\)/);
 assert.match(app, /aria-current=\{activeTab === 'conversation' \? 'page'/);

@@ -50,7 +50,7 @@ export function ConversationTab({
   const submittingRef = useRef(false);
   const claimedActionIdsRef = useRef(new Set<string>());
   const captureCommitGuardRef = useRef(emptyCaptureCommitRequestGuard());
-  const reviewRef = useRef<HTMLDivElement>(null);
+  const reviewRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     submittingRef.current = false;
@@ -87,7 +87,7 @@ export function ConversationTab({
     event.preventDefault();
     if (draft.trim().length === 0 || submittingRef.current) return;
     submittingRef.current = true;
-    applySession(transitionConversationSession(session, { type: 'SUBMIT_TEXT', text: draft }));
+    applySession(transitionConversationSession(session, { type: 'SUBMIT_TEXT', text: draft, occurredAt: new Date().toISOString() }));
     setDraft('');
     focusInput();
   };
@@ -118,6 +118,7 @@ export function ConversationTab({
   };
 
   const handleMessageAction = (messageId: string) => {
+    if (session.dailyLogCaptureFlow) return;
     if (claimedActionIdsRef.current.has(messageId)) return;
     claimedActionIdsRef.current.add(messageId);
     const result = executeConversationAction(session, messageId, actionCallbacks);
@@ -153,7 +154,7 @@ export function ConversationTab({
               <button
                 type="button"
                 className="conversation-message-action"
-                disabled={message.action.executed}
+                disabled={message.action.executed || Boolean(session.dailyLogCaptureFlow)}
                 onClick={() => handleMessageAction(message.id)}
               >
                 {message.action.executed ? '移動しました' : message.action.label}
@@ -165,32 +166,32 @@ export function ConversationTab({
       {session.dailyLogCaptureFlow && <DailyLogCaptureFlowCard key={session.dailyLogCaptureFlow.step} flow={session.dailyLogCaptureFlow} onAnswer={handleFlowAnswer}
         onBack={() => onSessionChange(backActiveDailyLogCaptureFlow(session).session)}
         onCancel={() => { onSessionChange(cancelActiveDailyLogCaptureFlow(session).session); requestAnimationFrame(focusInput); }} />}
-      {session.activeCaptureCandidate && <div ref={reviewRef} tabIndex={-1}><CaptureCandidateReviewCard candidate={session.activeCaptureCandidate}
+      {session.activeCaptureCandidate && <CaptureCandidateReviewCard ref={reviewRef} candidate={session.activeCaptureCandidate}
         onBeginEdit={() => onSessionChange(beginActiveCaptureCandidateEdit(session, new Date().toISOString()).session)}
         onApplyEdit={(payload: DailyLogCapturePayload) => { const result = applyActiveCaptureCandidateEdit(session, payload, new Date().toISOString()); onSessionChange(result.session); return { error: result.error, validationErrors: result.validationErrors }; }}
         onMarkReady={() => { const result = markActiveCaptureCandidateReady(session, new Date().toISOString()); onSessionChange(result.session); return { error: result.error, validationErrors: result.validationErrors }; }}
         onReject={() => { onSessionChange(rejectActiveCaptureCandidate(session, new Date().toISOString()).session); requestAnimationFrame(focusInput); }}
         onCancel={() => { onSessionChange(cancelActiveCaptureCandidate(session, new Date().toISOString()).session); requestAnimationFrame(focusInput); }}
-        onRequestCommit={() => { if (captureCommitGuardRef.current.requestIssued) return undefined; const result = requestActiveCaptureCandidateCommit(session, new Date().toISOString()); onSessionChange(result.session); if (result.commitRequest) { captureCommitGuardRef.current = recordCaptureCommitRequest(session.activeCaptureCandidate!.id); onCaptureCommitRequest(result.commitRequest); } return result.commitRequest; }} /></div>}
+        onRequestCommit={() => { if (captureCommitGuardRef.current.requestIssued) return undefined; const result = requestActiveCaptureCandidateCommit(session, new Date().toISOString()); onSessionChange(result.session); if (result.commitRequest) { captureCommitGuardRef.current = recordCaptureCommitRequest(session.activeCaptureCandidate!.id); onCaptureCommitRequest(result.commitRequest); } return result.commitRequest; }} />}
       <p className="conversation-live-region" aria-live="polite" aria-atomic="true">
         {announcement && <span key={announcement.messageId}>{announcement.text}</span>}
       </p>
       <form className="conversation-composer" onSubmit={handleSubmit}>
         <label htmlFor="conversation-input">自由に書く</label>
-        <textarea ref={inputRef} id="conversation-input" value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={handleKeyDown} placeholder="今の気持ちや、考えたいことを書いてください" rows={3} />
+        <textarea ref={inputRef} id="conversation-input" value={draft} disabled={Boolean(session.dailyLogCaptureFlow)} onChange={(event) => setDraft(event.target.value)} onKeyDown={handleKeyDown} placeholder={session.dailyLogCaptureFlow ? '現在の記録を完了または取消してください' : '今の気持ちや、考えたいことを書いてください'} rows={3} />
         <div className="conversation-composer-actions">
           <button type="button" className="conversation-reset" onClick={handleReset}>会話を最初から始める</button>
-          <button type="submit" disabled={draft.trim().length === 0} aria-disabled={draft.trim().length === 0}>{draft.trim().length === 0 ? '送信（入力待ち）' : '送信'}</button>
+          <button type="submit" disabled={draft.trim().length === 0 || Boolean(session.dailyLogCaptureFlow)} aria-disabled={draft.trim().length === 0 || Boolean(session.dailyLogCaptureFlow)}>{session.dailyLogCaptureFlow ? '記録を進行中' : draft.trim().length === 0 ? '送信（入力待ち）' : '送信'}</button>
         </div>
       </form>
       <aside className="conversation-quick-actions" aria-labelledby="quick-actions-title">
         <h3 id="quick-actions-title">既存の機能を使う</h3>
         <p>選択した画面へ移動します。会話の内容は引き継ぎません。</p>
         <div>
-          <button type="button" onClick={onNavigateToLog}>今日の状態を記録する</button>
-          <button type="button" onClick={onNavigateToPrediction}>明日の見通しを見る</button>
-          <button type="button" onClick={onNavigateToCompassMap}>Compass Mapを見る</button>
-          <button type="button" onClick={onNavigateToDetails}>詳しい画面を見る</button>
+          <button type="button" disabled={Boolean(session.dailyLogCaptureFlow)} onClick={onNavigateToLog}>今日の状態を記録する</button>
+          <button type="button" disabled={Boolean(session.dailyLogCaptureFlow)} onClick={onNavigateToPrediction}>明日の見通しを見る</button>
+          <button type="button" disabled={Boolean(session.dailyLogCaptureFlow)} onClick={onNavigateToCompassMap}>Compass Mapを見る</button>
+          <button type="button" disabled={Boolean(session.dailyLogCaptureFlow)} onClick={onNavigateToDetails}>詳しい画面を見る</button>
         </div>
       </aside>
     </section>

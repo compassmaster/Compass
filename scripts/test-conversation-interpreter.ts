@@ -30,7 +30,8 @@ const ambiguous = buildConversationResponse('AMBIGUOUS_RECORD');
 assert.equal((ambiguous.text.match(/[？?]/g) ?? []).length, 1, 'ambiguous record asks exactly one question');
 assert.equal(ambiguous.action, undefined);
 assert.equal(buildConversationResponse('UNKNOWN').action, undefined);
-for (const intent of ['RECORD_DAILY_LOG', 'RECORD_SLEEP', 'VIEW_PREDICTION', 'VIEW_COMPASS_MAP', 'VIEW_DETAILS', 'VIEW_WEATHER', 'VIEW_BACKUP'] as const) {
+assert.equal(buildConversationResponse('RECORD_DAILY_LOG').action, undefined);
+for (const intent of ['RECORD_SLEEP', 'VIEW_PREDICTION', 'VIEW_COMPASS_MAP', 'VIEW_DETAILS', 'VIEW_WEATHER', 'VIEW_BACKUP'] as const) {
   assert.equal(buildConversationResponse(intent).action?.intent, intent);
 }
 for (const forbidden of ['理解しました', '分析しました', '覚えておきます']) {

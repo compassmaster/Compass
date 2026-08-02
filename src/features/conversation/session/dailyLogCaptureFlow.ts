@@ -28,7 +28,8 @@ export type DailyLogCaptureAnswer =
   | { step: 'NOTE'; value: string }
   | { step: 'EVENTS'; value: string | string[] };
 
-export type FlowResult = { ok: true; flow: DailyLogCaptureFlow | null } | { ok: false; reason: 'FLOW_ALREADY_ACTIVE' | 'NO_ACTIVE_FLOW' | 'STEP_MISMATCH' | 'INVALID_DATE' | 'INVALID_SCALE' | 'FLOW_INCOMPLETE' | 'CANDIDATE_CREATION_FAILED' };
+export type DailyLogCaptureFlowError = 'FLOW_ALREADY_ACTIVE' | 'NO_ACTIVE_FLOW' | 'STEP_MISMATCH' | 'INVALID_DATE' | 'INVALID_SCALE' | 'FLOW_INCOMPLETE' | 'CANDIDATE_CREATION_FAILED' | 'ALREADY_AT_FIRST_STEP';
+export type FlowResult = { ok: true; flow: DailyLogCaptureFlow | null } | { ok: false; reason: DailyLogCaptureFlowError };
 export type CompleteFlowResult = { ok: true; flow: null; candidate: CaptureCandidate } | Exclude<FlowResult, { ok: true }>;
 
 const STEPS: readonly DailyLogCaptureStep[] = ['DATE', 'MOOD', 'FATIGUE', 'NOTE', 'EVENTS'];
@@ -64,6 +65,7 @@ export function answerDailyLogCaptureStep(flow: DailyLogCaptureFlow | null, answ
 export function moveBackDailyLogCaptureFlow(flow: DailyLogCaptureFlow | null): FlowResult {
   if (!flow) return { ok: false, reason: 'NO_ACTIVE_FLOW' };
   const index = STEPS.indexOf(flow.step);
+  if (index === 0) return { ok: false, reason: 'ALREADY_AT_FIRST_STEP' };
   return { ok: true, flow: { ...flow, step: STEPS[Math.max(0, index - 1)] } };
 }
 

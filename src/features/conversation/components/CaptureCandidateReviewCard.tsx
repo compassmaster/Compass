@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { forwardRef, useEffect, useRef, useState } from 'react';
 import type { CaptureCandidate, CaptureCommitRequest, DailyLogCapturePayload } from '../types/captureCandidate.ts';
 import type { CaptureCandidateValidationError } from '../session/captureCandidateLifecycle.ts';
 import {
@@ -24,7 +24,7 @@ type Props = {
   onRequestCommit: () => CaptureCommitRequest | undefined;
 };
 
-export function CaptureCandidateReviewCard(props: Props) {
+export const CaptureCandidateReviewCard = forwardRef<HTMLElement, Props>(function CaptureCandidateReviewCard(props, reviewRef) {
   const { candidate, onBeginEdit, onApplyEdit, onMarkReady, onReject, onCancel, onRequestCommit } = props;
   const model = presentCaptureCandidateReview(candidate);
   const candidateSignature = capturePayloadSignature(candidate.proposedPayload);
@@ -77,7 +77,7 @@ export function CaptureCandidateReviewCard(props: Props) {
   const editing = candidate.status === 'EDITING';
 
   return (
-    <article className="capture-review" aria-labelledby={`capture-title-${candidate.id}`}>
+    <article ref={reviewRef} tabIndex={-1} className="capture-review" aria-labelledby={`capture-title-${candidate.id}`}>
       <header><p className="capture-review-destination">保存先: 日々の記録</p><h3 id={`capture-title-${candidate.id}`}>保存する内容を確認</h3></header>
       <p className="capture-review-status" role="status" aria-live="polite">{model.statusLabel}</p>
       {model.isUnsaved && <p className="capture-review-unsaved">この内容はまだ保存されていません。</p>}
@@ -107,4 +107,4 @@ export function CaptureCandidateReviewCard(props: Props) {
       <div className="capture-review-actions">{editing ? <><button type="button" onClick={apply}>修正を適用する</button><button type="button" disabled={!confirmEnabled} onClick={ready}>この内容を確認する</button><button type="button" onClick={onCancel}>取消</button></> : <><button type="button" disabled={model.controlsDisabled || candidate.status === 'COMMITTED'} onClick={onBeginEdit}>修正する</button><button type="button" disabled={!model.saveAllowed} onClick={onRequestCommit}>保存する</button><button type="button" disabled={model.controlsDisabled || candidate.status === 'COMMITTED'} onClick={onReject}>今回は保存しない</button></>}</div>
     </article>
   );
-}
+});

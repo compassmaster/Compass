@@ -84,10 +84,10 @@ Issue #68 の主要8画面を、同じ手順で再確認するための手動QA�
 
 | 確認項目 | 360px | 390px | 768px | desktop |
 | --- | --- | --- | --- | --- |
-| 現在の質問だけが表示され、日付・1〜5選択・textareaが横にはみ出さない | CSS / build OK | CSS / build OK | CSS / build OK | CSS / build OK |
-| scaleの5操作領域と全buttonが44px以上を維持する | CSS OK | CSS OK | CSS OK | CSS OK |
-| step変更時に先頭操作へfocusし、progressとerrorを読み上げられる | 自動契約OK | 自動契約OK | 自動契約OK | 自動契約OK |
-| back / cancelをkeyboardだけで操作でき、cancel / reset後にcomposerへ戻る | 自動契約OK | 自動契約OK | 自動契約OK | 自動契約OK |
-| 完了後に確認カードへfocusし、Message listのscroll領域を変えない | 自動契約OK | 自動契約OK | 自動契約OK | 自動契約OK |
+| 現在の質問だけが表示され、日付・1〜5選択・textareaが横にはみ出さない | コード確認、手動未実施 | コード確認、手動未実施 | コード確認、手動未実施 | コード確認、手動未実施 |
+| scaleの5操作領域と全buttonが44px以上を維持する | CSS確認、手動未実施 | CSS確認、手動未実施 | CSS確認、手動未実施 | CSS確認、手動未実施 |
+| step変更時に先頭操作へfocusし、progressとerrorを読み上げられる | source契約テストのみ | source契約テストのみ | source契約テストのみ | source契約テストのみ |
+| back / cancelをkeyboardだけで操作でき、cancel / reset後にcomposerへ戻る | コード確認、手動未実施 | コード確認、手動未実施 | コード確認、手動未実施 | コード確認、手動未実施 |
+| 完了後に確認カードへfocusし、Message listのscroll領域を変えない | source契約テストのみ | source契約テストのみ | source契約テストのみ | source契約テストのみ |
 
-実機・ブラウザでの視覚確認は未実施。各幅でDATEからEVENTSまで進み、「なし」、複数行events、back、cancel、完了後の確認カードを確認すること。
+実ブラウザでのfocus、keyboard、scroll、視覚確認は全幅で未実施。表の結果はコードまたは自動テストで確認できる範囲だけを示し、手動QA成功を意味しない。各幅でDATEからEVENTSまで進み、「なし」、複数行events、back、cancel、完了後の確認カードを確認すること。

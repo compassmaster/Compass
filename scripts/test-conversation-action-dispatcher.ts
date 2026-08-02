@@ -13,10 +13,10 @@ const inputs: Record<ActionableConversationIntent, string> = {
   VIEW_BACKUP: 'バックアップを見たい',
 };
 
-for (const intent of Object.keys(inputs) as ActionableConversationIntent[]) {
+for (const intent of (Object.keys(inputs) as ActionableConversationIntent[]).filter((intent) => intent !== 'RECORD_DAILY_LOG')) {
   const counts = Object.fromEntries(Object.keys(inputs).map((key) => [key, 0])) as Record<ActionableConversationIntent, number>;
   const callbacks = Object.fromEntries(Object.keys(inputs).map((key) => [key, () => { counts[key as ActionableConversationIntent] += 1; }])) as ConversationActionCallbacks;
-  const classified = transitionConversationSession(createConversationSession(), { type: 'SUBMIT_TEXT', text: inputs[intent] });
+  const classified = transitionConversationSession(createConversationSession(), { type: 'SUBMIT_TEXT', text: inputs[intent], occurredAt: '2026-08-02T09:00:00.000Z' });
   assert.deepEqual(Object.values(counts), [0, 0, 0, 0, 0, 0, 0], `${intent}: classification has no callback`);
   const messageId = classified.messages.at(-1)!.id;
   const first = executeConversationAction(classified, messageId, callbacks);
