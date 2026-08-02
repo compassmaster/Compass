@@ -429,3 +429,7 @@ Issue #66の能力境界を維持したまま、純粋なInterpreterとResponse 
 ## 2026-08-02 Capture Candidate review handoff (Issue #77)
 
 Conversationには最大1件のCapture Candidate確認カードが接続された。編集適用はEDITINGを維持し、別の「この内容を確認する」でREADYにする。保存操作は`onCaptureCommitRequest`へ一度通知してCOMMITTINGにするだけで、Appのadapterは意図的に未接続である。実保存を追加する際は既存Application Serviceの結果を受けて初めてCOMMITTED/FAILEDへ遷移させること。Candidate、deduplication key、会話本文をstorage/backupへ追加しないこと。
+
+### PR #78 review follow-up
+
+値の由来はmood/fatigueごとの実際のoriginを表示する。編集draftは適用済みsignatureと一致する場合だけ確認でき、外部Candidate ID/payload変更時に同期する。commit requestのUI guardは成功後だけ記録し、Candidate消失・変更またはCOMMITTING以外への遷移で解除するため、FAILEDからのretryとreset後の同一IDを妨げない。
