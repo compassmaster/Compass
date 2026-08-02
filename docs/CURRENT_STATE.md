@@ -367,3 +367,7 @@ Candidate回答の実変更とUnderstanding Objectの生成・意味のある更
 - 新着時はMessage一覧の末尾80px以内にいる場合だけ追従し、過去を読む位置を奪わない。reset後はcomposerへ戻し、action clickによる遷移時だけAppのNavigation adapterが移動先の安定したfocus targetへfocusする。Conversationタブへ戻るだけでは強制focusしない。
 - sessionはAppのin-memory stateで、タブ移動およびbackup restore後も保持し、resetだけで初期化する。ブラウザ再読込では消える。Conversation resource / storage keyをbackup inventoryへ追加せず、export / preview / restore対象外とする。restoreされた永続データと現在の会話sessionは別物である。
 - 実装済みはConversation Shell UI、in-memory session、Quick Action、限定的な決定論的Navigation intent。自由会話理解、LLM、Conversation Capture、会話履歴永続化、Calendar、Understanding-aware Conversation、Analysisを相談文脈で利用する処理は未実装。
+
+## 2026-08-02 Conversation Capture Candidate確認UI (Issue #77)
+
+Conversation sessionは未保存Capture Candidateを最大1件だけin-memoryで保持し、Conversation上の専用カードで内容、由来、保存先、目的を確認・修正・却下できる。READYも未保存として表示し、「保存する」は検証済み`CaptureCommitRequest`を外側のcallbackへ一度通知してCOMMITTINGにするだけで、DailyLog保存やCOMMITTED遷移は行わない。Candidate生成、永続化、センシティブ情報の同意UIは未実装である。
