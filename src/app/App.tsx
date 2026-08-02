@@ -30,11 +30,12 @@ import { WeeklySummaryTab } from '../features/weekly-summary/components/WeeklySu
 import { BackupPanel } from '../features/backup/components/BackupPanel.tsx';
 import { firstUseGuideQueryService } from '../features/first-use-guide/services/index.ts';
 import type { FirstUseGuideStepId } from '../features/first-use-guide/types/firstUseGuide.ts';
+import { ConversationTab } from '../features/conversation/components/ConversationTab.tsx';
 
 import './App.css';
 
 
-type AppTab = 'home' | 'log' | 'weeklySummary' | 'relationships' | 'prediction' | 'compassMap' | 'backup';
+type AppTab = 'conversation' | 'home' | 'log' | 'weeklySummary' | 'relationships' | 'prediction' | 'compassMap' | 'backup';
 
 
 function loadInitialUnderstandingCandidates(): UnderstandingCandidate[] {
@@ -89,7 +90,7 @@ function loadInitialUserModel(): UserModel {
 }
 
 export function App() {
-  const [activeTab, setActiveTab] = useState<AppTab>('home');
+  const [activeTab, setActiveTab] = useState<AppTab>('conversation');
   const [firstUseGuide, setFirstUseGuide] = useState(() => firstUseGuideQueryService.get());
   const [logs, setLogs] = useState<DailyLog[]>(() => dailyLogApplicationService.listDailyLogs());
   const [, setUserModel] = useState<UserModel>(() => loadInitialUserModel());
@@ -220,6 +221,13 @@ export function App() {
       </header>
 
       <nav className="app-nav" aria-label="主要画面">
+        <button
+          className={`tab-button ${activeTab === 'conversation' ? 'active-tab' : ''}`}
+          aria-current={activeTab === 'conversation' ? 'page' : undefined}
+          onClick={() => setActiveTab('conversation')}
+        >
+          💬 Conversation
+        </button>
         <button 
           className={`tab-button ${activeTab === 'home' ? 'active-tab' : ''}`} 
           aria-current={activeTab === 'home' ? 'page' : undefined}
@@ -258,6 +266,13 @@ export function App() {
       </nav>
 
       <main className="app-main">
+        {activeTab === 'conversation' && (
+          <ConversationTab
+            onNavigateToLog={() => setActiveTab('log')}
+            onNavigateToSleep={() => setActiveTab('log')}
+            onNavigateToReflection={() => setActiveTab('weeklySummary')}
+          />
+        )}
         {activeTab === 'home' && (
           <HomeTab 
             logs={logs}
