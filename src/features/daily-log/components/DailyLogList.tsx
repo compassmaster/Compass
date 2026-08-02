@@ -10,6 +10,8 @@ export function DailyLogList({ revision = 0, onChanged, navigationTarget = null,
   const [localRevision, setLocalRevision] = useState(0);
   const [editing, setEditing] = useState<DailyLogEditState | null>(null);
   const [deleting, setDeleting] = useState<DailyLog | null>(null);
+  const [pendingDeleteRecordId, setPendingDeleteRecordId] = useState<EntryId | null>(null);
+  const [deleteConfirmationArmed, setDeleteConfirmationArmed] = useState(false);
   const [error, setError] = useState('');
   const recordRefs = useRef(new Map<EntryId, HTMLElement>());
   const firstEditFieldRef = useRef<HTMLInputElement>(null);
@@ -30,6 +32,8 @@ export function DailyLogList({ revision = 0, onChanged, navigationTarget = null,
   };
   const openDelete = (log: DailyLog) => {
     deleteReturnRecordIdRef.current = log.id;
+    setPendingDeleteRecordId(log.id);
+    setDeleteConfirmationArmed(true);
     setDeleting(log);
   };
   /* Navigation commands intentionally synchronize transient App state into this UI's local edit/dialog state. */
@@ -41,6 +45,8 @@ export function DailyLogList({ revision = 0, onChanged, navigationTarget = null,
     const resolved = resolveDailyLogNavigationTarget(logs, navigationTarget);
     if (resolved.kind === 'NOT_FOUND') {
       deleteReturnRecordIdRef.current = null;
+      setPendingDeleteRecordId(null);
+      setDeleteConfirmationArmed(false);
       setEditing(null); setDeleting(null); setError('指定された保存済みの記録が見つかりませんでした。');
       onNavigationTargetConsumed?.();
       return;
@@ -67,14 +73,30 @@ export function DailyLogList({ revision = 0, onChanged, navigationTarget = null,
     const recordId = editing.id; setEditing(null); setError(''); refresh(); onRecordChanged?.({ recordId, kind: 'UPDATED' });
   };
   const confirmDelete = () => {
-    if (!deleting) return;
+    if (!deleting || !deleteConfirmationArmed || pendingDeleteRecordId !== deleting.id) return;
     const result = dailyLogApplicationService.deleteDailyLog(deleting.id);
-    if (!result.ok) { setError('記録が見つかりませんでした。'); return; }
-    const recordId = deleting.id; setDeleting(null); deleteReturnRecordIdRef.current = null; setError(''); refresh(); onRecordChanged?.({ recordId, kind: 'DELETED' });
+    if (!result.ok) {
+      setDeleteConfirmationArmed(false);
+      setPendingDeleteRecordId(null);
+      deleteReturnRecordIdRef.current = null;
+      setDeleting(null);
+      setError('記録を削除できませんでした。記録は保持されています。');
+      return;
+    }
+    const recordId = deleting.id;
+    setDeleting(null);
+    setDeleteConfirmationArmed(false);
+    setPendingDeleteRecordId(null);
+    deleteReturnRecordIdRef.current = null;
+    setError('');
+    refresh();
+    onRecordChanged?.({ recordId, kind: 'DELETED' });
   };
   const cancelDelete = () => {
     const recordId = deleteReturnRecordIdRef.current;
     setDeleting(null);
+    setDeleteConfirmationArmed(false);
+    setPendingDeleteRecordId(null);
     deleteReturnRecordIdRef.current = null;
     requestAnimationFrame(() => { if (recordId) recordRefs.current.get(recordId)?.focus(); });
   };
