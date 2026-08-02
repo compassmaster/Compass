@@ -78,6 +78,19 @@ export function presentCaptureCandidate(session: ConversationSession, candidate:
 export const beginActiveCaptureCandidateEdit = (session: ConversationSession, now: string): CaptureSessionResult => session.activeCaptureCandidate ? updateCandidate(session, beginCaptureCandidateEdit(session.activeCaptureCandidate, now)) : { session, error: 'NO_ACTIVE_CANDIDATE' };
 export const applyActiveCaptureCandidateEdit = (session: ConversationSession, payload: DailyLogCapturePayload, now: string): CaptureSessionResult => session.activeCaptureCandidate ? updateCandidate(session, applyCaptureCandidateEdit(session.activeCaptureCandidate, payload, now)) : { session, error: 'NO_ACTIVE_CANDIDATE' };
 export const markActiveCaptureCandidateReady = (session: ConversationSession, now: string): CaptureSessionResult => session.activeCaptureCandidate ? updateCandidate(session, markCaptureCandidateReady(session.activeCaptureCandidate, now)) : { session, error: 'NO_ACTIVE_CANDIDATE' };
+/** PROPOSEDの現在値を編集せず明示確認する。途中失敗時はsessionを一切変更しない。 */
+export function confirmActiveProposedCaptureCandidate(session: ConversationSession, now: string): CaptureSessionResult {
+  const candidate = session.activeCaptureCandidate;
+  if (!candidate) return { session, error: 'NO_ACTIVE_CANDIDATE' };
+  if (candidate.targetDate !== candidate.proposedPayload.date) return { session, error: 'NOT_READY', validationErrors: ['PAYLOAD_DATE_MISMATCH'] };
+  const editing = beginCaptureCandidateEdit(candidate, now);
+  if (!editing.ok) return { session, error: editing.reason, validationErrors: editing.validationErrors };
+  const applied = applyCaptureCandidateEdit(editing.candidate, candidate.proposedPayload, now);
+  if (!applied.ok) return { session, error: applied.reason, validationErrors: applied.validationErrors };
+  const ready = markCaptureCandidateReady(applied.candidate, now);
+  if (!ready.ok) return { session, error: ready.reason, validationErrors: ready.validationErrors };
+  return { session: { ...session, activeCaptureCandidate: ready.candidate } };
+}
 function removeTerminalCandidate(session: ConversationSession, result: ReturnType<typeof rejectCaptureCandidate>): CaptureSessionResult {
   return result.ok ? { session: { ...session, activeCaptureCandidate: null } } : { session, error: result.reason, validationErrors: result.validationErrors };
 }

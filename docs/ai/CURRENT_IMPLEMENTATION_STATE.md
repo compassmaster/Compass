@@ -152,3 +152,7 @@ Message / 話者 / actionのsemantics、Assistant新着だけのlive region、fo
 ## 2026-08-02 Structured DailyLog Capture flow
 
 Conversation session内だけのDailyLog flowを実装済み。Interpreterの`RECORD_DAILY_LOG`だけが開始し、DATE / MOOD / FATIGUE / NOTE / EVENTSを順番に本人へ確認する。自由文から値を抽出・推測せず、完了後は既存`createCaptureCandidate`でPROPOSED Candidateを1件生成する。実保存、COMMITTING / COMMITTEDへの自動遷移、Repository / localStorage / backup、DailyLogApplicationService接続は未実装。
+
+### PROPOSED explicit confirmation
+
+PROPOSED Candidateの現在payloadを変更せず、既存BEGIN_EDIT / APPLY_EDIT / MARK_READYを原子的に委譲するsession helperを実装済み。失敗時は元sessionを返し、READYは未保存のまま。DailyLogApplicationServiceへの接続はない。

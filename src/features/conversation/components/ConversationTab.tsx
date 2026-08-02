@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import type { CaptureCommitRequest, DailyLogCapturePayload } from '../types/captureCandidate.ts';
 import type { ConversationSession } from '../session/conversationSession.ts';
-import { answerActiveDailyLogCaptureFlow, applyActiveCaptureCandidateEdit, backActiveDailyLogCaptureFlow, beginActiveCaptureCandidateEdit, cancelActiveCaptureCandidate, cancelActiveDailyLogCaptureFlow, completeActiveDailyLogCaptureFlow, markActiveCaptureCandidateReady, rejectActiveCaptureCandidate, requestActiveCaptureCandidateCommit, transitionConversationSession } from '../session/conversationSession.ts';
+import { answerActiveDailyLogCaptureFlow, applyActiveCaptureCandidateEdit, backActiveDailyLogCaptureFlow, beginActiveCaptureCandidateEdit, cancelActiveCaptureCandidate, cancelActiveDailyLogCaptureFlow, completeActiveDailyLogCaptureFlow, confirmActiveProposedCaptureCandidate, markActiveCaptureCandidateReady, rejectActiveCaptureCandidate, requestActiveCaptureCandidateCommit, transitionConversationSession } from '../session/conversationSession.ts';
 import { CaptureCandidateReviewCard } from './CaptureCandidateReviewCard.tsx';
 import { emptyCaptureCommitRequestGuard, recordCaptureCommitRequest, synchronizeCaptureCommitRequestGuard } from './captureCommitRequestGuard.ts';
 import { executeConversationAction, type ConversationActionCallbacks } from '../actions/conversationActionDispatcher.ts';
@@ -170,6 +170,7 @@ export function ConversationTab({
         onBeginEdit={() => onSessionChange(beginActiveCaptureCandidateEdit(session, new Date().toISOString()).session)}
         onApplyEdit={(payload: DailyLogCapturePayload) => { const result = applyActiveCaptureCandidateEdit(session, payload, new Date().toISOString()); onSessionChange(result.session); return { error: result.error, validationErrors: result.validationErrors }; }}
         onMarkReady={() => { const result = markActiveCaptureCandidateReady(session, new Date().toISOString()); onSessionChange(result.session); return { error: result.error, validationErrors: result.validationErrors }; }}
+        onConfirmProposed={() => { const result = confirmActiveProposedCaptureCandidate(session, new Date().toISOString()); onSessionChange(result.session); return { error: result.error, validationErrors: result.validationErrors }; }}
         onReject={() => { onSessionChange(rejectActiveCaptureCandidate(session, new Date().toISOString()).session); requestAnimationFrame(focusInput); }}
         onCancel={() => { onSessionChange(cancelActiveCaptureCandidate(session, new Date().toISOString()).session); requestAnimationFrame(focusInput); }}
         onRequestCommit={() => { if (captureCommitGuardRef.current.requestIssued) return undefined; const result = requestActiveCaptureCandidateCommit(session, new Date().toISOString()); onSessionChange(result.session); if (result.commitRequest) { captureCommitGuardRef.current = recordCaptureCommitRequest(session.activeCaptureCandidate!.id); onCaptureCommitRequest(result.commitRequest); } return result.commitRequest; }} />}

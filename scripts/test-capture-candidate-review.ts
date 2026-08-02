@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { createCaptureCandidate, markCaptureCandidateFailed, retryCaptureCandidate } from '../src/features/conversation/session/captureCandidateLifecycle.ts';
-import { applyActiveCaptureCandidateEdit, beginActiveCaptureCandidateEdit, createConversationSession, markActiveCaptureCandidateReady, presentCaptureCandidate, rejectActiveCaptureCandidate, requestActiveCaptureCandidateCommit, transitionConversationSession } from '../src/features/conversation/session/conversationSession.ts';
+import { applyActiveCaptureCandidateEdit, beginActiveCaptureCandidateEdit, confirmActiveProposedCaptureCandidate, createConversationSession, markActiveCaptureCandidateReady, presentCaptureCandidate, rejectActiveCaptureCandidate, requestActiveCaptureCandidateCommit, transitionConversationSession } from '../src/features/conversation/session/conversationSession.ts';
 import { canConfirmCaptureEdit, capturePayloadSignature, captureReviewErrorMessages, presentCaptureCandidateReview } from '../src/features/conversation/components/captureCandidatePresentation.ts';
 import { emptyCaptureCommitRequestGuard, recordCaptureCommitRequest, synchronizeCaptureCommitRequestGuard } from '../src/features/conversation/components/captureCommitRequestGuard.ts';
 import type { DateString } from '../src/features/daily-log/types/log.ts';
@@ -12,6 +12,35 @@ session=presentCaptureCandidate(session,make('one')).session; assert.equal(sessi
 const duplicate=presentCaptureCandidate(session,make('two')); assert.equal(duplicate.error,'ACTIVE_CANDIDATE_EXISTS'); assert.equal(duplicate.session.activeCaptureCandidate?.id,'one');
 session=beginActiveCaptureCandidateEdit(session,now).session; assert.equal(session.activeCaptureCandidate?.status,'EDITING');
 const payload={...session.activeCaptureCandidate!.proposedPayload,mood:{value:4 as const,origin:'USER_EXPLICIT' as const},fatigue:{value:3 as const,origin:'USER_EXPLICIT' as const}};
+
+const explicitProposed = make('explicit-proposed');
+explicitProposed.proposedPayload = structuredClone(payload);
+const proposedSession = presentCaptureCandidate(createConversationSession(), explicitProposed).session;
+const proposedSnapshot = structuredClone(proposedSession.activeCaptureCandidate!);
+assert.equal(requestActiveCaptureCandidateCommit(proposedSession, now).commitRequest, undefined, 'PROPOSED cannot save before confirmation');
+const explicitlyConfirmed = confirmActiveProposedCaptureCandidate(proposedSession, now);
+assert.equal(explicitlyConfirmed.error, undefined);
+assert.equal(explicitlyConfirmed.session.activeCaptureCandidate?.status, 'READY');
+assert.notEqual(explicitlyConfirmed.session.activeCaptureCandidate?.status, 'COMMITTING');
+assert.deepEqual(explicitlyConfirmed.session.activeCaptureCandidate?.proposedPayload, proposedSnapshot.proposedPayload);
+assert.equal(explicitlyConfirmed.session.activeCaptureCandidate?.sourceExcerpt, proposedSnapshot.sourceExcerpt);
+assert.equal(explicitlyConfirmed.session.activeCaptureCandidate?.sourceMessageId, proposedSnapshot.sourceMessageId);
+assert.equal(explicitlyConfirmed.session.activeCaptureCandidate?.purpose, proposedSnapshot.purpose);
+assert.equal(explicitlyConfirmed.session.activeCaptureCandidate?.deduplicationKey, proposedSnapshot.deduplicationKey);
+assert.ok(requestActiveCaptureCandidateCommit(explicitlyConfirmed.session, now).commitRequest, 'READY can save after explicit confirmation');
+
+for (const invalidCandidate of [
+  { ...explicitProposed, id: 'sensitive-confirm' as typeof explicitProposed.id, sensitivity: 'SENSITIVE_REQUIRES_SEPARATE_CONSENT' as const },
+  { ...explicitProposed, id: 'inferred-confirm' as typeof explicitProposed.id, proposedPayload: { ...payload, mood: { value: 4 as const, origin: 'COMPASS_INFERRED' as const } } },
+  { ...explicitProposed, id: 'mismatch-confirm' as typeof explicitProposed.id, targetDate: '2026-08-01' as DateString },
+]) {
+  const original = presentCaptureCandidate(createConversationSession(), invalidCandidate).session;
+  const refused = confirmActiveProposedCaptureCandidate(original, now);
+  assert.ok(refused.error);
+  assert.equal(refused.session, original, 'failed explicit confirmation preserves original session');
+  assert.equal(refused.session.activeCaptureCandidate, original.activeCaptureCandidate);
+  assert.equal(refused.session.activeCaptureCandidate?.status, 'PROPOSED');
+}
 session=applyActiveCaptureCandidateEdit(session,payload,now).session; assert.equal(session.activeCaptureCandidate?.status,'EDITING');
 session=markActiveCaptureCandidateReady(session,now).session; assert.equal(session.activeCaptureCandidate?.status,'READY'); assert.equal(presentCaptureCandidateReview(session.activeCaptureCandidate!).statusLabel,'確認済み・未保存');
 const requested=requestActiveCaptureCandidateCommit(session,now); assert.ok(requested.commitRequest); assert.equal(requested.session.activeCaptureCandidate?.status,'COMMITTING'); assert.equal(requestActiveCaptureCandidateCommit(requested.session,now).commitRequest,undefined);
@@ -58,5 +87,7 @@ assert.equal(synchronizeCaptureCommitRequestGuard(guard, make('same-id')).reques
 assert.equal(synchronizeCaptureCommitRequestGuard(guard, { ...committingCandidate, status: 'FAILED' }).requestIssued, false, 'FAILED clears guard for retry');
 assert.equal(synchronizeCaptureCommitRequestGuard(guard, { ...committingCandidate, status: 'READY' }).requestIssued, false, 'READY clears guard for retry');
 const cardSource=await readFile(new URL('../src/features/conversation/components/CaptureCandidateReviewCard.tsx',import.meta.url),'utf8'); assert.match(cardSource,/role="alert"/); assert.match(cardSource,/disabled=\{!confirmEnabled\}/);
+assert.match(cardSource,/candidate\.status === 'PROPOSED'.*この内容を確認する.*修正する.*今回は保存しない/s);
+assert.match(cardSource,/candidate\.status === 'READY' && <button type="button" onClick=\{onRequestCommit\}>保存する<\/button>/);
 const source=await readFile(new URL('../src/features/conversation/session/conversationSession.ts',import.meta.url),'utf8'); assert.doesNotMatch(source,/localStorage|Repository|backup|DailyLogApplicationService/);
 console.log('capture candidate review tests passed');

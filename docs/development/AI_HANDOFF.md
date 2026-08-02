@@ -437,3 +437,7 @@ Conversationには最大1件のCapture Candidate確認カードが接続され�
 ## 2026-08-02 Structured DailyLog Capture flow handoff (Issue #79)
 
 `ConversationSession.dailyLogCaptureFlow`は入力中だけ存在するin-memory stateで、DATE → MOOD → FATIGUE → NOTE → EVENTSの現在stepと回答済みdraftだけを保持する。開始元User MessageのID / 発言をCandidate sourceに使い、全項目回答後だけ既存factoryからPROPOSED Candidateを作る。active flow / active Candidateは互いに開始を阻止し、reset / cancelでflowを破棄する。今後の保存adapter実装でもCandidate確認を迂回せず、Repository、localStorage、backupへflowを追加しないこと。
+
+### PROPOSED explicit confirmation follow-up
+
+修正不要のPROPOSED Candidateは`confirmActiveProposedCaptureCandidate`で明示確認できる。このhelperは既存lifecycleの3遷移を順に実行し、全成功時だけsessionをREADYへ置換する。途中失敗時の部分遷移を公開せず、保存やCOMMITTING遷移は行わない。
