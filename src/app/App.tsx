@@ -228,7 +228,7 @@ export function App() {
           aria-current={activeTab === 'conversation' ? 'page' : undefined}
           onClick={() => setActiveTab('conversation')}
         >
-          💬 Conversation
+          💬 会話
         </button>
         <button 
           className={`tab-button ${activeTab === 'home' ? 'active-tab' : ''}`} 

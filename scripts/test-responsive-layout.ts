@@ -7,7 +7,7 @@ const appCss = read('../src/app/App.css');
 const globalCss = read('../src/index.css');
 const firstUseCss = read('../src/features/first-use-guide/components/FirstUseGuide.css');
 
-for (const label of ['Conversation', 'ホーム', '記録', 'ふりかえり', '関係', '明日の見通し', 'Compass Map', 'バックアップ']) {
+for (const label of ['会話', 'ホーム', '記録', 'ふりかえり', '関係', '明日の見通し', 'Compass Map', 'バックアップ']) {
   assert.ok(app.includes(label), `navigation must retain ${label}`);
 }
 assert.equal((app.match(/aria-current=/g) ?? []).length, 8, 'every tab exposes its current-page state');
