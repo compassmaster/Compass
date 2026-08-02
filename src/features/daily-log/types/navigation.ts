@@ -37,3 +37,12 @@ export function resolveDailyLogNavigationTarget(logs: readonly DailyLog[], targe
   }
   return { kind: target.action, record };
 }
+
+/** A delete is valid only for the record in the armed, currently visible confirmation. */
+export function canConfirmDailyLogDelete(
+  pendingRecordId: EntryId | null,
+  deleteConfirmationArmed: boolean,
+  requestedRecordId: EntryId,
+): boolean {
+  return deleteConfirmationArmed && pendingRecordId === requestedRecordId;
+}
