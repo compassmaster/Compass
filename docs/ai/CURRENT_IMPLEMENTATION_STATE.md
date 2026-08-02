@@ -148,3 +148,7 @@ Message / 話者 / actionのsemantics、Assistant新着だけのlive region、fo
 ## Conversation Capture review boundary (Issue #77)
 
 `ConversationSession.activeCaptureCandidate`は最大1件のin-memory stateで、reset時に破棄される。純粋なsession操作は既存lifecycleを委譲し、READYからだけimmutableなcommit requestを一度返してCOMMITTINGへ進む。UI callbackの先にDailyLogApplicationServiceは未接続であり、保存成功やCOMMITTEDを表示しない。localStorage、Repository、backup、Message payloadは変更していない。
+
+## 2026-08-02 Structured DailyLog Capture flow
+
+Conversation session内だけのDailyLog flowを実装済み。Interpreterの`RECORD_DAILY_LOG`だけが開始し、DATE / MOOD / FATIGUE / NOTE / EVENTSを順番に本人へ確認する。自由文から値を抽出・推測せず、完了後は既存`createCaptureCandidate`でPROPOSED Candidateを1件生成する。実保存、COMMITTING / COMMITTEDへの自動遷移、Repository / localStorage / backup、DailyLogApplicationService接続は未実装。

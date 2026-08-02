@@ -103,7 +103,7 @@ export function CaptureCandidateReviewCard(props: Props) {
         <div><dt>note</dt><dd>{candidate.proposedPayload.note || 'なし'}</dd></div>
         <div><dt>events</dt><dd>{candidate.proposedPayload.events.length ? <ul>{candidate.proposedPayload.events.map((event, index) => <li key={`${event}-${index}`}>{event}</li>)}</ul> : 'なし'}</dd></div>
       </dl>}
-      <section className="capture-review-source" aria-labelledby={`capture-source-${candidate.id}`}><h4 id={`capture-source-${candidate.id}`}>本人に提示する会話からの引用</h4><blockquote>{candidate.sourceExcerpt}</blockquote></section>
+      <section className="capture-review-source" aria-labelledby={`capture-source-${candidate.id}`}><h4 id={`capture-source-${candidate.id}`}>記録を始めた本人の発言</h4><blockquote>{candidate.sourceExcerpt}</blockquote></section>
       <div className="capture-review-actions">{editing ? <><button type="button" onClick={apply}>修正を適用する</button><button type="button" disabled={!confirmEnabled} onClick={ready}>この内容を確認する</button><button type="button" onClick={onCancel}>取消</button></> : <><button type="button" disabled={model.controlsDisabled || candidate.status === 'COMMITTED'} onClick={onBeginEdit}>修正する</button><button type="button" disabled={!model.saveAllowed} onClick={onRequestCommit}>保存する</button><button type="button" disabled={model.controlsDisabled || candidate.status === 'COMMITTED'} onClick={onReject}>今回は保存しない</button></>}</div>
     </article>
   );

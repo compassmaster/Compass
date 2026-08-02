@@ -44,3 +44,12 @@
 .capture-review input:focus-visible,.capture-review textarea:focus-visible,.capture-review button:focus-visible { outline:3px solid #d97706; outline-offset:3px; }
 @media(max-width:600px){.capture-review{padding:16px}.capture-review-actions{display:grid}.capture-review-actions button{width:100%}}
 @media(max-width:360px){.capture-review{padding:12px}}
+.daily-log-flow { min-width:0; padding:20px; border:2px solid #2b6cb0; border-radius:16px; background:#fff; overflow-wrap:anywhere; }
+.daily-log-flow h3 { margin-top:4px; color:#1a365d; }.daily-log-flow-progress { margin:0; font-weight:700; color:#245b91; }
+.daily-log-flow-field { display:grid; gap:10px; min-width:0; margin:16px 0; padding:0; border:0; }.daily-log-flow-field label,.daily-log-flow-field legend { font-weight:700; }.daily-log-flow-field p { margin:0; color:#526479; }
+.daily-log-flow-field input[type=date],.daily-log-flow-field textarea { box-sizing:border-box; width:100%; min-width:0; min-height:44px; padding:10px; border:1px solid #718096; border-radius:8px; font:inherit; }.daily-log-flow-field textarea { min-height:88px; resize:vertical; }
+.daily-log-scale { display:grid; grid-template-columns:repeat(5,minmax(44px,1fr)); gap:8px; }.daily-log-scale label { display:grid; place-items:center; min-width:44px; min-height:44px; border:1px solid #718096; border-radius:8px; }.daily-log-scale input { width:20px; height:20px; }
+.daily-log-flow button { min-height:44px; padding:9px 16px; border:1px solid #2b6cb0; border-radius:18px; background:#fff; color:#245b91; font-weight:700; }.daily-log-flow-choice,.daily-log-flow-navigation { display:flex; flex-wrap:wrap; gap:10px; }.daily-log-flow-navigation { padding-top:16px; border-top:1px solid #dbe4ee; }.daily-log-flow button:disabled { opacity:.55; cursor:not-allowed; }.daily-log-flow-error { color:#b42318; font-weight:700; }
+.daily-log-flow input:focus-visible,.daily-log-flow textarea:focus-visible,.daily-log-flow button:focus-visible,[tabindex="-1"]:focus-visible { outline:3px solid #d97706; outline-offset:3px; }
+@media(max-width:600px){.daily-log-flow{padding:16px}.daily-log-flow-choice,.daily-log-flow-navigation{display:grid}.daily-log-flow-choice button,.daily-log-flow-navigation button{width:100%}}
+@media(max-width:360px){.daily-log-flow{padding:12px}.daily-log-scale{gap:4px}}

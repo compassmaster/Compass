@@ -433,3 +433,7 @@ Conversationには最大1件のCapture Candidate確認カードが接続され�
 ### PR #78 review follow-up
 
 値の由来はmood/fatigueごとの実際のoriginを表示する。編集draftは適用済みsignatureと一致する場合だけ確認でき、外部Candidate ID/payload変更時に同期する。commit requestのUI guardは成功後だけ記録し、Candidate消失・変更またはCOMMITTING以外への遷移で解除するため、FAILEDからのretryとreset後の同一IDを妨げない。
+
+## 2026-08-02 Structured DailyLog Capture flow handoff (Issue #79)
+
+`ConversationSession.dailyLogCaptureFlow`は入力中だけ存在するin-memory stateで、DATE → MOOD → FATIGUE → NOTE → EVENTSの現在stepと回答済みdraftだけを保持する。開始元User MessageのID / 発言をCandidate sourceに使い、全項目回答後だけ既存factoryからPROPOSED Candidateを作る。active flow / active Candidateは互いに開始を阻止し、reset / cancelでflowを破棄する。今後の保存adapter実装でもCandidate確認を迂回せず、Repository、localStorage、backupへflowを追加しないこと。

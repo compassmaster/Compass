@@ -371,3 +371,7 @@ Candidate回答の実変更とUnderstanding Objectの生成・意味のある更
 ## 2026-08-02 Conversation Capture Candidate確認UI (Issue #77)
 
 Conversation sessionは未保存Capture Candidateを最大1件だけin-memoryで保持し、Conversation上の専用カードで内容、由来、保存先、目的を確認・修正・却下できる。READYも未保存として表示し、「保存する」は検証済み`CaptureCommitRequest`を外側のcallbackへ一度通知してCOMMITTINGにするだけで、DailyLog保存やCOMMITTED遷移は行わない。Candidate生成、永続化、センシティブ情報の同意UIは未実装である。
+
+## 2026-08-02 構造化DailyLog Capture flow (Issue #79)
+
+`RECORD_DAILY_LOG`と明示判定されたUser Messageだけを起点に、DATE → MOOD → FATIGUE → NOTE → EVENTSを一問ずつ確認するin-memory flowを実装した。全回答後は本人明示のmood / fatigueと正規化したeventsから`USER_STRUCTURED_INPUT`のCandidateを1件だけPROPOSEDで生成し、既存確認カードへ渡す。flow / Candidateはresetで消え、Repository、localStorage、backup、DailyLogApplicationService、DailyLog型、CaptureProvenanceには接続していない。

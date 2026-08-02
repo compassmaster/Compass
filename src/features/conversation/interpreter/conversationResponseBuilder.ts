@@ -4,7 +4,7 @@ import type { ConversationIntent } from '../types/intent.ts';
 export type ConversationResponse = { text: string; action?: MessageAction };
 
 const ACTIONS: Record<Exclude<ConversationIntent, 'AMBIGUOUS_RECORD' | 'UNKNOWN'>, Omit<MessageAction, 'executed'>> = {
-  RECORD_DAILY_LOG: { intent: 'RECORD_DAILY_LOG', label: '今日の状態を記録する' },
+  RECORD_DAILY_LOG: { intent: 'RECORD_DAILY_LOG', label: '既存の記録画面を開く' },
   RECORD_SLEEP: { intent: 'RECORD_SLEEP', label: '睡眠を記録する' },
   VIEW_PREDICTION: { intent: 'VIEW_PREDICTION', label: '明日の見通しを見る' },
   VIEW_COMPASS_MAP: { intent: 'VIEW_COMPASS_MAP', label: 'Compass Mapを見る' },
@@ -20,6 +20,10 @@ export function buildConversationResponse(intent: ConversationIntent): Conversat
   if (intent === 'UNKNOWN') {
     return { text: 'この入力から案内先を選べませんでした。下のクイックアクションから既存の画面を選べます。入力内容の理解・分析・保存は行っていません。' };
   }
+  if (intent === 'RECORD_DAILY_LOG') return {
+    text: '会話で記録するため、対象日から一つずつ確認します。既存の記録画面を使うこともできます。',
+    action: { ...ACTIONS[intent], executed: false },
+  };
   return {
     text: '該当する既存画面を案内できます。移動する場合は、次のボタンを押してください。',
     action: { ...ACTIONS[intent], executed: false },

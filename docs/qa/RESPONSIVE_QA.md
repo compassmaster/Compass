@@ -79,3 +79,15 @@ Issue #68 の主要8画面を、同じ手順で再確認するための手動QA�
 9. **バックアップ**: exportボタン、file inputを操作する。有効なバックアップと不正ファイルを選び、件数プレビュー、警告・エラーが折り返すことを確認する。復元後にホームへ戻り、初回利用ガイドの進捗が復元データと同期することを確認する。
 10. OSのライト/ダーク設定を切り替え、今回はライトUIのままinput/select/textareaだけが暗色化しないことを確認する。
 11. 各NGは対象幅、タブ、データ状態、再現手順、スクリーンショットを記録する。
+
+## Structured DailyLog Capture flow QA (Issue #79)
+
+| 確認項目 | 360px | 390px | 768px | desktop |
+| --- | --- | --- | --- | --- |
+| 現在の質問だけが表示され、日付・1〜5選択・textareaが横にはみ出さない | CSS / build OK | CSS / build OK | CSS / build OK | CSS / build OK |
+| scaleの5操作領域と全buttonが44px以上を維持する | CSS OK | CSS OK | CSS OK | CSS OK |
+| step変更時に先頭操作へfocusし、progressとerrorを読み上げられる | 自動契約OK | 自動契約OK | 自動契約OK | 自動契約OK |
+| back / cancelをkeyboardだけで操作でき、cancel / reset後にcomposerへ戻る | 自動契約OK | 自動契約OK | 自動契約OK | 自動契約OK |
+| 完了後に確認カードへfocusし、Message listのscroll領域を変えない | 自動契約OK | 自動契約OK | 自動契約OK | 自動契約OK |
+
+実機・ブラウザでの視覚確認は未実施。各幅でDATEからEVENTSまで進み、「なし」、複数行events、back、cancel、完了後の確認カードを確認すること。
