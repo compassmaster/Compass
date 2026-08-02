@@ -7,9 +7,6 @@ on:
       - main
       - master
 
-permissions:
-  contents: write
-
 jobs:
   build:
     name: Lint and build
@@ -17,8 +14,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -26,21 +21,8 @@ jobs:
           node-version: 24
           cache: npm
 
-      - name: Install dependencies and refresh lockfile
-        run: npm install --no-audit --no-fund
-
-      - name: Commit generated lockfile
-        if: github.event_name == 'pull_request'
-        run: |
-          if git diff --quiet -- package-lock.json; then
-            echo "package-lock.json is already synchronized"
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package-lock.json
-          git commit -m "chore: synchronize package lock for DOM tests"
-          git push origin HEAD:${{ github.event.pull_request.head.ref }}
+      - name: Install dependencies
+        run: npm ci
 
       - name: Lint
         run: npm run lint
