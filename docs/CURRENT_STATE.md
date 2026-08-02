@@ -356,3 +356,11 @@ Candidate回答の実変更とUnderstanding Objectの生成・意味のある更
 
 - 純粋なInterpreterとResponse Builderが限定された案内intentだけを判定し、Assistant Messageのactionを本人が押した場合だけApp callbackを一度実行する。
 - 人物理解、分析、Conversation Capture、永続化、外部API、LLM接続は追加しない。
+
+
+## 2026-08-02 Conversation ShellをPrimary Experienceとして仕上げる (Issue #68)
+
+- Conversationを先頭・初期activeとする主要8画面を維持し、Message一覧・話者・actionのsemantics、Assistant新着だけのlive region、focus-visible、44px操作領域、狭幅レイアウトを整備した。
+- 新着時はMessage一覧の末尾80px以内にいる場合だけ追従し、過去を読む位置を奪わない。reset後はcomposerへ戻し、action clickによる遷移時だけAppのNavigation adapterが移動先の安定したfocus targetへfocusする。Conversationタブへ戻るだけでは強制focusしない。
+- sessionはAppのin-memory stateで、タブ移動およびbackup restore後も保持し、resetだけで初期化する。ブラウザ再読込では消える。Conversation resource / storage keyをbackup inventoryへ追加せず、export / preview / restore対象外とする。restoreされた永続データと現在の会話sessionは別物である。
+- 実装済みはConversation Shell UI、in-memory session、Quick Action、限定的な決定論的Navigation intent。自由会話理解、LLM、Conversation Capture、会話履歴永続化、Calendar、Understanding-aware Conversation、Analysisを相談文脈で利用する処理は未実装。

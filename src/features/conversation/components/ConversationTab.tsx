@@ -3,6 +3,7 @@ import type { ConversationSession } from '../session/conversationSession.ts';
 import { transitionConversationSession } from '../session/conversationSession.ts';
 import { executeConversationAction, type ConversationActionCallbacks } from '../actions/conversationActionDispatcher.ts';
 import { shouldSubmitConversationKey } from './conversationKeyboard.ts';
+import { isNearConversationEnd } from './conversationScroll.ts';
 import './ConversationTab.css';
 
 type ConversationTabProps = {
@@ -31,6 +32,8 @@ export function ConversationTab({
   const [draft, setDraft] = useState('');
   const [announcement, setAnnouncement] = useState('');
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const messagesRef = useRef<HTMLDivElement>(null);
+  const shouldFollowMessagesRef = useRef(true);
   const submittingRef = useRef(false);
   const claimedActionIdsRef = useRef(new Set<string>());
 
@@ -38,8 +41,15 @@ export function ConversationTab({
     submittingRef.current = false;
   }, [session]);
 
+  useEffect(() => {
+    if (!shouldFollowMessagesRef.current) return;
+    messagesRef.current?.scrollTo({ top: messagesRef.current.scrollHeight, behavior: 'smooth' });
+  }, [session.messages.length]);
+
   const focusInput = () => inputRef.current?.focus();
   const applySession = (nextSession: ConversationSession) => {
+    const list = messagesRef.current;
+    shouldFollowMessagesRef.current = list ? isNearConversationEnd(list) : true;
     onSessionChange(nextSession);
     const latest = nextSession.messages.at(-1);
     setAnnouncement(latest?.role === 'assistant' ? latest.text : '');
@@ -65,7 +75,8 @@ export function ConversationTab({
     setDraft('');
     claimedActionIdsRef.current.clear();
     applySession(transitionConversationSession(session, { type: 'RESET' }));
-    focusInput();
+    shouldFollowMessagesRef.current = true;
+    requestAnimationFrame(focusInput);
   };
 
   const actionCallbacks: ConversationActionCallbacks = {
@@ -93,9 +104,9 @@ export function ConversationTab({
         <h2 id="conversation-title">いま、何を一緒に考えましょうか</h2>
         <p>この会話は同じページを開いている間だけ保持され、再読み込みすると消えます。現在は自由文の理解・分析・保存には対応していません。</p>
       </header>
-      <div className="conversation-messages" aria-label="会話">
+      <div ref={messagesRef} className="conversation-messages" role="list" aria-label="メッセージ一覧">
         {session.messages.map((message) => (
-          <div key={message.id} className={`conversation-message conversation-message-${message.role}`}>
+          <article key={message.id} role="listitem" className={`conversation-message conversation-message-${message.role}`} aria-label={`${message.role === 'assistant' ? 'Compass' : 'あなた'}のメッセージ`}>
             <span className="conversation-speaker">{message.role === 'assistant' ? 'Compass' : 'あなた'}</span>
             <p>{message.text}</p>
             {message.action && (
@@ -108,7 +119,7 @@ export function ConversationTab({
                 {message.action.executed ? '移動しました' : message.action.label}
               </button>
             )}
-          </div>
+          </article>
         ))}
       </div>
       <p className="conversation-live-region" aria-live="polite" aria-atomic="true">{announcement}</p>
@@ -117,7 +128,7 @@ export function ConversationTab({
         <textarea ref={inputRef} id="conversation-input" value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={handleKeyDown} placeholder="今の気持ちや、考えたいことを書いてください" rows={3} />
         <div className="conversation-composer-actions">
           <button type="button" className="conversation-reset" onClick={handleReset}>会話を最初から始める</button>
-          <button type="submit" disabled={draft.trim().length === 0}>送信</button>
+          <button type="submit" disabled={draft.trim().length === 0} aria-disabled={draft.trim().length === 0}>{draft.trim().length === 0 ? '送信（入力待ち）' : '送信'}</button>
         </div>
       </form>
       <aside className="conversation-quick-actions" aria-labelledby="quick-actions-title">

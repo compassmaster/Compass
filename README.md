@@ -16,11 +16,11 @@ Compassが目指す未来と目的については、[Vision](docs/01_ビジョ�
 
 ## 現在の開発フェーズ
 
-現在はConversation-First Roadmapの**Stage 0: Foundation**です。DailyLog / SleepRecordの記録・管理、backup / restore、初回利用ガイド、WeatherのDomain・保存・Forecast / Historical取得、日次・7日間の読み取り専用表示、固定Analyzer、Evidence、Relationship Explorer、翌日疲労Predictionを実装しています。
+現在はConversation-First Roadmapの**Stage 1: Conversation Shell**です。DailyLog / SleepRecordの記録・管理、backup / restore、初回利用ガイド、WeatherのDomain・保存・Forecast / Historical取得、日次・7日間の読み取り専用表示、固定Analyzer、Evidence、Relationship Explorer、翌日疲労Predictionを実装しています。
 
-理解PipelineはUnderstanding Candidate / Response / Object、回答変更、append-only Understanding履歴、Formal UserModelの参照ID集約・整合・解決まで実装済みです。Compass MapとFormal ReflectionはResolvedFormalUserModelへ読み取り専用で接続されています。主要7画面のレスポンシブ基盤も実装済みです。
+理解PipelineはUnderstanding Candidate / Response / Object、回答変更、append-only Understanding履歴、Formal UserModelの参照ID集約・整合・解決まで実装済みです。Compass MapとFormal ReflectionはResolvedFormalUserModelへ読み取り専用で接続されています。Conversationを先頭・初期表示とする主要8画面のレスポンシブ基盤も実装済みです。Conversationはin-memory session、Quick Action、限定的な決定論的Navigation intent、アクセシブルなMessage一覧、控えめな自動scrollを備えます。sessionはタブ移動とbackup restore後も保持され、resetでのみ初期化されます。再読込では消え、backup対象には含みません。
 
-Stage 1: Conversation Shell以降のConversation UI・会話履歴・Conversation Capture・Conversation consumer接続、LLM生成、Calendar UI・外部Calendar連携、ウェアラブル連携、汎用自動取得、Personal Discovery Engine、学習型機械学習・オンライン学習は未実装です。
+自由会話理解、会話履歴永続化、Conversation Capture・Understanding-aware Conversation、LLM生成、Calendar UI・外部Calendar連携、ウェアラブル連携、汎用自動取得、Personal Discovery Engine、学習型機械学習・オンライン学習は未実装です。
 
 詳細は [Current State](docs/CURRENT_STATE.md) と [Current Implementation State](docs/ai/CURRENT_IMPLEMENTATION_STATE.md) を参照してください。
 

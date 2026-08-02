@@ -402,3 +402,11 @@ Conversation sessionの所有境界は`App`であり、Conversationタブのunmo
 ## 2026-08-02 Deterministic guidance handoff (Issue #67)
 
 Issue #66の能力境界を維持したまま、純粋なInterpreterとResponse Builderで限定された既存画面案内だけを分類する。判定は副作用を起こさず、Message actionの明示クリック時だけ分離したdispatcherが対応するApp callbackを一度実行する。人物理解、分析、Capture、永続化、外部API、LLM接続は未実装である。
+
+
+## 2026-08-02 Conversation ShellをPrimary Experienceとして仕上げる (Issue #68)
+
+- Conversationを先頭・初期activeとする主要8画面を維持し、Message一覧・話者・actionのsemantics、Assistant新着だけのlive region、focus-visible、44px操作領域、狭幅レイアウトを整備した。
+- 新着時はMessage一覧の末尾80px以内にいる場合だけ追従し、過去を読む位置を奪わない。reset後はcomposerへ戻し、action clickによる遷移時だけAppのNavigation adapterが移動先の安定したfocus targetへfocusする。Conversationタブへ戻るだけでは強制focusしない。
+- sessionはAppのin-memory stateで、タブ移動およびbackup restore後も保持し、resetだけで初期化する。ブラウザ再読込では消える。Conversation resource / storage keyをbackup inventoryへ追加せず、export / preview / restore対象外とする。restoreされた永続データと現在の会話sessionは別物である。
+- 実装済みはConversation Shell UI、in-memory session、Quick Action、限定的な決定論的Navigation intent。自由会話理解、LLM、Conversation Capture、会話履歴永続化、Calendar、Understanding-aware Conversation、Analysisを相談文脈で利用する処理は未実装。

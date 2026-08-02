@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { shouldSubmitConversationKey } from '../src/features/conversation/components/conversationKeyboard.ts';
+import { isNearConversationEnd } from '../src/features/conversation/components/conversationScroll.ts';
 
 const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8');
 const app = read('../src/app/App.tsx');
@@ -12,7 +13,7 @@ assert.match(app, /useState\(createConversationSession\)/, 'App owns the session
 assert.match(app, /session=\{conversationSession\}/);
 assert.match(app, /onSessionChange=\{setConversationSession\}/);
 for (const label of ['今日の状態を記録する', '明日の見通しを見る', 'Compass Mapを見る', '詳しい画面を見る']) assert.ok(tab.includes(label));
-assert.match(app, /onNavigateToCompassMap=\{\(\) => \{\s*refreshUserModelUpdateCandidates\(\);\s*refreshResolvedFormalUserModel\(\);\s*setActiveTab\('compassMap'\)/);
+assert.match(app, /onNavigateToCompassMap=\{\(\) => \{\s*refreshUserModelUpdateCandidates\(\);\s*refreshResolvedFormalUserModel\(\);\s*navigateFromConversation\('compassMap'\)/);
 assert.doesNotMatch(featureSource, /localStorage|Repository|ApplicationService|Application Service/);
 assert.doesNotMatch(featureSource, /features\/(?:daily-log|prediction|compass-map|home)/);
 
@@ -27,9 +28,22 @@ assert.match(tab, /requestSubmit\(\)/);
 assert.match(tab, /focusInput\(\)/);
 assert.match(tab, /aria-live="polite"/);
 assert.doesNotMatch(tab, /conversation-messages" aria-live/);
+assert.match(tab, /role="list" aria-label="メッセージ一覧"/);
+assert.match(tab, /role="listitem"/);
+assert.match(tab, /<article key=\{message\.id\}/);
+assert.match(tab, /aria-disabled=\{draft\.trim\(\)\.length === 0\}/);
+assert.match(app, /TAB_FOCUS_TARGETS/);
+assert.match(app, /target\?\.focus\(\)/);
+assert.match(app, /aria-current=\{activeTab === 'conversation' \? 'page'/);
+
+assert.equal(isNearConversationEnd({ scrollTop: 500, clientHeight: 400, scrollHeight: 980 }), true, '80px boundary follows');
+assert.equal(isNearConversationEnd({ scrollTop: 499, clientHeight: 400, scrollHeight: 980 }), false, '81px does not follow');
+assert.equal(isNearConversationEnd({ scrollTop: 0, clientHeight: 400, scrollHeight: 400 }), true, 'non-overflowing list follows');
 
 assert.match(css, /\.conversation-composer button\s*\{[^}]*min-height:\s*44px/);
 assert.match(css, /\.conversation-quick-actions button\s*\{[^}]*min-height:\s*44px/);
 assert.match(css, /\.conversation-message\s*\{[^}]*overflow-wrap:\s*anywhere/);
 assert.match(css, /\.conversation-live-region\s*\{/);
+assert.match(css, /\.conversation button:focus-visible, \.conversation textarea:focus-visible/);
+assert.match(css, /@media \(max-width: 360px\)/);
 console.log('conversation UI contracts passed');

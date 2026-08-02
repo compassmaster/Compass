@@ -3,7 +3,7 @@
 ## 2026-08-01 Product Direction
 
 - プロダクト体験は[`docs/product/CONVERSATION_FIRST_PRODUCT_DIRECTION.md`](../product/CONVERSATION_FIRST_PRODUCT_DIRECTION.md)をCanonical Documentとする。
-- ChatをPrimary Experienceとする方針は採用済みだが、Conversation UI / Capture / consumer接続とLLMは未実装である。
+- ChatをPrimary ExperienceとするStage 1 Conversation Shell UI、in-memory session、Quick Action、限定的な決定論的Navigation intentは実装済みである。自由会話理解、Conversation Capture、会話履歴永続化、Understanding-aware consumer接続、LLMは未実装である。
 - Calendarを人生の時間軸とする方針は採用済みだが、Calendar UI / 外部カレンダー連携は未実装である。
 - Weatherの限定的な自動取得は実装済みだが、ウェアラブル連携と汎用自動取得基盤は未実装である。
 - 固定Analyzer、Relationship、読み取り専用Predictionは存在するが、学習型機械学習・オンライン学習は未実装である。
@@ -131,3 +131,8 @@ Storage keys:
 - `compass_observed_weather_records_invalid_v1`
 
 Still not implemented: Weather API Client, Open-Meteo, HTTP, Base Location, Location UI, Weather acquisition Application Service, Weather Analyzer, DailyLog/SleepRecord join, Prediction, Prediction Evaluation, Machine Learning, Conversation, or direct Formal UserModel updates from Weather.
+
+
+## 2026-08-02 Conversation Shell primary experience (Issue #68)
+
+Message / 話者 / actionのsemantics、Assistant新着だけのlive region、focus-visible、44px操作領域、末尾付近だけ追従する純粋scroll判定を実装した。actionによる遷移先focusはAppのNavigation adapterと画面側の安定IDで扱い、Intent / Domain modelへDOM IDを入れない。sessionはApp memoryにあり、他タブとbackup restoreをまたいで保持し、resetだけで初期化する。再読込では消え、backup inventory / export / preview / restoreには含めない。永続データのrestoreと会話sessionは別境界である。自由会話理解、LLM、Conversation Capture、会話永続化、人物理解、感情分析、Record自動作成、Calendar連携は未実装。

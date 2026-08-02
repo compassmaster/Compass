@@ -64,7 +64,7 @@ export function SleepRecordSection({ onChanged }: { readonly onChanged?: () => v
 
   return <section className="sleep-management">
     <form className="sleep-entry" onSubmit={save}>
-      <h2>睡眠を記録する</h2>
+      <h2 id="sleep-primary-heading" tabIndex={-1}>睡眠を記録する</h2>
       <p>睡眠はDailyLogとは独立して、起床日単位で1日1件保存します。</p>
       <label>起床日<input aria-label="睡眠の起床日" type="date" required value={draft.sleepDate} onChange={(e) => loadDate(e.target.value)} /></label>
       <label>就寝日時<input aria-label="睡眠の就寝日時" type="datetime-local" required value={draft.bedtime} onChange={(e) => setDraft({ ...draft, bedtime: e.target.value })} /></label>

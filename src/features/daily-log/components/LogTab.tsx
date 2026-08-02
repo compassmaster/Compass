@@ -66,7 +66,7 @@ export function LogTab({ onSaveSuccess, onSleepChanged }: { onSaveSuccess: () =>
     <>
     {onSleepChanged ? <SleepRecordSection onChanged={onSleepChanged} /> : <SleepRecordSection />}
     <form onSubmit={handleSubmit} className="log-form">
-      <h2>今日を記録する</h2>
+      <h2 id="log-primary-heading" tabIndex={-1}>今日を記録する</h2>
 
       <div className="form-group">
         <label className="form-label">
