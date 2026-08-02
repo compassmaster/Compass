@@ -98,6 +98,7 @@ function loadInitialUserModel(): UserModel {
 export function App() {
   const [activeTab, setActiveTab] = useState<AppTab>('conversation');
   const [conversationSession, setConversationSession] = useState(createConversationSession);
+  const [conversationScrollPosition, setConversationScrollPosition] = useState(0);
   const [firstUseGuide, setFirstUseGuide] = useState(() => firstUseGuideQueryService.get());
   const [logs, setLogs] = useState<DailyLog[]>(() => dailyLogApplicationService.listDailyLogs());
   const [, setUserModel] = useState<UserModel>(() => loadInitialUserModel());
@@ -286,6 +287,8 @@ export function App() {
           <ConversationTab
             session={conversationSession}
             onSessionChange={setConversationSession}
+            scrollPosition={conversationScrollPosition}
+            onScrollPositionChange={setConversationScrollPosition}
             onNavigateToLog={() => navigateFromConversation('log')}
             onNavigateToSleep={() => navigateFromConversation('log', 'sleep-primary-heading')}
             onNavigateToPrediction={() => navigateFromConversation('prediction')}

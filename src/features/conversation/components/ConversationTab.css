@@ -17,6 +17,7 @@
 .conversation-composer .conversation-reset { border: 1px solid #718096; background: #fff; color: #334155; }
 .conversation-composer button:disabled { background: #a0aec0; cursor: not-allowed; }
 .conversation button:focus-visible, .conversation textarea:focus-visible { outline: 3px solid #d97706; outline-offset: 3px; }
+.conversation-messages:focus-visible { outline: 3px solid #d97706; outline-offset: 3px; }
 .conversation-message-action { min-height: 44px; max-width: 100%; margin-top: 10px; padding: 8px 14px; white-space: normal; }
 .conversation-quick-actions h3 { margin: 0; }
 .conversation-quick-actions p { color: #526479; }

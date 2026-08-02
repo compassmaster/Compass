@@ -1,14 +1,17 @@
-import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import type { ConversationSession } from '../session/conversationSession.ts';
 import { transitionConversationSession } from '../session/conversationSession.ts';
 import { executeConversationAction, type ConversationActionCallbacks } from '../actions/conversationActionDispatcher.ts';
 import { shouldSubmitConversationKey } from './conversationKeyboard.ts';
 import { isNearConversationEnd } from './conversationScroll.ts';
+import { toConversationAnnouncement, type ConversationAnnouncement } from './conversationAnnouncement.ts';
 import './ConversationTab.css';
 
 type ConversationTabProps = {
   session: ConversationSession;
   onSessionChange: (session: ConversationSession) => void;
+  scrollPosition: number;
+  onScrollPositionChange: (scrollTop: number) => void;
   onNavigateToLog: () => void;
   onNavigateToSleep: () => void;
   onNavigateToPrediction: () => void;
@@ -21,6 +24,8 @@ type ConversationTabProps = {
 export function ConversationTab({
   session,
   onSessionChange,
+  scrollPosition,
+  onScrollPositionChange,
   onNavigateToLog,
   onNavigateToSleep,
   onNavigateToPrediction,
@@ -30,10 +35,11 @@ export function ConversationTab({
   onNavigateToBackup,
 }: ConversationTabProps) {
   const [draft, setDraft] = useState('');
-  const [announcement, setAnnouncement] = useState('');
+  const [announcement, setAnnouncement] = useState<ConversationAnnouncement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const messagesRef = useRef<HTMLDivElement>(null);
   const shouldFollowMessagesRef = useRef(true);
+  const renderedMessageCountRef = useRef(session.messages.length);
   const submittingRef = useRef(false);
   const claimedActionIdsRef = useRef(new Set<string>());
 
@@ -41,7 +47,13 @@ export function ConversationTab({
     submittingRef.current = false;
   }, [session]);
 
+  useLayoutEffect(() => {
+    if (messagesRef.current) messagesRef.current.scrollTop = scrollPosition;
+  }, [scrollPosition]);
+
   useEffect(() => {
+    if (renderedMessageCountRef.current === session.messages.length) return;
+    renderedMessageCountRef.current = session.messages.length;
     if (!shouldFollowMessagesRef.current) return;
     messagesRef.current?.scrollTo({ top: messagesRef.current.scrollHeight, behavior: 'smooth' });
   }, [session.messages.length]);
@@ -51,8 +63,7 @@ export function ConversationTab({
     const list = messagesRef.current;
     shouldFollowMessagesRef.current = list ? isNearConversationEnd(list) : true;
     onSessionChange(nextSession);
-    const latest = nextSession.messages.at(-1);
-    setAnnouncement(latest?.role === 'assistant' ? latest.text : '');
+    setAnnouncement(toConversationAnnouncement(nextSession.messages.at(-1)));
   };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -104,7 +115,7 @@ export function ConversationTab({
         <h2 id="conversation-title">いま、何を一緒に考えましょうか</h2>
         <p>この会話は同じページを開いている間だけ保持され、再読み込みすると消えます。現在は自由文の理解・分析・保存には対応していません。</p>
       </header>
-      <div ref={messagesRef} className="conversation-messages" role="list" aria-label="メッセージ一覧">
+      <div ref={messagesRef} className="conversation-messages" role="list" aria-label="メッセージ一覧" tabIndex={0} onScroll={(event) => onScrollPositionChange(event.currentTarget.scrollTop)}>
         {session.messages.map((message) => (
           <article key={message.id} role="listitem" className={`conversation-message conversation-message-${message.role}`} aria-label={`${message.role === 'assistant' ? 'Compass' : 'あなた'}のメッセージ`}>
             <span className="conversation-speaker">{message.role === 'assistant' ? 'Compass' : 'あなた'}</span>
@@ -122,7 +133,9 @@ export function ConversationTab({
           </article>
         ))}
       </div>
-      <p className="conversation-live-region" aria-live="polite" aria-atomic="true">{announcement}</p>
+      <p className="conversation-live-region" aria-live="polite" aria-atomic="true">
+        {announcement && <span key={announcement.messageId}>{announcement.text}</span>}
+      </p>
       <form className="conversation-composer" onSubmit={handleSubmit}>
         <label htmlFor="conversation-input">自由に書く</label>
         <textarea ref={inputRef} id="conversation-input" value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={handleKeyDown} placeholder="今の気持ちや、考えたいことを書いてください" rows={3} />
