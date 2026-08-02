@@ -11,16 +11,16 @@ lastUpdated: "2026-08-02"
 ## Product Directionと実装状態
 
 - **採用済み方針**: ChatをPrimary Experience、Calendarを人生の時間軸、相談中の分析利用、根拠の段階的開示、早期個人化、Conversation Capture、同意に基づく自動取得、Personal Discovery Engine。
-- **一部実装済み**: DailyLog / SleepRecord、Weather取得・前日気象の限定的な自動取得、Evidence、Relationship Explorer、読み取り専用Prediction、Understanding確認・履歴、Formal UserModel、Compass Map / Formal Reflectionの読み取り専用接続、初回利用ガイド。
-- **未実装**: Conversation UI・会話履歴・Conversation Capture・Conversation consumer接続、LLM生成、Calendar UI・外部カレンダー連携、ウェアラブル連携、学習型機械学習・オンライン学習、Personal Discovery Engineとしての統合。
+- **一部実装済み**: in-memory Conversation Shell、DailyLog / SleepRecord、Weather取得・前日気象の限定的な自動取得、Evidence、Relationship Explorer、読み取り専用Prediction、Understanding確認・履歴、Formal UserModel、Compass Map / Formal Reflectionの読み取り専用接続、初回利用ガイド。
+- **未実装**: 自由会話理解、永続的な会話履歴、Conversation Capture、Conversation consumer接続、LLM生成、Calendar UI・外部カレンダー連携、ウェアラブル連携、学習型機械学習・オンライン学習、Personal Discovery Engineとしての統合。
 
 `SleepRecord.source`の`SMARTWATCH`は将来互換の値にすぎず、ウェアラブル連携ではない。日付・timezone単位の集計はCalendar連携ではない。固定ルールによるAnalyzer / Relationship / Predictionは学習型機械学習ではない。
 
 ## 現在のVersion
 
-**v0.1.0-alpha / Conversation-First Roadmap Stage 0: Foundation**
+**v0.1.0-alpha / Conversation-First Roadmap Stage 1: Conversation Shell**
 
-現在のFoundationは、記録・編集・backup、Weather限定取得、日次・7日間集計、固定分析、Relationship / Prediction、正式Understanding Pipelineと履歴、Formal UserModel、読み取り専用Compass Map / Reflection、および主要7画面のレスポンシブ基盤までを含む。ConversationをPrimary ExperienceにするStage 1: Conversation Shell以降は未実装である。
+現在はFoundationの機能に加え、保存や人物理解を自動化しないin-memory Conversation Shellを含む。Conversation Capture以降は未実装である。
 
 ## 完了済み
 
@@ -67,7 +67,7 @@ lastUpdated: "2026-08-02"
 ### 未実装
 
 - ConversationをFormal UserModel Resolverへ正式接続する新フロー。
-- Conversation UI・Conversation Capture・LLM生成・Prompt Version管理・Candidate Prioritizer・Calendar連携・ウェアラブル連携・学習型Machine Learning。
+- 自由会話理解・永続的な会話履歴・Conversation Capture・LLM生成・Prompt Version管理・Candidate Prioritizer・Calendar連携・ウェアラブル連携・学習型Machine Learning。
 - WeatherのDomain / Repository / Base Location / Forecast・Historical取得、限定的な自動取得、読み取り専用のWeather × Fatigue ObservationとPredictionは実装済み。ただし、汎用External Context自動取得、WeatherからFormal Pipelineへの接続、学習型予測は未実装。
 
 ## 実装済み項目
@@ -345,3 +345,9 @@ Candidate回答の実変更とUnderstanding Objectの生成・意味のある更
 ### PR #60 レビュー対応
 
 回答済みの通常表示は現在回答と変更開始ボタンだけに限定した。変更中は選択に応じてUnderstanding Objectへの影響を説明し、外部からResponseの回答または回答時刻が更新された場合は編集中状態を破棄する。確認UIはキャンセル、Escape、初期フォーカス、終了時のフォーカス復帰、確定中の再送防止を備える。
+
+## 2026-08-02 Conversation Shell (Issue #66)
+
+- Conversationを先頭タブかつ初期表示とする最小UIを追加した。会話sessionはAppのメモリ内だけに置き、同一ページ内のタブ移動では保持し、ブラウザ再読込では消える。
+- 自由文は画面内にそのまま表示し、内容の理解、keyword / intent判定、分析、Conversation Capture、永続化、LLM生成は行わない。定型応答でもこの能力境界を明示する。
+- Quick ActionはAppから渡されたcallbackだけで既存画面へ移動する。Conversation featureはRepository、localStorage、Application Serviceへアクセスしない。

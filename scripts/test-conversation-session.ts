@@ -13,4 +13,7 @@ assert.equal(initial.messages.length, 1, 'transition must not mutate its input')
 const repeated = transitionConversationSession(transitioned, { type: 'SUBMIT_TEXT', text: 'もう一つ' });
 assert.equal(repeated.messages.length, 5);
 assert.equal(new Set(repeated.messages.map(({ id }) => id)).size, 5);
+const reset = transitionConversationSession(repeated, { type: 'RESET' });
+assert.deepEqual(reset, createConversationSession());
+assert.notEqual(reset, initial, 'reset creates a fresh in-memory session');
 console.log('conversation-session tests passed');

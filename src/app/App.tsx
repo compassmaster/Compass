@@ -31,6 +31,7 @@ import { BackupPanel } from '../features/backup/components/BackupPanel.tsx';
 import { firstUseGuideQueryService } from '../features/first-use-guide/services/index.ts';
 import type { FirstUseGuideStepId } from '../features/first-use-guide/types/firstUseGuide.ts';
 import { ConversationTab } from '../features/conversation/components/ConversationTab.tsx';
+import { createConversationSession } from '../features/conversation/session/conversationSession.ts';
 
 import './App.css';
 
@@ -91,6 +92,7 @@ function loadInitialUserModel(): UserModel {
 
 export function App() {
   const [activeTab, setActiveTab] = useState<AppTab>('conversation');
+  const [conversationSession, setConversationSession] = useState(createConversationSession);
   const [firstUseGuide, setFirstUseGuide] = useState(() => firstUseGuideQueryService.get());
   const [logs, setLogs] = useState<DailyLog[]>(() => dailyLogApplicationService.listDailyLogs());
   const [, setUserModel] = useState<UserModel>(() => loadInitialUserModel());
@@ -268,9 +270,16 @@ export function App() {
       <main className="app-main">
         {activeTab === 'conversation' && (
           <ConversationTab
+            session={conversationSession}
+            onSessionChange={setConversationSession}
             onNavigateToLog={() => setActiveTab('log')}
-            onNavigateToSleep={() => setActiveTab('log')}
-            onNavigateToReflection={() => setActiveTab('weeklySummary')}
+            onNavigateToPrediction={() => setActiveTab('prediction')}
+            onNavigateToCompassMap={() => {
+              refreshUserModelUpdateCandidates();
+              refreshResolvedFormalUserModel();
+              setActiveTab('compassMap');
+            }}
+            onNavigateToDetails={() => setActiveTab('home')}
           />
         )}
         {activeTab === 'home' && (
