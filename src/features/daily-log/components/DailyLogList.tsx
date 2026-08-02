@@ -84,7 +84,12 @@ export function DailyLogList({ revision = 0, onChanged, navigationTarget = null,
     const recordId = pendingDeleteRecord.id;
     setDeleteConfirmationArmed(false);
     const result = dailyLogApplicationService.deleteDailyLog(recordId);
-    if (!result.ok) { setError('記録が見つかりませんでした。'); return; }
+    if (!result.ok) {
+      setPendingDeleteRecordId(null);
+      deleteReturnRecordIdRef.current = null;
+      setError('記録を削除できませんでした。記録は保持されています。');
+      return;
+    }
     setPendingDeleteRecordId(null); deleteReturnRecordIdRef.current = null; setError(''); refresh(); onRecordChanged?.({ recordId, kind: 'DELETED' });
   };
   const cancelDelete = () => {
