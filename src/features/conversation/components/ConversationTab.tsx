@@ -1,6 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
+import type { CaptureCommitRequest, DailyLogCapturePayload } from '../types/captureCandidate.ts';
 import type { ConversationSession } from '../session/conversationSession.ts';
-import { transitionConversationSession } from '../session/conversationSession.ts';
+import { applyActiveCaptureCandidateEdit, beginActiveCaptureCandidateEdit, cancelActiveCaptureCandidate, markActiveCaptureCandidateReady, rejectActiveCaptureCandidate, requestActiveCaptureCandidateCommit, transitionConversationSession } from '../session/conversationSession.ts';
+import { CaptureCandidateReviewCard } from './CaptureCandidateReviewCard.tsx';
 import { executeConversationAction, type ConversationActionCallbacks } from '../actions/conversationActionDispatcher.ts';
 import { shouldSubmitConversationKey } from './conversationKeyboard.ts';
 import { isNearConversationEnd } from './conversationScroll.ts';
@@ -19,6 +21,7 @@ type ConversationTabProps = {
   onNavigateToDetails: () => void;
   onNavigateToWeather: () => void;
   onNavigateToBackup: () => void;
+  onCaptureCommitRequest: (request: CaptureCommitRequest) => void;
 };
 
 export function ConversationTab({
@@ -33,6 +36,7 @@ export function ConversationTab({
   onNavigateToDetails,
   onNavigateToWeather,
   onNavigateToBackup,
+  onCaptureCommitRequest,
 }: ConversationTabProps) {
   const [draft, setDraft] = useState('');
   const [announcement, setAnnouncement] = useState<ConversationAnnouncement | null>(null);
@@ -42,6 +46,7 @@ export function ConversationTab({
   const renderedMessageCountRef = useRef(session.messages.length);
   const submittingRef = useRef(false);
   const claimedActionIdsRef = useRef(new Set<string>());
+  const requestedCaptureIdsRef = useRef(new Set<string>());
 
   useEffect(() => {
     submittingRef.current = false;
@@ -133,6 +138,13 @@ export function ConversationTab({
           </article>
         ))}
       </div>
+      {session.activeCaptureCandidate && <CaptureCandidateReviewCard candidate={session.activeCaptureCandidate}
+        onBeginEdit={() => onSessionChange(beginActiveCaptureCandidateEdit(session, new Date().toISOString()).session)}
+        onApplyEdit={(payload: DailyLogCapturePayload) => { const result = applyActiveCaptureCandidateEdit(session, payload, new Date().toISOString()); onSessionChange(result.session); return result.validationErrors; }}
+        onMarkReady={() => { const result = markActiveCaptureCandidateReady(session, new Date().toISOString()); onSessionChange(result.session); return result.validationErrors; }}
+        onReject={() => { onSessionChange(rejectActiveCaptureCandidate(session, new Date().toISOString()).session); requestAnimationFrame(focusInput); }}
+        onCancel={() => { onSessionChange(cancelActiveCaptureCandidate(session, new Date().toISOString()).session); requestAnimationFrame(focusInput); }}
+        onRequestCommit={() => { if (requestedCaptureIdsRef.current.has(session.activeCaptureCandidate!.id)) return undefined; requestedCaptureIdsRef.current.add(session.activeCaptureCandidate!.id); const result = requestActiveCaptureCandidateCommit(session, new Date().toISOString()); onSessionChange(result.session); if (result.commitRequest) onCaptureCommitRequest(result.commitRequest); return result.commitRequest; }} />}
       <p className="conversation-live-region" aria-live="polite" aria-atomic="true">
         {announcement && <span key={announcement.messageId}>{announcement.text}</span>}
       </p>

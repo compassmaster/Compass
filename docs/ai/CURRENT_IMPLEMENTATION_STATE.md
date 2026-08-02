@@ -144,3 +144,7 @@ Still not implemented: Weather API Client, Open-Meteo, HTTP, Base Location, Loca
 ## 2026-08-02 Conversation Shell primary experience (Issue #68)
 
 Message / 話者 / actionのsemantics、Assistant新着だけのlive region、focus-visible、44px操作領域、末尾付近だけ追従する純粋scroll判定を実装した。actionによる遷移先focusはAppのNavigation adapterと画面側の安定IDで扱い、Intent / Domain modelへDOM IDを入れない。sessionはApp memoryにあり、他タブとbackup restoreをまたいで保持し、resetだけで初期化する。再読込では消え、backup inventory / export / preview / restoreには含めない。永続データのrestoreと会話sessionは別境界である。自由会話理解、LLM、Conversation Capture、会話永続化、人物理解、感情分析、Record自動作成、Calendar連携は未実装。
+
+## Conversation Capture review boundary (Issue #77)
+
+`ConversationSession.activeCaptureCandidate`は最大1件のin-memory stateで、reset時に破棄される。純粋なsession操作は既存lifecycleを委譲し、READYからだけimmutableなcommit requestを一度返してCOMMITTINGへ進む。UI callbackの先にDailyLogApplicationServiceは未接続であり、保存成功やCOMMITTEDを表示しない。localStorage、Repository、backup、Message payloadは変更していない。

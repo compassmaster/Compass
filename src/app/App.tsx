@@ -302,6 +302,7 @@ export function App() {
               navigateFromConversation('home', 'home-weather-section');
             }}
             onNavigateToBackup={() => navigateFromConversation('backup')}
+            onCaptureCommitRequest={() => { /* Persistence is intentionally outside Issue #77. */ }}
           />
         )}
         {activeTab === 'home' && (

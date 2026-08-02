@@ -425,3 +425,7 @@ Issue #66の能力境界を維持したまま、純粋なInterpreterとResponse 
 - 新着時はMessage一覧の末尾80px以内にいる場合だけ追従し、過去を読む位置を奪わない。reset後はcomposerへ戻し、action clickによる遷移時だけAppのNavigation adapterが移動先の安定したfocus targetへfocusする。Conversationタブへ戻るだけでは強制focusしない。
 - sessionはAppのin-memory stateで、タブ移動およびbackup restore後も保持し、resetだけで初期化する。ブラウザ再読込では消える。Conversation resource / storage keyをbackup inventoryへ追加せず、export / preview / restore対象外とする。restoreされた永続データと現在の会話sessionは別物である。
 - 実装済みはConversation Shell UI、in-memory session、Quick Action、限定的な決定論的Navigation intent。自由会話理解、LLM、Conversation Capture、会話履歴永続化、Calendar、Understanding-aware Conversation、Analysisを相談文脈で利用する処理は未実装。
+
+## 2026-08-02 Capture Candidate review handoff (Issue #77)
+
+Conversationには最大1件のCapture Candidate確認カードが接続された。編集適用はEDITINGを維持し、別の「この内容を確認する」でREADYにする。保存操作は`onCaptureCommitRequest`へ一度通知してCOMMITTINGにするだけで、Appのadapterは意図的に未接続である。実保存を追加する際は既存Application Serviceの結果を受けて初めてCOMMITTED/FAILEDへ遷移させること。Candidate、deduplication key、会話本文をstorage/backupへ追加しないこと。

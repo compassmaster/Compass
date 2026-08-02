@@ -35,3 +35,12 @@
   .conversation-heading, .conversation-messages, .conversation-composer, .conversation-quick-actions { padding: 12px; }
   .conversation-message { max-width: 100%; }
 }
+.capture-review { min-width:0; padding:20px; border:2px solid #2b6cb0; border-radius:16px; background:#fff; overflow-wrap:anywhere; }
+.capture-review h3,.capture-review h4 { color:#1a365d; } .capture-review-destination,.capture-review-status { font-weight:700; } .capture-review-unsaved { padding:10px; background:#fff7ed; color:#9a3412; }
+.capture-review-meta,.capture-review-values { display:grid; gap:12px; } .capture-review-meta div,.capture-review-values div { min-width:0; } .capture-review dt { font-weight:700; color:#526479; } .capture-review dd { margin:4px 0; white-space:pre-wrap; overflow-wrap:anywhere; } .capture-review-values small { display:block; margin-top:4px; }
+.capture-review-fields { display:grid; gap:8px; } .capture-review-fields label { margin-top:8px; font-weight:700; } .capture-review-fields input,.capture-review-fields textarea { box-sizing:border-box; width:100%; min-width:0; min-height:44px; padding:10px; border:1px solid #718096; border-radius:8px; font:inherit; } .capture-review-fields textarea { min-height:88px; resize:vertical; }
+.capture-scale-help,.capture-field-error,.capture-review-error { color:#b42318; } .capture-review-source blockquote { margin:8px 0; padding:12px; background:#f7fafc; white-space:pre-wrap; overflow-wrap:anywhere; }
+.capture-review-actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:16px; } .capture-review-actions button { min-height:44px; padding:9px 16px; border:1px solid #2b6cb0; border-radius:18px; background:#fff; color:#245b91; font-weight:700; } .capture-review-actions button:disabled { opacity:.55; cursor:not-allowed; }
+.capture-review input:focus-visible,.capture-review textarea:focus-visible,.capture-review button:focus-visible { outline:3px solid #d97706; outline-offset:3px; }
+@media(max-width:600px){.capture-review{padding:16px}.capture-review-actions{display:grid}.capture-review-actions button{width:100%}}
+@media(max-width:360px){.capture-review{padding:12px}}
