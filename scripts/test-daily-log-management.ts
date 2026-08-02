@@ -71,6 +71,13 @@ assert.match(logTab, /<DailyLogList revision=\{listRevision\} onChanged=\{onSave
 for (const contract of [/navigationTarget/,/onNavigationTargetConsumed/,/onRecordChanged/,/role="alert"/,/firstEditFieldRef/,/deleteHeadingRef/,/recordRefs/]) assert.match(ui, contract);
 assert.match(ui,/openDelete\(log\)/,'normal and target deletion share return-focus setup');
 assert.match(ui,/deleteReturnRecordIdRef\.current = null/,'missing, success, and cancel clear stale return targets');
+for (const failureContract of [
+  /setDeleteConfirmationArmed\(false\)/,
+  /setPendingDeleteRecordId\(null\)/,
+  /setDeleting\(null\)/,
+  /記録を削除できませんでした。記録は保持されています。/,
+]) assert.match(ui, failureContract, 'failed deletion disarms and closes the dialog while reporting the retained record');
+assert.match(ui, /pendingDeleteRecordId !== deleting\.id/, 'deletion is limited to the record for which confirmation was armed');
 assert.match(ui,/daily-log-edit-heading-/,'editing article keeps a valid labelledby target');
 assert.doesNotMatch(ui, /window\.location/, 'record navigation does not depend on window.location');
 assert.doesNotMatch(app, /const refreshLogs = \(\) => \{[^}]*setActiveTab/s, 'parent reload keeps the current Record tab selected');
