@@ -8,6 +8,7 @@ import {
 } from '../types/log';
 import { DailyLogList } from './DailyLogList';
 import './LogTab.css';
+import type { DailyLogNavigationTarget, DailyLogRecordChange } from '../types/navigation.ts';
 
 /**
  * 日次ログの入力フォーム。
@@ -15,7 +16,7 @@ import './LogTab.css';
  * フォームの状態はこのコンポーネント内で閉じて管理する。
  * 保存成功時に onSaveSuccess コールバックで親に通知する。
  */
-export function LogTab({ onSaveSuccess, onSleepChanged }: { onSaveSuccess: () => void; onSleepChanged?: () => void }) {
+export function LogTab({ onSaveSuccess, onSleepChanged, navigationTarget, onNavigationTargetConsumed, onRecordChanged }: { onSaveSuccess: () => void; onSleepChanged?: () => void; navigationTarget?: DailyLogNavigationTarget | null; onNavigationTargetConsumed?: () => void; onRecordChanged?: (change: DailyLogRecordChange) => void }) {
   const [mood, setMood] = useState<Scale | null>(3);
   const [fatigue, setFatigue] = useState<Scale | null>(3);
   const [note, setNote] = useState('');
@@ -169,7 +170,7 @@ export function LogTab({ onSaveSuccess, onSleepChanged }: { onSaveSuccess: () =>
       </button>
 
     </form>
-    <DailyLogList revision={listRevision} onChanged={onSaveSuccess} />
+    <DailyLogList revision={listRevision} onChanged={onSaveSuccess} navigationTarget={navigationTarget} onNavigationTargetConsumed={onNavigationTargetConsumed} onRecordChanged={onRecordChanged} />
     </>
   );
 }

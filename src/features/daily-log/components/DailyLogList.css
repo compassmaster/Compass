@@ -9,6 +9,9 @@
   margin-bottom: 16px;
   border: 1px solid #ddd;
 }
+.log-card:focus { outline:3px solid #2563eb; outline-offset:3px; }
+.log-card, .log-card * { min-width:0; }
+.log-note p, .log-events { overflow-wrap:anywhere; }
 
 .log-header {
   display: flex;

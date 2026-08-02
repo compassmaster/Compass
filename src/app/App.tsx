@@ -31,8 +31,9 @@ import { BackupPanel } from '../features/backup/components/BackupPanel.tsx';
 import { firstUseGuideQueryService } from '../features/first-use-guide/services/index.ts';
 import type { FirstUseGuideStepId } from '../features/first-use-guide/types/firstUseGuide.ts';
 import { ConversationTab } from '../features/conversation/components/ConversationTab.tsx';
-import { createConversationSession } from '../features/conversation/session/conversationSession.ts';
+import { createConversationSession, dismissCommittedReceiptForRecordChange } from '../features/conversation/session/conversationSession.ts';
 import { DailyLogCaptureCommitAdapter } from '../features/conversation/application/dailyLogCaptureCommitAdapter.ts';
+import type { DailyLogNavigationTarget, DailyLogRecordChange } from '../features/daily-log/types/navigation.ts';
 
 import './App.css';
 
@@ -101,6 +102,7 @@ export function App() {
   const [activeTab, setActiveTab] = useState<AppTab>('conversation');
   const [conversationSession, setConversationSession] = useState(createConversationSession);
   const [conversationScrollPosition, setConversationScrollPosition] = useState(0);
+  const [dailyLogNavigationTarget, setDailyLogNavigationTarget] = useState<DailyLogNavigationTarget | null>(null);
   const [firstUseGuide, setFirstUseGuide] = useState(() => firstUseGuideQueryService.get());
   const [logs, setLogs] = useState<DailyLog[]>(() => dailyLogApplicationService.listDailyLogs());
   const [, setUserModel] = useState<UserModel>(() => loadInitialUserModel());
@@ -143,6 +145,13 @@ export function App() {
   };
 
   const refreshFirstUseGuide = () => setFirstUseGuide(firstUseGuideQueryService.get());
+  const navigateToDailyLogRecord = (target: DailyLogNavigationTarget) => {
+    setDailyLogNavigationTarget(target);
+    setActiveTab('log');
+  };
+  const handleDailyLogRecordChanged = (change: DailyLogRecordChange) => {
+    setConversationSession((session) => dismissCommittedReceiptForRecordChange(session, change));
+  };
   const navigateFromConversation = (tab: AppTab, targetId = TAB_FOCUS_TARGETS[tab]) => {
     setActiveTab(tab);
     if (!targetId) return;
@@ -292,6 +301,7 @@ export function App() {
             scrollPosition={conversationScrollPosition}
             onScrollPositionChange={setConversationScrollPosition}
             onNavigateToLog={() => navigateFromConversation('log')}
+            onNavigateToRecord={navigateToDailyLogRecord}
             onNavigateToSleep={() => navigateFromConversation('log', 'sleep-primary-heading')}
             onNavigateToPrediction={() => navigateFromConversation('prediction')}
             onNavigateToCompassMap={() => {
@@ -341,7 +351,7 @@ export function App() {
             onFirstUseDataChanged={refreshFirstUseGuide}
           />
         )}
-        {activeTab === 'log' && <LogTab onSaveSuccess={refreshLogs} onSleepChanged={refreshFirstUseGuide} />}
+        {activeTab === 'log' && <LogTab onSaveSuccess={refreshLogs} onSleepChanged={refreshFirstUseGuide} navigationTarget={dailyLogNavigationTarget} onNavigationTargetConsumed={() => setDailyLogNavigationTarget(null)} onRecordChanged={handleDailyLogRecordChanged} />}
         {activeTab === 'weeklySummary' && <WeeklySummaryTab />}
         {activeTab === 'relationships' && <RelationshipExplorerTab />}
         {activeTab === 'prediction' && <PredictionTab />}

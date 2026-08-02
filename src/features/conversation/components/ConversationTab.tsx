@@ -12,6 +12,7 @@ import './ConversationTab.css';
 import { DailyLogCaptureFlowCard } from './DailyLogCaptureFlowCard.tsx';
 import type { DailyLogCaptureAnswer } from '../session/dailyLogCaptureFlow.ts';
 import { executeCaptureCommit } from '../application/captureCommitExecutor.ts';
+import type { DailyLogNavigationTarget } from '../../daily-log/types/navigation.ts';
 
 type ConversationTabProps = {
   session: ConversationSession;
@@ -19,6 +20,7 @@ type ConversationTabProps = {
   scrollPosition: number;
   onScrollPositionChange: (scrollTop: number) => void;
   onNavigateToLog: () => void;
+  onNavigateToRecord: (target: DailyLogNavigationTarget) => void;
   onNavigateToSleep: () => void;
   onNavigateToPrediction: () => void;
   onNavigateToCompassMap: () => void;
@@ -34,6 +36,7 @@ export function ConversationTab({
   scrollPosition,
   onScrollPositionChange,
   onNavigateToLog,
+  onNavigateToRecord,
   onNavigateToSleep,
   onNavigateToPrediction,
   onNavigateToCompassMap,
@@ -196,7 +199,7 @@ export function ConversationTab({
         onReject={() => { onSessionChange(rejectActiveCaptureCandidate(session, new Date().toISOString()).session); requestAnimationFrame(focusInput); }}
         onCancel={() => { onSessionChange(cancelActiveCaptureCandidate(session, new Date().toISOString()).session); requestAnimationFrame(focusInput); }}
         onRetry={() => { commitActiveCandidate(true); }}
-        onNavigateToLog={onNavigateToLog}
+        onNavigateToRecord={onNavigateToRecord}
         onRequestCommit={() => commitActiveCandidate(false)} />}
       <p className="conversation-live-region" aria-live="polite" aria-atomic="true">
         {announcement && <span key={announcement.messageId}>{announcement.text}</span>}

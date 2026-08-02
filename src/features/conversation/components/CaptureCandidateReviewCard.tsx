@@ -1,5 +1,7 @@
 import { forwardRef, useEffect, useRef, useState } from 'react';
 import type { CaptureCandidate, CaptureCommitRequest, DailyLogCapturePayload } from '../types/captureCandidate.ts';
+import type { DailyLogNavigationTarget } from '../../daily-log/types/navigation.ts';
+import { createDailyLogNavigationTarget } from '../session/conversationSession.ts';
 import type { CaptureCandidateValidationError } from '../session/captureCandidateLifecycle.ts';
 import {
   canConfirmCaptureEdit,
@@ -24,11 +26,11 @@ type Props = {
   onCancel: () => void;
   onRequestCommit: () => CaptureCommitRequest | undefined;
   onRetry: () => void;
-  onNavigateToLog: () => void;
+  onNavigateToRecord: (target: DailyLogNavigationTarget) => void;
 };
 
 export const CaptureCandidateReviewCard = forwardRef<HTMLElement, Props>(function CaptureCandidateReviewCard(props, reviewRef) {
-  const { candidate, onBeginEdit, onApplyEdit, onMarkReady, onConfirmProposed, onReject, onCancel, onRequestCommit, onRetry, onNavigateToLog } = props;
+  const { candidate, onBeginEdit, onApplyEdit, onMarkReady, onConfirmProposed, onReject, onCancel, onRequestCommit, onRetry, onNavigateToRecord } = props;
   const model = presentCaptureCandidateReview(candidate);
   const candidateSignature = capturePayloadSignature(candidate.proposedPayload);
   const synchronizationKey = `${candidate.id}:${candidateSignature}`;
@@ -83,6 +85,10 @@ export const CaptureCandidateReviewCard = forwardRef<HTMLElement, Props>(functio
     if (result.error || result.validationErrors?.length) focusFirstError(result.validationErrors ?? []);
   };
   const editing = candidate.status === 'EDITING';
+  const navigate = (action: DailyLogNavigationTarget['action']) => {
+    const target = createDailyLogNavigationTarget(candidate, action);
+    if (target) onNavigateToRecord(target);
+  };
 
   return (
     <article ref={reviewRef} tabIndex={-1} className="capture-review" aria-labelledby={`capture-title-${candidate.id}`}>
@@ -112,7 +118,7 @@ export const CaptureCandidateReviewCard = forwardRef<HTMLElement, Props>(functio
         <div><dt>events</dt><dd>{candidate.proposedPayload.events.length ? <ul>{candidate.proposedPayload.events.map((event, index) => <li key={`${event}-${index}`}>{event}</li>)}</ul> : 'なし'}</dd></div>
       </dl>}
       <section className="capture-review-source" aria-labelledby={`capture-source-${candidate.id}`}><h4 id={`capture-source-${candidate.id}`}>記録を始めた本人の発言</h4><blockquote>{candidate.sourceExcerpt}</blockquote></section>
-      <div className="capture-review-actions">{editing ? <><button type="button" onClick={apply}>修正を適用する</button><button type="button" disabled={!confirmEnabled} onClick={ready}>この内容を確認する</button><button type="button" onClick={onCancel}>取消</button></> : candidate.status === 'PROPOSED' ? <><button type="button" onClick={confirmProposed}>この内容を確認する</button><button type="button" onClick={onBeginEdit}>修正する</button><button type="button" onClick={onReject}>今回は保存しない</button></> : <><button type="button" disabled={model.controlsDisabled} onClick={onBeginEdit}>修正する</button>{candidate.status === 'READY' && <button type="button" onClick={onRequestCommit}>保存する</button>}{candidate.status === 'FAILED' && candidate.failure?.retryable && <button type="button" onClick={onRetry}>もう一度保存する</button>}<button type="button" disabled={model.controlsDisabled} onClick={onReject}>今回は保存しない</button>{candidate.status === 'COMMITTED' && <button type="button" onClick={onNavigateToLog}>日々の記録を見る</button>}</>}</div>
+      <div className="capture-review-actions">{editing ? <><button type="button" onClick={apply}>修正を適用する</button><button type="button" disabled={!confirmEnabled} onClick={ready}>この内容を確認する</button><button type="button" onClick={onCancel}>取消</button></> : candidate.status === 'PROPOSED' ? <><button type="button" onClick={confirmProposed}>この内容を確認する</button><button type="button" onClick={onBeginEdit}>修正する</button><button type="button" onClick={onReject}>今回は保存しない</button></> : <><button type="button" disabled={model.controlsDisabled} onClick={onBeginEdit}>修正する</button>{candidate.status === 'READY' && <button type="button" onClick={onRequestCommit}>保存する</button>}{candidate.status === 'FAILED' && candidate.failure?.retryable && <button type="button" onClick={onRetry}>もう一度保存する</button>}<button type="button" disabled={model.controlsDisabled} onClick={onReject}>今回は保存しない</button>{candidate.status === 'COMMITTED' && candidate.commitResultReference?.recordId && <><button type="button" onClick={() => navigate('VIEW')}>保存した記録を見る</button><button type="button" onClick={() => navigate('EDIT')}>保存した記録を編集する</button><button type="button" onClick={() => navigate('DELETE')}>保存した記録を削除する</button></>}</>}</div>
     </article>
   );
 });

@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
-import { claimConversationAction, createConversationSession, transitionConversationSession } from '../src/features/conversation/session/conversationSession.ts';
+import { claimConversationAction, createConversationSession, createDailyLogNavigationTarget, dismissCommittedReceiptForRecordChange, presentCaptureCandidate, rejectActiveCaptureCandidate, cancelActiveCaptureCandidate, transitionConversationSession } from '../src/features/conversation/session/conversationSession.ts';
+import { createCaptureCandidate } from '../src/features/conversation/session/captureCandidateLifecycle.ts';
+import type { DateString, EntryId } from '../src/features/daily-log/types/log.ts';
 
 const initial = createConversationSession();
 assert.equal(initial.messages.length, 1);
@@ -25,4 +27,30 @@ assert.equal(firstClaim.session.messages.at(-1)?.action?.executed, true);
 const secondClaim = claimConversationAction(firstClaim.session, actionMessage.id);
 assert.equal(secondClaim.intent, undefined, 'an action can only be claimed once');
 assert.equal(secondClaim.session, firstClaim.session);
+
+const candidateResult = createCaptureCandidate({ id:'capture-1', destinationType:'DAILY_LOG', purpose:'記録', targetDate:'2026-08-02' as DateString,
+  proposedPayload:{date:'2026-08-02' as DateString,mood:{value:3,origin:'USER_EXPLICIT'},fatigue:{value:2,origin:'USER_EXPLICIT'},note:'secret payload',events:[]},
+  sourceMessageId:'message-secret',sourceExcerpt:'secret excerpt',conversationOccurredAt:'2026-08-02T09:00:00Z',extraction:{method:'USER_STRUCTURED_INPUT',version:'v1'},sensitivity:'NON_SENSITIVE',deduplicationKey:'same-key',createdAt:'2026-08-02T09:00:00Z' });
+if (!candidateResult.ok) throw new Error('candidate fixture');
+const presented = presentCaptureCandidate(createConversationSession(), candidateResult.candidate);
+const rejectedSession = rejectActiveCaptureCandidate(presented.session, '2026-08-02T09:01:00Z').session;
+assert.deepEqual(rejectedSession.rejectedDeduplicationKeys, ['same-key'], 'reject records only the key');
+assert.doesNotMatch(JSON.stringify(rejectedSession.rejectedDeduplicationKeys), /secret|message-/);
+assert.equal(presentCaptureCandidate(rejectedSession, candidateResult.candidate).error, 'CAPTURE_SUPPRESSED', 'same key is suppressed');
+const different = { ...candidateResult.candidate, id:'capture-2' as typeof candidateResult.candidate.id, deduplicationKey:'different-key' };
+assert.equal(presentCaptureCandidate(rejectedSession, different).error, undefined, 'different key remains available, including the same date');
+const duplicateState = { ...rejectedSession, activeCaptureCandidate: different };
+assert.deepEqual(rejectActiveCaptureCandidate(duplicateState, '2026-08-02T09:02:00Z').session.rejectedDeduplicationKeys, ['same-key','different-key']);
+const rePresentedDifferent = presentCaptureCandidate(rejectedSession, different).session;
+assert.deepEqual(cancelActiveCaptureCandidate(rePresentedDifferent, '2026-08-02T09:03:00Z').session.rejectedDeduplicationKeys, ['same-key'], 'cancel does not suppress');
+assert.deepEqual(transitionConversationSession(rejectedSession,{type:'RESET'}).rejectedDeduplicationKeys, [], 'reset clears suppression');
+
+const committed = { ...candidateResult.candidate, status:'COMMITTED' as const, commitResultReference:{destinationType:'DAILY_LOG' as const,recordId:'log-1',committedAt:'2026-08-02T09:01:00Z'} };
+for (const action of ['VIEW','EDIT','DELETE'] as const) assert.deepEqual(createDailyLogNavigationTarget(committed, action), {recordId:'log-1',action});
+assert.equal(createDailyLogNavigationTarget(candidateResult.candidate,'VIEW'), null, 'non-COMMITTED candidate cannot navigate');
+const receiptSession = { ...createConversationSession(), activeCaptureCandidate: committed };
+assert.equal(dismissCommittedReceiptForRecordChange(receiptSession,{recordId:'other' as EntryId,kind:'UPDATED'}), receiptSession, 'other record retains receipt');
+const dismissed = dismissCommittedReceiptForRecordChange(receiptSession,{recordId:'log-1' as EntryId,kind:'DELETED'});
+assert.equal(dismissed.activeCaptureCandidate, null);
+assert.equal(committed.status, 'COMMITTED', 'receipt dismissal does not mutate terminal status');
 console.log('conversation-session tests passed');

@@ -5,6 +5,7 @@ import type { ILogRepository } from '../src/features/daily-log/services/logRepos
 import type { DailyLog, DateString, EntryId } from '../src/features/daily-log/types/log.ts';
 
 const original = [log('b','2026-07-28','2026-07-28T09:00:00Z'), log('c','2026-07-29','2026-07-29T08:00:00Z'), log('a','2026-07-28','2026-07-28T10:00:00Z')];
+original[2].captureProvenance = { source:'CONVERSATION_CAPTURE',capturedAt:'2026-07-28T09:59:00Z',consentedAt:'2026-07-28T10:00:00Z',extraction:{method:'USER_STRUCTURED_INPUT',version:'v1'},sourceExcerpt:'確認した範囲' };
 const baseline = structuredClone(original);
 const repository = memoryRepository(original);
 const service = new DailyLogApplicationService(repository, () => '2026-07-30T12:00:00.000Z');
@@ -24,6 +25,7 @@ if (updated.ok) {
   assert.equal(updated.log.mood, 5, 'mood is updated');
   assert.equal(updated.log.fatigue, 1, 'fatigue is updated');
   assert.equal(updated.log.note, 'updated', 'note is updated');
+  assert.deepEqual(updated.log.captureProvenance, baseline.find((log) => log.id === 'a')?.captureProvenance, 'update preserves CaptureProvenance');
 }
 assert.deepEqual(updateInput, inputBaseline, 'update input is unchanged');
 const afterUpdate = service.listDailyLogs();
@@ -48,7 +50,9 @@ assert.doesNotMatch(ui, /sleepHours/, 'sleepHours is not restored as an edit fie
 assert.match(ui, /疲労は1=元気、5=とても疲れている/);
 assert.match(ui, /過去に生成済みの分析結果は自動的に書き換わりません/);
 assert.match(ui, /キャンセル/);
-assert.match(logTab, /<DailyLogList revision=\{listRevision\} onChanged=\{onSaveSuccess\} \/>/, 'edit/delete changes are connected to the parent reload callback');
+assert.match(logTab, /<DailyLogList revision=\{listRevision\} onChanged=\{onSaveSuccess\}/, 'edit/delete changes are connected to the parent reload callback');
+for (const contract of [/navigationTarget/,/onNavigationTargetConsumed/,/onRecordChanged/,/role="alert"/,/firstEditFieldRef/,/deleteHeadingRef/,/recordRefs/]) assert.match(ui, contract);
+assert.doesNotMatch(ui, /window\.location/, 'record navigation does not depend on window.location');
 assert.doesNotMatch(app, /const refreshLogs = \(\) => \{[^}]*setActiveTab/s, 'parent reload keeps the current Record tab selected');
 console.log('DailyLog management tests passed');
 

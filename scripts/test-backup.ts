@@ -32,6 +32,7 @@ const storage=populatedStorage(); storage.setItem('not-managed','keep'); let rec
 const service=new BackupApplicationService(storage,BACKUP_RESOURCE_REGISTRY,()=>t,()=>{reconciles++});
 const exported=service.export(); const envelope=JSON.parse(exported) as BackupEnvelope;
 assert.equal(envelope.resources.length,15); assert.deepEqual(envelope.resources.map(r=>r.name),BACKUP_RESOURCE_REGISTRY.map(r=>r.name));
+assert.doesNotMatch(JSON.stringify(envelope),/rejectedDeduplicationKeys|dailyLogNavigationTarget|activeCaptureCandidate/,'session suppression, navigation, and Capture Candidate are not exported');
 assert.doesNotMatch(JSON.stringify(envelope.resources.find(r=>r.name==='dailyLogs')!.data),/sourceMessageId|candidateId|deduplicationKey/,'ephemeral capture identifiers are not exported with DailyLog');
 assert.equal(BACKUP_RESOURCE_REGISTRY.some(({name,storageKey}) => /conversation/i.test(name) || /conversation/i.test(storageKey)), false, 'in-memory conversation is not a backup resource');
 assert.equal(service.prepareImport(exported).preview.restorable,true); assert.deepEqual(service.getExportPreview().resourceSummaries.map(r=>r.count),[2,1,1,1,1,1,1,1,1,2,1,1,1,1,1]);

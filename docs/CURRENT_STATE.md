@@ -6,14 +6,20 @@ lastUpdated: "2026-08-02"
 ---
 # Current State (現在のプロジェクト状況)
 
+## 2026-08-02 Conversation Capture境界完了（Issue #83）
+
+- 同一sessionの却下済みdeduplication keyだけをin-memory保持し、再提示を抑制する。resetで破棄し、永続化・backup・restoreは行わない。
+- COMMITTED receiptから保存済みDailyLogをVIEW / EDIT / DELETEでき、Appのone-shot targetで正しいRecordへfocusする。編集・削除は既存Application Serviceを通り、provenance境界を維持する。
+- 同じRecordの更新・削除後はCOMMITTED Candidateを変更せずactive receiptだけを外す。backup resourceは15件のままである。
+
 プロダクト体験の方向性は[Conversation-First Product Direction](product/CONVERSATION_FIRST_PRODUCT_DIRECTION.md)をCanonical Documentとする。以下は2026-08-02時点の`main`との照合結果であり、後続の日時別セクションは実装当時の履歴として読む。
 
 ## Product Directionと実装状態
 
 - **採用済み方針**: ChatをPrimary Experience、Calendarを人生の時間軸、相談中の分析利用、根拠の段階的開示、早期個人化、Conversation Capture、同意に基づく自動取得、Personal Discovery Engine。
 - **一部実装済み**: in-memory Conversation Shellと決定論的な既存画面案内、DailyLog / SleepRecord、Weather取得・前日気象の限定的な自動取得、Evidence、Relationship Explorer、読み取り専用Prediction、Understanding確認・履歴、Formal UserModel、Compass Map / Formal Reflectionの読み取り専用接続、初回利用ガイド。
-- **一部実装済み（Conversation Capture）**: D-0016準拠のin-memory Capture Candidate型、DailyLog capture payload、8状態の純粋なlifecycle、COMMITTING時のdeep-copy commit request snapshot、明示的な遷移・metadata検証失敗。保存処理とは未接続で、センシティブ候補はREADYにできない。
-- **未実装**: Capture Candidate確認UI、DailyLogApplicationServiceへのcommit接続、Candidate / 会話の永続化、自由会話理解、永続的な会話履歴、Conversation consumer接続、LLM生成、Calendar UI・外部カレンダー連携、ウェアラブル連携、学習型機械学習・オンライン学習、Personal Discovery Engineとしての統合。
+- **実装済み（Conversation Capture Stage 2）**: D-0016準拠のin-memory Capture Candidate、構造化DailyLog flow、確認・commit・retry、最小CaptureProvenance、同一sessionのreject suppression、COMMITTED receiptから保存済みRecordへのVIEW / EDIT / DELETE導線。センシティブ候補はREADYにできない。
+- **未実装**: Candidate / 会話の永続化、自由会話理解、永続的な会話履歴、Conversation consumer接続、LLM生成、Calendar UI・外部カレンダー連携、ウェアラブル連携、学習型機械学習・オンライン学習、Personal Discovery Engineとしての統合。
 
 `SleepRecord.source`の`SMARTWATCH`は将来互換の値にすぎず、ウェアラブル連携ではない。日付・timezone単位の集計はCalendar連携ではない。固定ルールによるAnalyzer / Relationship / Predictionは学習型機械学習ではない。
 

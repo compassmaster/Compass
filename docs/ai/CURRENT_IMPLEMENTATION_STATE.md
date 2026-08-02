@@ -1,5 +1,9 @@
 # Compass Agent Instructions
 
+## 2026-08-02 Conversation Capture completion（Issue #83）
+
+Conversation sessionは却下済みdeduplication keyの集合だけを保持し、同じsessionでの再提示を`CAPTURE_SUPPRESSED`として拒否する。Candidate本文・source・ID・purposeは抑制情報へ複製せず、resetで消える。COMMITTED DailyLogはtransient navigation targetを介して記録一覧のVIEW / EDIT / DELETEへ接続済みで、更新・削除通知が同じrecordIdのactive receiptだけを外す。新しいRepository、storage key、backup resourceはない。
+
 ## 2026-08-02 Capture Candidate model (Issue #75)
 
 - D-0016準拠のCapture Candidate型、構造化DailyLog payload、8状態lifecycleと純粋な遷移関数を実装済み。
