@@ -42,8 +42,30 @@ const envelopeRecords = <T>(value: unknown, version: number, guard: (record: unk
 };
 const timestamp = (value: unknown) => typeof value === 'string' && value.length > 0 && Number.isFinite(Date.parse(value));
 const date = (value: unknown) => { if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false; const parsed = Date.parse(`${value}T00:00:00Z`); return Number.isFinite(parsed) && new Date(parsed).toISOString().slice(0, 10) === value; };
-const dailyLog = (value: unknown): value is DailyLog => object(value) && typeof value.id === 'string' && value.id.length > 0 && date(value.date) && timestamp(value.createdAt) && timestamp(value.updatedAt) && value.schemaVersion === CURRENT_SCHEMA_VERSION && [1, 2, 3, 4, 5].includes(value.mood as number) && [1, 2, 3, 4, 5].includes(value.fatigue as number) && typeof value.note === 'string' && Array.isArray(value.events) && value.events.every((entry) => typeof entry === 'string');
-const sleepRecord = (value: unknown): value is SleepRecord => object(value) && typeof value.id === 'string' && value.id.length > 0 && date(value.sleepDate) && timestamp(value.bedtime) && timestamp(value.wakeTime) && typeof value.durationMinutes === 'number' && Number.isFinite(value.durationMinutes) && value.durationMinutes > 0 && (value.source === 'MANUAL' || value.source === 'SMARTWATCH') && timestamp(value.createdAt) && timestamp(value.updatedAt);
+const provenance = (value: unknown) => object(value) && value.source === 'CONVERSATION_CAPTURE' && timestamp(value.capturedAt) && timestamp(value.consentedAt) && object(value.extraction) && value.extraction.method === 'USER_STRUCTURED_INPUT' && typeof value.extraction.version === 'string' && value.extraction.version.trim().length > 0 && typeof value.sourceExcerpt === 'string' && value.sourceExcerpt.trim().length > 0;
+const dailyLog = (value: unknown): value is DailyLog => object(value) && typeof value.id === 'string' && value.id.length > 0 && date(value.date) && timestamp(value.createdAt) && timestamp(value.updatedAt) && value.schemaVersion === CURRENT_SCHEMA_VERSION && [1, 2, 3, 4, 5].includes(value.mood as number) && [1, 2, 3, 4, 5].includes(value.fatigue as number) && (value.sleepHours === null || typeof value.sleepHours === 'number' && Number.isFinite(value.sleepHours)) && typeof value.note === 'string' && Array.isArray(value.events) && value.events.every((entry) => typeof entry === 'string') && (value.captureProvenance === undefined || provenance(value.captureProvenance));
+const sleepRecord = (value: unknown): value is SleepRecord => object(value) && typeof value.id === 'string' && value.id.length > 0 && date(value.sleepDate) && isSleepDateTimeSyntax(value.bedtime) && isSleepDateTimeSyntax(value.wakeTime) && typeof value.durationMinutes === 'number' && Number.isInteger(value.durationMinutes) && value.durationMinutes > 0 && (value.source === 'MANUAL' || value.source === 'SMARTWATCH') && timestamp(value.createdAt) && timestamp(value.updatedAt);
+
+const OFFSET_DATETIME = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d{1,3})?)?(Z|[+-]\d{2}:\d{2})$/;
+const WALL_DATETIME = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/;
+const validParts = (match: RegExpMatchArray) => { const [, y, m, d, h, min, second = '00'] = match; const instant = Date.UTC(+y, +m - 1, +d, +h, +min, +second); const value = new Date(instant); return value.getUTCFullYear() === +y && value.getUTCMonth() + 1 === +m && value.getUTCDate() === +d && value.getUTCHours() === +h && value.getUTCMinutes() === +min && value.getUTCSeconds() === +second; };
+const isSleepDateTimeSyntax = (value: unknown): value is string => { if (typeof value !== 'string') return false; const match = value.match(OFFSET_DATETIME) ?? value.match(WALL_DATETIME); return match !== null && validParts(match) && (value.match(OFFSET_DATETIME) === null || Number.isFinite(Date.parse(value))); };
+
+export function sleepDateTimeToInstant(value: string, timeZone: string): number | null {
+  const offset = value.match(OFFSET_DATETIME); if (offset) return validParts(offset) ? Date.parse(value) : null;
+  const wall = value.match(WALL_DATETIME); if (!wall || !validParts(wall)) return null;
+  try { new Intl.DateTimeFormat('en', { timeZone }).format(); } catch { return null; }
+  const [, y, m, d, h, min, second = '00'] = wall, target = `${y}-${m}-${d}T${h}:${min}:${second}`, wallUtc = Date.UTC(+y, +m - 1, +d, +h, +min, +second), matches: number[] = [];
+  const formatter = new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' });
+  for (let offsetMinutes = -14 * 60; offsetMinutes <= 14 * 60; offsetMinutes += 15) { const candidate = wallUtc - offsetMinutes * 60_000; const parts = Object.fromEntries(formatter.formatToParts(new Date(candidate)).filter((part) => part.type !== 'literal').map((part) => [part.type, part.value])); if (`${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}:${parts.second}` === target) matches.push(candidate); }
+  return matches.length === 1 ? matches[0] : null;
+}
+export function validateSleepRecordForTimeline(record: SleepRecord, timeZone: string): boolean {
+  const bedtime = sleepDateTimeToInstant(record.bedtime, timeZone), wakeTime = sleepDateTimeToInstant(record.wakeTime, timeZone); if (bedtime === null || wakeTime === null || wakeTime <= bedtime) return false;
+  const calculated = Math.round((wakeTime - bedtime) / 60_000); if (Math.abs(calculated - record.durationMinutes) > 1) return false;
+  const wakeParts = new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date(wakeTime)); const get = (type: string) => wakeParts.find((part) => part.type === type)?.value ?? '';
+  return `${get('year')}-${get('month')}-${get('day')}` === record.sleepDate;
+}
 
 export class CalendarTimelineSourceReader extends StrictStorageReader<CalendarEventRecord> { constructor(storage: Pick<Storage, 'getItem'> = localStorage) { super(storage, CALENDAR_EVENT_STORAGE_KEY); } protected validate(value: unknown) { return envelopeRecords(value, 1, isCalendarEventRecord); } }
 export class DailyLogTimelineSourceReader extends StrictStorageReader<DailyLog> { constructor(storage: Pick<Storage, 'getItem'> = localStorage) { super(storage, DAILY_LOG_STORAGE_KEY); } protected validate(value: unknown) { return arrayRecords(value, dailyLog); } }

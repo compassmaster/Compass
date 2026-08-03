@@ -1,10 +1,12 @@
 import React from 'react';
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { LifeTimelineSection } from '../src/features/life-timeline/components/LifeTimelineSection.tsx';
 import { CalendarTab } from '../src/features/calendar/components/CalendarTab.tsx';
 import { LifeTimelineQueryService, compareLifeTimelineItems } from '../src/features/life-timeline/services/lifeTimelineQueryService.ts';
-import { CalendarTimelineSourceReader, DailyLogTimelineSourceReader, ForecastTimelineSourceReader, ObservationTimelineSourceReader, SleepTimelineSourceReader, type LifeTimelineSourceReader } from '../src/features/life-timeline/services/lifeTimelineSourceReader.ts';
+import { CalendarTimelineSourceReader, DailyLogTimelineSourceReader, ForecastTimelineSourceReader, ObservationTimelineSourceReader, SleepTimelineSourceReader, sleepDateTimeToInstant, type LifeTimelineSourceReader } from '../src/features/life-timeline/services/lifeTimelineSourceReader.ts';
+import { BackupApplicationService } from '../src/features/backup/services/backupApplicationService.ts';
 import type { CalendarEventRecord } from '../src/features/calendar/types/calendarEvent.ts';
 import type { DailyLog } from '../src/features/daily-log/types/log.ts';
 import type { SleepRecord } from '../src/features/sleep/types/sleepRecord.ts';
@@ -37,6 +39,20 @@ describe('LifeTimeline strict read/query contract', () => {
     expect(new DailyLogTimelineSourceReader({ getItem: () => { throw new Error('denied'); } }).readAll()).toEqual({ ok: false, failureCode: 'STORAGE_READ_FAILED' });
   });
 
+  it.each([
+    [CalendarTimelineSourceReader, JSON.stringify({ schemaVersion: 1, records: [{ id: 'bad' }] })],
+    [DailyLogTimelineSourceReader, JSON.stringify([{ id: 'bad' }])],
+    [SleepTimelineSourceReader, JSON.stringify([{ id: 'bad' }])],
+    [ForecastTimelineSourceReader, JSON.stringify({ schemaVersion: 1, records: [{ id: 'bad' }] })],
+    [ObservationTimelineSourceReader, JSON.stringify({ schemaVersion: 1, records: [{ id: 'bad' }] })],
+  ] as const)('%s exposes an invalid source record as FAILED through its production adapter', (Reader, raw) => expect(new Reader({ getItem: () => raw }).readAll()).toEqual({ ok: false, failureCode: 'INVALID_RECORD' }));
+
+  it('strictly validates DailyLog sleepHours/provenance and Sleep period/duration through storage adapters', () => {
+    for (const invalid of [{ ...daily, sleepHours: 'not-a-finite-number' }, { ...daily, captureProvenance: { source: 'CONVERSATION_CAPTURE' } }]) expect(new DailyLogTimelineSourceReader({ getItem: () => JSON.stringify([invalid]) }).readAll()).toEqual({ ok: false, failureCode: 'INVALID_RECORD' });
+    const invalidSleep = { ...sleep, bedtime: '2026-11-01T08:00', wakeTime: '2026-11-01T07:00', durationMinutes: 60 };
+    const result = new LifeTimelineQueryService({ calendar: ok([]), dailyLog: ok([]), sleep: new SleepTimelineSourceReader({ getItem: () => JSON.stringify([invalidSleep]) }), forecast: ok([]), observation: ok([]) }).query({ fromDate: '2026-11-01', toDate: '2026-11-01', timeZone: 'UTC' }); expect(result.ok).toBe(true); if (result.ok) expect(result.sources.find((source) => source.source === 'SLEEP')).toMatchObject({ status: 'FAILED', failureCode: 'INVALID_RECORD' });
+  });
+
   it('performs zero Storage writes and creates no projection/cache/backup key during a production-style query', () => {
     localStorage.clear(); const before = Object.keys(localStorage); const setItem = vi.spyOn(Storage.prototype, 'setItem'), removeItem = vi.spyOn(Storage.prototype, 'removeItem');
     const service = new LifeTimelineQueryService({ calendar: new CalendarTimelineSourceReader(), dailyLog: new DailyLogTimelineSourceReader(), sleep: new SleepTimelineSourceReader(), forecast: new ForecastTimelineSourceReader(), observation: new ObservationTimelineSourceReader() });
@@ -63,6 +79,31 @@ describe('LifeTimeline strict read/query contract', () => {
     const projectedDaily = result.items.find((item) => item.recordType === 'DAILY_LOG'); if (projectedDaily?.recordType === 'DAILY_LOG') projectedDaily.projection.events[0] = 'mutated'; expect(daily.events[0]).toBe('walk');
   });
 
+  it('sorts real instants across offsets and DST, uses continuation midnight, and applies fixed-rank/id ties', () => {
+    const events = [
+      event('later-wall-earlier-instant', 'PLANNED', { timeKind: 'TIMED', startsAt: '2026-11-01T09:00:00+09:00', endsAt: '2026-11-01T10:00:00+09:00', timeZone: 'Asia/Tokyo', startDate: undefined, endDate: undefined }),
+      event('earlier-wall-later-instant', 'PLANNED', { timeKind: 'TIMED', startsAt: '2026-11-01T01:30:00-04:00', endsAt: '2026-11-01T02:30:00-05:00', timeZone: 'America/New_York', startDate: undefined, endDate: undefined }),
+      event('multi', 'PLANNED', { timeKind: 'TIMED', startsAt: '2026-10-31T23:30:00-04:00', endsAt: '2026-11-02T01:00:00-05:00', timeZone: 'America/New_York', startDate: undefined, endDate: undefined }),
+      event('tie-b', 'PLANNED', { timeKind: 'TIMED', startsAt: '2026-11-01T05:30:00Z', endsAt: '2026-11-01T06:00:00Z', timeZone: 'UTC', startDate: undefined, endDate: undefined }),
+      event('tie-a', 'PLANNED', { timeKind: 'TIMED', startsAt: '2026-11-01T05:30:00Z', endsAt: '2026-11-01T06:00:00Z', timeZone: 'UTC', startDate: undefined, endDate: undefined }),
+    ];
+    const hourly = { ...forecast, id: 'hourly', targetPeriod: { ...forecast.targetPeriod, granularity: 'HOURLY', startsAt: '2026-11-01T01:30:00-04:00', endsAt: '2026-11-01T02:30:00-05:00' } } as WeatherForecastSnapshot;
+    const result = new LifeTimelineQueryService({ calendar: ok(events), dailyLog: ok([]), sleep: ok([]), forecast: ok([hourly]), observation: ok([]) }).query({ fromDate: '2026-11-01', toDate: '2026-11-01', timeZone: 'UTC' }); expect(result.ok).toBe(true); if (!result.ok) return;
+    expect(result.items.map((item) => item.sourceRecordId)).toEqual(['later-wall-earlier-instant', 'multi', 'earlier-wall-later-instant', 'tie-a', 'tie-b', 'hourly']);
+    expect(result.items.find((item) => item.sourceRecordId === 'multi')?.effectiveSortInstant).toBe('2026-11-01T04:00:00.000Z');
+    expect(result.items.find((item) => item.sourceRecordId === 'hourly')?.effectiveSortInstant).toBe('2026-11-01T05:30:00.000Z');
+  });
+
+  it('parses Sleep offset instants and datetime-local wall times independently of the runtime TZ and rejects gaps/order/duration mismatch', () => {
+    const original = process.env.TZ; process.env.TZ = 'Pacific/Honolulu'; const tokyo = sleepDateTimeToInstant('2026-01-02T07:00', 'Asia/Tokyo'); process.env.TZ = 'Europe/London'; expect(sleepDateTimeToInstant('2026-01-02T07:00', 'Asia/Tokyo')).toBe(tokyo); expect(tokyo).toBe(Date.parse('2026-01-01T22:00:00Z')); process.env.TZ = original;
+    expect(sleepDateTimeToInstant('2026-03-08T02:30', 'America/New_York')).toBeNull(); expect(sleepDateTimeToInstant('2026-01-02T07:00:00+09:00', 'America/New_York')).toBe(Date.parse('2026-01-01T22:00:00Z'));
+    for (const invalid of [
+      { ...sleep, bedtime: '2026-11-01T07:00', wakeTime: '2026-11-01T06:00', durationMinutes: 60 },
+      { ...sleep, bedtime: '2026-10-31T23:00', wakeTime: '2026-11-01T07:00', durationMinutes: 10 },
+      { ...sleep, sleepDate: '2026-03-08', bedtime: '2026-03-08T02:30', wakeTime: '2026-03-08T04:00', durationMinutes: 30 },
+    ]) { const result = new LifeTimelineQueryService({ calendar: ok([]), dailyLog: ok([]), sleep: ok([invalid as SleepRecord]), forecast: ok([]), observation: ok([]) }).query({ fromDate: invalid.sleepDate as string, toDate: invalid.sleepDate as string, timeZone: 'America/New_York' }); expect(result.ok && result.sources.find((source) => source.source === 'SLEEP')).toMatchObject({ status: 'FAILED', failureCode: 'INVALID_RECORD' }); }
+  });
+
   it('keeps successful sources while exposing failures rather than empty arrays', () => {
     const result = query({ daily: failed() }).query({ fromDate: '2026-11-01', toDate: '2026-11-01', timeZone: 'UTC' }); expect(result.ok).toBe(true); if (!result.ok) return;
     expect(result.completeness).toBe('PARTIAL_FAILURE'); expect(result.items.some((item) => item.recordType === 'CALENDAR_EVENT')).toBe(true); expect(result.sources.find((source) => source.source === 'DAILY_LOG')).toMatchObject({ status: 'FAILED', failureCode: 'STORAGE_READ_FAILED', candidateCount: null });
@@ -81,5 +122,15 @@ describe('LifeTimeline DOM', () => {
   it('distinguishes no records and failures, and a Timeline failure does not remove Calendar Agenda', () => {
     const empty = new LifeTimelineQueryService({ calendar: ok([]), dailyLog: ok([]), sleep: ok([]), forecast: ok([]), observation: ok([]) }); const view = render(<LifeTimelineSection date="2026-11-01" service={empty} />); expect(screen.getByText('この日の記録はありません。')).toBeTruthy(); view.unmount();
     render(<CalendarTab timelineService={query({ daily: failed() })} />); expect(screen.getByRole('heading', { name: /のAgenda/ })).toBeTruthy(); expect(screen.getByText(/一部を読み込めませんでした/)).toBeTruthy(); expect(screen.queryByText('この日の記録はありません。')).toBeNull();
+  });
+  it('requeries the selected date after previous, next and date input without taking navigation focus', async () => {
+    const service = query(), spy = vi.spyOn(service, 'query'), user = userEvent.setup(); render(<CalendarTab timelineService={service} />); const previous = screen.getByRole('button', { name: '前の日' }), next = screen.getByRole('button', { name: '次の日' }), input = screen.getByLabelText('表示する日');
+    previous.focus(); await user.click(previous); expect(document.activeElement).toBe(previous); await user.click(next); expect(document.activeElement).toBe(next); input.focus(); fireEvent.change(input, { target: { value: '2026-11-01' } }); expect(document.activeElement).toBe(input);
+    expect(spy.mock.calls.at(-1)?.[0]).toMatchObject({ fromDate: '2026-11-01', toDate: '2026-11-01' }); expect(new Set(spy.mock.calls.map(([value]) => value.fromDate)).size).toBeGreaterThan(1);
+  });
+
+  it('keeps the actual backup export free of Timeline projections, traces, sort keys and query caches', () => {
+    localStorage.clear(); query().query({ fromDate: '2026-11-01', toDate: '2026-11-01', timeZone: 'UTC' }); const exported = new BackupApplicationService(localStorage, undefined, () => '2026-11-01T00:00:00Z').export();
+    for (const forbidden of ['stableItemKey', 'effectiveSortInstant', 'sortKey', 'coveredDates', 'missingDates', 'includedRecordIds', 'lifeTimeline', 'queryCache']) expect(exported).not.toContain(forbidden);
   });
 });

@@ -17,6 +17,8 @@ interface ItemBase {
   readonly sourceTimeZone: string | null;
   readonly sortBucket: LifeTimelineSortBucket;
   readonly sortKey: string;
+  /** TIMED_OR_HOURLYだけが持つ実instant。その他のbucketはnull。 */
+  readonly effectiveSortInstant: string | null;
 }
 export type LifeTimelineItem =
   | (ItemBase & { readonly recordType: 'CALENDAR_EVENT'; readonly source: 'CALENDAR'; readonly projection: { readonly title: string; readonly note?: string; readonly timeKind: 'ALL_DAY' | 'TIMED'; readonly status: CalendarEventStatus; readonly startsAt?: string; readonly endsAt?: string } })
