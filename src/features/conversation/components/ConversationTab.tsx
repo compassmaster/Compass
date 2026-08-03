@@ -13,6 +13,8 @@ import { DailyLogCaptureFlowCard } from './DailyLogCaptureFlowCard.tsx';
 import type { DailyLogCaptureAnswer } from '../session/dailyLogCaptureFlow.ts';
 import { executeCaptureCommit } from '../application/captureCommitExecutor.ts';
 import type { DailyLogNavigationTarget } from '../../daily-log/types/navigation.ts';
+import { interpretConversationInput } from '../interpreter/conversationInterpreter.ts';
+import { CalendarCaptureCard, type CalendarCaptureCommit, type CalendarCaptureReceipt } from './CalendarCaptureCard.tsx';
 
 type ConversationTabProps = {
   session: ConversationSession;
@@ -28,6 +30,8 @@ type ConversationTabProps = {
   onNavigateToWeather: () => void;
   onNavigateToBackup: () => void;
   onCaptureCommitRequest: (request: CaptureCommitRequest) => CaptureCommitOutcome | Promise<CaptureCommitOutcome>;
+  onCalendarCommit: CalendarCaptureCommit;
+  onNavigateToCalendarRecord: (receipt: CalendarCaptureReceipt) => void;
 };
 
 export function ConversationTab({
@@ -44,9 +48,13 @@ export function ConversationTab({
   onNavigateToWeather,
   onNavigateToBackup,
   onCaptureCommitRequest,
+  onCalendarCommit,
+  onNavigateToCalendarRecord,
 }: ConversationTabProps) {
   const [draft, setDraft] = useState('');
   const [announcement, setAnnouncement] = useState<ConversationAnnouncement | null>(null);
+  const [calendarCapture, setCalendarCapture] = useState<{ key: number; sourceExcerpt: string; capturedAt: string } | null>(null);
+  const rejectedCalendarExcerptsRef = useRef(new Set<string>());
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const messagesRef = useRef<HTMLDivElement>(null);
   const shouldFollowMessagesRef = useRef(true);
@@ -97,7 +105,10 @@ export function ConversationTab({
     event.preventDefault();
     if (draft.trim().length === 0 || submittingRef.current) return;
     submittingRef.current = true;
-    applySession(transitionConversationSession(session, { type: 'SUBMIT_TEXT', text: draft, occurredAt: new Date().toISOString() }));
+    const occurredAt = new Date().toISOString();
+    const intent = interpretConversationInput(draft);
+    applySession(transitionConversationSession(session, { type: 'SUBMIT_TEXT', text: draft, occurredAt }));
+    if (intent === 'RECORD_CALENDAR' && !calendarCapture && !session.dailyLogCaptureFlow && !session.activeCaptureCandidate && !rejectedCalendarExcerptsRef.current.has(draft.trim())) setCalendarCapture({ key: session.nextMessageNumber, sourceExcerpt: draft.trim(), capturedAt: occurredAt });
     setDraft('');
     focusInput();
   };
@@ -112,6 +123,7 @@ export function ConversationTab({
     submittingRef.current = false;
     setDraft('');
     claimedActionIdsRef.current.clear();
+    setCalendarCapture(null); rejectedCalendarExcerptsRef.current.clear();
     applySession(transitionConversationSession(session, { type: 'RESET' }));
     shouldFollowMessagesRef.current = true;
     requestAnimationFrame(focusInput);
@@ -119,6 +131,7 @@ export function ConversationTab({
 
   const actionCallbacks: ConversationActionCallbacks = {
       RECORD_DAILY_LOG: onNavigateToLog,
+      RECORD_CALENDAR: () => undefined,
       RECORD_SLEEP: onNavigateToSleep,
       VIEW_PREDICTION: onNavigateToPrediction,
       VIEW_COMPASS_MAP: onNavigateToCompassMap,
@@ -191,6 +204,7 @@ export function ConversationTab({
       {session.dailyLogCaptureFlow && <DailyLogCaptureFlowCard key={session.dailyLogCaptureFlow.step} flow={session.dailyLogCaptureFlow} onAnswer={handleFlowAnswer}
         onBack={() => onSessionChange(backActiveDailyLogCaptureFlow(session).session)}
         onCancel={() => { onSessionChange(cancelActiveDailyLogCaptureFlow(session).session); requestAnimationFrame(focusInput); }} />}
+      {calendarCapture && <CalendarCaptureCard key={calendarCapture.key} request={calendarCapture} onCommit={onCalendarCommit} onReceipt={onNavigateToCalendarRecord} onClose={(rejected) => { if (rejected) rejectedCalendarExcerptsRef.current.add(calendarCapture.sourceExcerpt); setCalendarCapture(null); requestAnimationFrame(focusInput); }} />}
       {session.activeCaptureCandidate && <CaptureCandidateReviewCard ref={reviewRef} candidate={session.activeCaptureCandidate}
         onBeginEdit={() => onSessionChange(beginActiveCaptureCandidateEdit(session, new Date().toISOString()).session)}
         onApplyEdit={(payload: DailyLogCapturePayload) => { const result = applyActiveCaptureCandidateEdit(session, payload, new Date().toISOString()); onSessionChange(result.session); return { error: result.error, validationErrors: result.validationErrors }; }}
@@ -206,7 +220,7 @@ export function ConversationTab({
       </p>
       <form className="conversation-composer" onSubmit={handleSubmit}>
         <label htmlFor="conversation-input">自由に書く</label>
-        <textarea ref={inputRef} id="conversation-input" value={draft} disabled={Boolean(session.dailyLogCaptureFlow)} onChange={(event) => setDraft(event.target.value)} onKeyDown={handleKeyDown} placeholder={session.dailyLogCaptureFlow ? '現在の記録を完了または取消してください' : '今の気持ちや、考えたいことを書いてください'} rows={3} />
+        <textarea ref={inputRef} id="conversation-input" value={draft} disabled={Boolean(session.dailyLogCaptureFlow || calendarCapture)} onChange={(event) => setDraft(event.target.value)} onKeyDown={handleKeyDown} placeholder={session.dailyLogCaptureFlow ? '現在の記録を完了または取消してください' : '今の気持ちや、考えたいことを書いてください'} rows={3} />
         <div className="conversation-composer-actions">
           <button type="button" className="conversation-reset" onClick={handleReset}>会話を最初から始める</button>
           <button type="submit" disabled={draft.trim().length === 0 || Boolean(session.dailyLogCaptureFlow)} aria-disabled={draft.trim().length === 0 || Boolean(session.dailyLogCaptureFlow)}>{session.dailyLogCaptureFlow ? '記録を進行中' : draft.trim().length === 0 ? '送信（入力待ち）' : '送信'}</button>

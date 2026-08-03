@@ -5,6 +5,9 @@ import { buildConversationResponse } from '../src/features/conversation/interpre
 assert.equal(normalizeConversationInput('  Ｃｏｍｐａｓｓ　Ｍａｐ  '), 'compass map');
 const cases = new Map<string, string>([
   ['今日の体調を記録したい', 'RECORD_DAILY_LOG'],
+  ['予定を追加したい', 'RECORD_CALENDAR'],
+  ['カレンダーに登録したい', 'RECORD_CALENDAR'],
+  ['明日会議がある', 'UNKNOWN'],
   ['睡眠を記録したい', 'RECORD_SLEEP'],
   ['睡眠', 'RECORD_SLEEP'],
   ['日々の状態', 'RECORD_DAILY_LOG'],
@@ -31,6 +34,7 @@ assert.equal((ambiguous.text.match(/[？?]/g) ?? []).length, 1, 'ambiguous recor
 assert.equal(ambiguous.action, undefined);
 assert.equal(buildConversationResponse('UNKNOWN').action, undefined);
 assert.equal(buildConversationResponse('RECORD_DAILY_LOG').action, undefined);
+assert.equal(buildConversationResponse('RECORD_CALENDAR').action, undefined);
 for (const intent of ['RECORD_SLEEP', 'VIEW_PREDICTION', 'VIEW_COMPASS_MAP', 'VIEW_DETAILS', 'VIEW_WEATHER', 'VIEW_BACKUP'] as const) {
   assert.equal(buildConversationResponse(intent).action?.intent, intent);
 }

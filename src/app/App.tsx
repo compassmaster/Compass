@@ -35,6 +35,8 @@ import { createConversationSession, dismissCommittedReceiptForRecordChange } fro
 import { DailyLogCaptureCommitAdapter } from '../features/conversation/application/dailyLogCaptureCommitAdapter.ts';
 import type { DailyLogNavigationTarget, DailyLogRecordChange } from '../features/daily-log/types/navigation.ts';
 import { CalendarTab } from '../features/calendar/components/CalendarTab.tsx';
+import { calendarEventApplicationService } from '../features/calendar/services/compositionRoot.ts';
+import type { CalendarCaptureReceipt } from '../features/conversation/components/CalendarCaptureCard.tsx';
 
 import './App.css';
 
@@ -104,6 +106,7 @@ export function App() {
   const [conversationSession, setConversationSession] = useState(createConversationSession);
   const [conversationScrollPosition, setConversationScrollPosition] = useState(0);
   const [dailyLogNavigationTarget, setDailyLogNavigationTarget] = useState<DailyLogNavigationTarget | null>(null);
+  const [calendarNavigationTarget, setCalendarNavigationTarget] = useState<CalendarCaptureReceipt | null>(null);
   const [firstUseGuide, setFirstUseGuide] = useState(() => firstUseGuideQueryService.get());
   const [logs, setLogs] = useState<DailyLog[]>(() => dailyLogApplicationService.listDailyLogs());
   const [, setUserModel] = useState<UserModel>(() => loadInitialUserModel());
@@ -321,6 +324,11 @@ export function App() {
               if (outcome.ok) refreshLogs();
               return outcome;
             }}
+            onCalendarCommit={async (input) => {
+              const result = calendarEventApplicationService.create(input);
+              return result.ok ? { ok: true, record: result.record } : { ok: false };
+            }}
+            onNavigateToCalendarRecord={(receipt) => { setCalendarNavigationTarget(receipt); setActiveTab('calendar'); }}
           />
         )}
         {activeTab === 'home' && (
@@ -354,7 +362,7 @@ export function App() {
           />
         )}
         {activeTab === 'log' && <LogTab onSaveSuccess={refreshLogs} onSleepChanged={refreshFirstUseGuide} navigationTarget={dailyLogNavigationTarget} onNavigationTargetConsumed={() => setDailyLogNavigationTarget(null)} onRecordChanged={handleDailyLogRecordChanged} />}
-        {activeTab === 'calendar' && <CalendarTab />}
+        {activeTab === 'calendar' && <CalendarTab navigationTarget={calendarNavigationTarget} onNavigationTargetConsumed={() => setCalendarNavigationTarget(null)} />}
         {activeTab === 'weeklySummary' && <WeeklySummaryTab />}
         {activeTab === 'relationships' && <RelationshipExplorerTab />}
         {activeTab === 'prediction' && <PredictionTab />}

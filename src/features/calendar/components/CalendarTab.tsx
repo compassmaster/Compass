@@ -12,8 +12,8 @@ const draftFor = (date: string): Draft => ({ title: '', note: '', timeKind: 'ALL
 const initialLoad = (service: CalendarEventApplicationService): LoadState => { try { return { records: service.list(), failed: false }; } catch { return { records: [], failed: true }; } };
 const afterRender = (action: () => void) => requestAnimationFrame(() => requestAnimationFrame(action));
 
-export function CalendarTab({ service = defaultService }: { service?: CalendarEventApplicationService }) {
-  const [selectedDate, setSelectedDate] = useState(localToday);
+export function CalendarTab({ service = defaultService, navigationTarget = null, onNavigationTargetConsumed }: { service?: CalendarEventApplicationService; navigationTarget?: { recordId: CalendarEventId; targetDate: string } | null; onNavigationTargetConsumed?: () => void }) {
+  const [selectedDate, setSelectedDate] = useState(() => navigationTarget?.targetDate ?? localToday());
   const [loaded, setLoaded] = useState(() => initialLoad(service));
   const [draft, setDraft] = useState(() => draftFor(selectedDate));
   const [editing, setEditing] = useState<CalendarEventId | null>(null);
@@ -91,10 +91,14 @@ export function CalendarTab({ service = defaultService }: { service?: CalendarEv
     else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
   };
   useEffect(() => { if (deleting) requestAnimationFrame(() => dialogRef.current?.querySelector<HTMLButtonElement>('[data-initial-focus]')?.focus()); }, [deleting]);
+  useEffect(() => {
+    if (!navigationTarget) return;
+    afterRender(() => { recordRefs.current.get(navigationTarget.recordId)?.focus(); onNavigationTargetConsumed?.(); });
+  }, [navigationTarget, onNavigationTargetConsumed]);
 
   const agenda = loaded.records.filter((record) => calendarEventOccursOnDate(record, selectedDate));
   return <section className="calendar" aria-labelledby="calendar-heading">
-    <h2 id="calendar-heading">カレンダー</h2><p>手入力の予定を管理します。会話からの予定保存はまだ利用できません。</p>
+    <h2 id="calendar-heading">カレンダー</h2><p>手入力または会話から保存した予定を管理します。</p>
     <div className="calendar-date-navigation" aria-label="Agendaの日付"><button type="button" onClick={() => selectDate(moveLocalDate(selectedDate, -1))}>前の日</button><button type="button" onClick={() => selectDate(localToday())}>今日</button><label>表示する日<input required type="date" value={selectedDate} onChange={(event) => selectDate(event.target.value)} /></label><button type="button" onClick={() => selectDate(moveLocalDate(selectedDate, 1))}>次の日</button></div>
     {message && <p role="alert" className="calendar-alert">{message}</p>}
     <form className="calendar-form" onSubmit={submit}><h3>{editing ? '予定を編集' : '予定を作成'}</h3><label>予定名<input ref={titleRef} required value={draft.title} onChange={(event) => setDraft({ ...draft, title: event.target.value })} /></label><label>メモ（任意）<textarea value={draft.note} onChange={(event) => setDraft({ ...draft, note: event.target.value })} /></label><fieldset><legend>予定の種類</legend><label><input type="radio" checked={draft.timeKind === 'ALL_DAY'} onChange={() => setDraft({ ...draft, timeKind: 'ALL_DAY' })} />終日</label><label><input type="radio" checked={draft.timeKind === 'TIMED'} onChange={() => setDraft({ ...draft, timeKind: 'TIMED' })} />時刻指定</label></fieldset>

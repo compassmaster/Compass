@@ -7,6 +7,10 @@ export function normalizeConversationInput(input: string): string {
 export function interpretConversationInput(input: string): ConversationIntent {
   const normalized = normalizeConversationInput(input);
 
+  // Calendar capture is deliberately opt-in. Mentioning a meeting or a date is
+  // not enough: the user must explicitly say that they want to add/save it.
+  if (/(?:予定|カレンダー).*(?:追加|登録|保存|入れ)(?:したい|たい|る|て)?|(?:追加|登録|保存|入れ).*(?:予定|カレンダー)/.test(normalized)) return 'RECORD_CALENDAR';
+
   if (/明日.*(?:天気|気象|予報)/.test(normalized)) return 'VIEW_WEATHER';
   if (/明日.*(?:見通し|調子|疲れ|疲労)/.test(normalized)) return 'VIEW_PREDICTION';
   if (/^(?:睡眠|眠り|寝たこと)[。.!！]?$|(?:睡眠|寝た|眠り|就寝|起床).*(?:記録|入力|入れ)|(?:記録|入力|入れ).*(?:睡眠|寝た|眠り|就寝|起床)/.test(normalized)) return 'RECORD_SLEEP';
