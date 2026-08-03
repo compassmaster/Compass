@@ -1,0 +1,234 @@
+name: Stage 2 completion docs sync
+
+on:
+  push:
+    branches:
+      - docs/stage2-completion
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: docs/stage2-completion
+          fetch-depth: 0
+
+      - name: Synchronize Stage 2 completion documents
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const path = require('node:path');
+
+          const marker = '<!-- STAGE2_COMPLETION_2026_08_03 -->';
+
+          function read(file) {
+            return fs.readFileSync(file, 'utf8');
+          }
+
+          function write(file, value) {
+            fs.writeFileSync(file, value.replace(/\r\n/g, '\n'));
+          }
+
+          function insertAfterHeading(file, heading, section) {
+            let value = read(file);
+            if (value.includes(marker)) return;
+            const needle = `${heading}\n`;
+            if (!value.includes(needle)) throw new Error(`Heading not found in ${file}: ${heading}`);
+            value = value.replace(needle, `${needle}\n${marker}\n${section.trim()}\n\n`);
+            write(file, value);
+          }
+
+          const currentStateSection = `## 2026-08-03 Stage 2 Conversation Capture完了（Issue #85）
+
+- D-0016に基づくStage 2のvertical sliceは、Conversation上の構造化DailyLog flow、Capture Candidateの確認・修正・却下、明示保存、CaptureProvenance、保存後のVIEW / EDIT / DELETEまで実装・確認済みである。
+- 手動QAはWindows上のChromium系ブラウザとlocal main \`10b1add2dedfb08864f07c7dbbb4e5889829176e\`で実施した。360px、390px、768px、desktopにおいて、Conversation、Candidate、DailyLog編集、Record action、削除dialogの横スクロール・文字切れ・ボタン重なりは確認されなかった。
+- PR #87で、Conversationから削除を開いた直後に確認前削除が起こり得るHigh不具合を修正した。修正後はdialog表示前の削除なし、cancel後のRecord維持とfocus復帰、明示confirmによる対象Recordだけの削除を実ブラウザで再確認した。
+- backup export / preview / restoreは従来どおり動作し、provenance付きDailyLogは復元対象、Conversation session、Candidate、却下key、navigation targetは対象外であることを確認した。backup resource数は増えていない。
+- Conversation sessionは再読み込みで復元されず、保存済みDailyLogだけが残る。会話全文、Candidate ID、Message ID、deduplicationKeyはDailyLogへ保存しない。
+- Stage 2の次はStage 3 — Calendar / Life Timelineである。予定・目標・節目の専用Recordと時間軸UIを設計するまで、DailyLogやUnderstandingを代用保存先にしない。
+
+詳細な実施記録は[Stage 2 Conversation Capture QA結果](qa/STAGE2_CONVERSATION_CAPTURE_QA_2026-08-03.md)とIssue #85を参照する。`;
+
+          insertAfterHeading('docs/CURRENT_STATE.md', '# Current State (現在のプロジェクト状況)', currentStateSection);
+          let currentState = read('docs/CURRENT_STATE.md');
+          currentState = currentState.replace('lastUpdated: "2026-08-02"', 'lastUpdated: "2026-08-03"');
+          currentState = currentState.replace('**v0.1.0-alpha / Conversation-First Roadmap Stage 1: Conversation Shell**', '**v0.1.0-alpha / Conversation-First Roadmap Stage 2: Conversation Capture completed**');
+          currentState = currentState.replace(
+            '現在はFoundationの機能に加え、保存や人物理解を自動化しないin-memory Conversation Shellと、保存前だけを表すCapture Candidate modelを含む。Capture UI、永続化、DailyLogの実保存は未実装である。',
+            '現在はFoundationの機能に加え、in-memory Conversation ShellとStage 2 Conversation Captureのvertical sliceを含む。構造化DailyLog flow、確認・修正・却下、明示保存、CaptureProvenance、同一session内の却下抑制、保存後のVIEW / EDIT / DELETEまで実装済みである。Candidateと会話履歴は永続化しない。'
+          );
+          currentState = currentState.replace(
+            '- Capture Candidateの確認UI、保存処理、DailyLogApplicationService接続、自由会話理解・永続的な会話履歴・LLM生成・Prompt Version管理・Candidate Prioritizer・Calendar連携・ウェアラブル連携・学習型Machine Learning。Domain / Application modelのみ実装済み。',
+            '- 自由会話からの抽出、永続的な会話履歴、LLM生成、Prompt Version管理、Candidate Prioritizer、Calendar連携、ウェアラブル連携、学習型Machine Learning。構造化DailyLog Captureは実装済み。'
+          );
+          currentState = currentState.replace(
+            /## 次の設計対象\n[\s\S]*?(?=## 2026-07-22 Formal UserModel Phase A実装状態)/,
+            `## 次の設計対象\n\nStage 2 Conversation Captureは完了した。次の設計対象はStage 3 — Calendar / Life Timelineである。\n\n- 予定・目標・節目を表す専用Record。\n- Calendarを人生の時間軸として扱うUI。\n- Conversationから予定候補を作る場合の確認・修正・却下・provenance境界。\n- DailyLog、Understanding、Calendar / Goal Recordを相互に代用しない責務分離。\n- 外部カレンダー連携より先に、ローカルDomainとApplication ServiceのSource of Truthを確定する。\n\n自由会話抽出、LLM、外部カレンダー同期、通知、音声入力はStage 3の初期設計で自動的に採用しない。\n\n`
+          );
+          write('docs/CURRENT_STATE.md', currentState);
+
+          const implementationSection = `## 2026-08-03 Current implementation: Stage 2 completed（Issue #85）
+
+- Conversationは初期activeのPrimary Experienceで、session、Message、flow、Candidate、却下抑制、navigation targetはin-memoryである。
+- 構造化DailyLog CaptureはDATE → MOOD → FATIGUE → NOTE → EVENTSを一問ずつ確認し、本人明示値だけからPROPOSED Candidateを生成する。
+- CandidateはPROPOSED / EDITING / READY / COMMITTING / COMMITTED / REJECTED / FAILED / CANCELLEDを持つ。READYと保存成功を分離し、二重commitを拒否する。
+- 保存はDailyLogApplicationServiceを通り、最小CaptureProvenanceをRecordへ従属させる。会話全文、Candidate ID、Message ID、deduplicationKeyは永続化しない。
+- COMMITTED receiptから正しいRecordをVIEW / EDIT / DELETEできる。削除は確認dialogを必須とし、cancel後に元Recordへfocusを戻す。PR #87で確認前削除のHigh不具合を修正し、DOM統合テストと実ブラウザ再QAを完了した。
+- 同一session内の却下候補はdeduplicationKeyで再提示を抑制し、理由をConversationへ表示する。reset / reloadで抑制状態は破棄される。
+- backup resourceは増やさず、provenance付きDailyLogだけを既存DailyLog resourceとしてexport / restoreする。Conversationのtransient stateはbackup対象外である。
+- 手動QAは360px、390px、768px、desktop、keyboard / focus、reload、backup / restore境界で合格した。詳細は \`docs/qa/STAGE2_CONVERSATION_CAPTURE_QA_2026-08-03.md\` を参照する。
+
+次のStageはCalendar / Life Timelineであり、自由会話抽出、LLM、会話履歴永続化、外部カレンダー連携は未実装である。`;
+          insertAfterHeading('docs/ai/CURRENT_IMPLEMENTATION_STATE.md', '# Compass Agent Instructions', implementationSection);
+
+          const handoffSection = `## 2026-08-03 Stage 2 completion handoff（Issue #85）
+
+Stage 2 — Conversation Captureは機能実装、High不具合修正、手動QA、backup境界確認まで完了した。現在のmain基準コミットはPR #87 merge後の \`10b1add2dedfb08864f07c7dbbb4e5889829176e\` である。
+
+今後の作業で維持する不変条件:
+
+- Conversation transcript、Capture Candidate、却下本文、session内deduplicationKey、navigation targetをRepository、localStorage、backupへ追加しない。
+- 保存前に内容、保存先、対象日、目的、source excerpt、値の由来を表示し、本人の明示確認を必須にする。
+- DailyLog保存・編集・削除は既存Application Serviceとvalidationを迂回しない。
+- mood / fatigueを推測して保存しない。
+- Record削除は確認dialogと明示confirmを必須にし、open eventとconfirm eventを同一操作で処理しない。
+- CaptureProvenanceはRecordへ従属し、編集で保持、削除で同時に消す。
+- Stage 3でCalendar / Goalの専用Recordを設計するまで、DailyLogやUnderstandingを予定・目標の代用保存先にしない。
+
+既知の非ブロッキングUX改善候補として、却下抑制メッセージ「今回は保存しない内容と同じため、再提案を控えます」は、より自然な説明へ変更する余地がある。`;
+          insertAfterHeading('docs/development/AI_HANDOFF.md', '# AI Handoff Document', handoffSection);
+          let handoff = read('docs/development/AI_HANDOFF.md');
+          handoff = handoff.replace('**Last Updated:** 2026-07-28', '**Last Updated:** 2026-08-03');
+          handoff = handoff.replace(
+            /- \*\*Current phase:\*\*[^\n]*/,
+            '- **Current phase:** Conversation-First Roadmap Stage 2 — Conversation Capture completed. 次はStage 3 Calendar / Life TimelineのDomain・保存境界・時間軸UI設計。'
+          );
+          write('docs/development/AI_HANDOFF.md', handoff);
+
+          const responsiveSection = `## 2026-08-03 Stage 2 Conversation Capture 最終手動QA
+
+実施環境: Windows / Chromium系ブラウザ / \`npm run dev\` / main \`10b1add2dedfb08864f07c7dbbb4e5889829176e\`。
+
+| 対象 | 360px | 390px | 768px | desktop |
+| --- | --- | --- | --- | --- |
+| Conversation composer / flow card | OK | OK | OK | OK |
+| Candidate review / READY / COMMITTED | OK | OK | OK | OK |
+| DailyLog Record action / edit form | OK | OK | OK | OK |
+| 削除dialog、文字切れ、button重なり、横scroll | OK | OK | OK | OK |
+
+追加確認:
+
+- Tab / Shift+Tabで主要操作へ到達し、focus-visibleを確認した。
+- 削除dialogをkeyboardで開き、cancel後に元Recordへfocusが戻った。
+- Candidate修正は適用前に最終確認・保存できず、適用後も自動保存されなかった。
+- 却下後にCandidateが消え、同一session内の再提案抑制理由が表示された。
+- reload後にConversation session / Candidateは復元されず、保存済みDailyLogだけが残った。
+- backup export / preview / restoreが動作し、provenance付きDailyLogは復元、Conversation transient stateは復元されなかった。
+
+物理端末のsoft keyboardとスクリーンリーダー実読み上げは今回のStage 2完了QAには含めていない。下記の過去セクションにある「未実施」は各Issue時点の履歴であり、この節のStage 2対象面に関する最終結果を上書きしない。`;
+          insertAfterHeading('docs/qa/RESPONSIVE_QA.md', '# レスポンシブ QA チェックリスト', responsiveSection);
+          let responsive = read('docs/qa/RESPONSIVE_QA.md');
+          responsive = responsive.replace(
+            '自動テストとCSS契約は実施し、実ブラウザ4幅の確認は未実施。',
+            '自動テストとCSS契約に加え、2026-08-03に実ブラウザ4幅の確認を完了した。'
+          );
+          write('docs/qa/RESPONSIVE_QA.md', responsive);
+
+          const changeLogSection = `## 2026-08-03 - Stage 2 Conversation Capture完了（Issue #85）
+
+* Windows上のChromium系ブラウザで、構造化DailyLog flow、Candidate確認・修正・却下、明示保存、保存後のVIEW / EDIT / DELETEを手動確認した。
+* PR #87で、Conversationの削除導線から確認前にDailyLogを削除できるHigh不具合を修正した。dialog openとconfirmを別イベント境界にし、cancel時のRecord維持・focus復帰、対象Recordだけの明示削除をDOM統合テストと実ブラウザで再確認した。
+* 360px、390px、768px、desktopでConversation、Candidate、DailyLog form、Record action、削除dialogの横scroll、文字切れ、button重なりがないことを確認した。
+* reloadでは保存済みDailyLogだけを維持し、Conversation session、Candidate、却下抑制を復元しないことを確認した。
+* backup export / preview / restoreでprovenance付きDailyLogを復元し、Conversation session、Candidate、却下key、navigation targetをbackup対象外に維持した。
+* \`docs/CURRENT_STATE.md\`、\`docs/ai/CURRENT_IMPLEMENTATION_STATE.md\`、\`docs/development/AI_HANDOFF.md\`、\`docs/qa/RESPONSIVE_QA.md\`をStage 2完了状態へ同期した。
+* 次のStageをCalendar / Life Timelineとし、専用Record設計前にDailyLogやUnderstandingへ予定・目標を代用保存しない方針を維持した。`;
+          insertAfterHeading('docs/変更履歴.md', '# 変更履歴', changeLogSection);
+
+          const report = `# Stage 2 Conversation Capture QA結果
+
+<!-- STAGE2_QA_REPORT_2026_08_03 -->
+
+- Issue: #85
+- Parent: #72
+- 実施日: 2026-08-02〜2026-08-03
+- 環境: Windows / Chromium系ブラウザ / local development server
+- 検証基準main: \`10b1add2dedfb08864f07c7dbbb4e5889829176e\`
+
+## 判定
+
+Stage 2 — Conversation Captureの主要な実ブラウザ体験は合格。途中で発見した確認前削除のHigh不具合はIssue #86 / PR #87で修正し、修正後の再QAも合格した。
+
+## 確認済み
+
+- 明示発言でだけ構造化DailyLog flowを開始。
+- DATE → MOOD → FATIGUE → NOTE → EVENTSを一問ずつ表示。
+- 未選択・不正入力のerror表示と対象fieldへのfocus復帰。
+- back時の入力保持、note / eventsの「なし」、eventsの空白正規化。
+- Candidateの内容、保存先、対象日、目的、source excerpt、値の由来、未保存状態の表示。
+- 修正適用前の最終確認禁止、修正後の自動保存なし。
+- rejectでCandidateを消し、同一session内の再提案抑制理由を表示。
+- READYだけで保存可能、COMMITTING中の二重操作禁止、COMMITTED表示。
+- 保存値の一致、同日複数Record、会話全文・Candidate ID・Message ID・deduplicationKeyの非保存。
+- 保存後の正しいRecordへのVIEW / EDIT / DELETE、編集対象の一意性、provenance保持。
+- 削除dialog表示前のRecord維持、cancel後のfocus復帰、明示confirmによる対象Recordだけの削除。
+- 編集・削除後に古いCOMMITTED receiptをactive表示へ残さない。
+- reload後に保存済みDailyLogだけを維持し、Conversation session / Candidateを復元しない。
+- 360px / 390px / 768px / desktopの対象画面で横scroll、文字切れ、button重なり、dialog画面外表示なし。
+- keyboardで主要操作を完了し、focus-visibleを確認。
+- backup export / preview / restore、provenance付きDailyLogの復元、Conversation transient stateの非復元。
+- backup resource数を増やしていない。
+
+## 自動確認
+
+PR #87のCIで \`npm ci\`、\`npm run lint\`、\`npm run build\`、Vitest DOM統合テストを含む \`npm test\` が成功した。Stage 2完了文書PRではCIに \`git diff --check\` を追加し、4項目を同一PRで再確認する。
+
+## 発見・解消した不具合
+
+### Issue #86: 確認前削除
+
+Conversationの「保存した記録を削除する」から、確認dialogを操作する前にRecordが削除され得た。PR #87でopenとconfirmを別イベント境界へ分離し、次を追加した。
+
+- 次フレームまでconfirm無効。
+- pending Record IDと表示Record IDの一致確認。
+- click / Enter / Space / StrictMode / stale target / missing Record / 同日複数Record / 削除失敗のDOM統合テスト。
+- 失敗時のRecord維持、dialog close、alert、変更通知抑制。
+
+修正後の実ブラウザQAで、確認前維持、cancel、再open、明示confirm、対象Recordだけの削除を確認した。
+
+## 非ブロッキング項目
+
+- 物理端末のsoft keyboard。
+- スクリーンリーダーの実読み上げ。
+- 却下抑制メッセージを、より自然な日本語へ改善すること。
+
+これらはStage 2の保存安全性と完了判定を妨げないが、後続のアクセシビリティ／UX改善で扱う。
+`;
+          fs.mkdirSync(path.dirname('docs/qa/STAGE2_CONVERSATION_CAPTURE_QA_2026-08-03.md'), { recursive: true });
+          write('docs/qa/STAGE2_CONVERSATION_CAPTURE_QA_2026-08-03.md', report);
+
+          let ci = read('.github/workflows/ci.yml');
+          if (!ci.includes('git diff --check')) {
+            ci = ci.replace(
+              '      - name: Install dependencies\n        run: npm ci\n',
+              '      - name: Check whitespace errors\n        run: git diff --check HEAD^ HEAD\n\n      - name: Install dependencies\n        run: npm ci\n'
+            );
+            write('.github/workflows/ci.yml', ci);
+          }
+          NODE
+
+      - name: Remove temporary workflow and commit synchronized docs
+        shell: bash
+        run: |
+          rm .github/workflows/stage2-doc-sync.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/workflows/ci.yml docs .github/workflows/stage2-doc-sync.yml
+          git commit -m "docs: Stage 2 Conversation Captureの完了状態を同期"
+          git push origin HEAD:docs/stage2-completion
