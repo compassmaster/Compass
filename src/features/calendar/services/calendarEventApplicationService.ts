@@ -25,8 +25,7 @@ export class CalendarEventApplicationService {
   }
   correct(id: CalendarEventId, input: CorrectCalendarEventInput): CalendarMutationResult {
     const existing = this.repository.getById(id); if (!existing) return { ok: false, reason: 'NOT_FOUND' };
-    const unchanged = JSON.stringify({ title: existing.title, note: existing.note, ...timeOf(existing) }) === JSON.stringify(input);
-    if (unchanged) return { ok: false, reason: 'NO_CHANGE' };
+    if (isSameCorrection(existing, input)) return { ok: false, reason: 'NO_CHANGE' };
     const updatedAt = this.now();
     if (Date.parse(updatedAt) <= Date.parse(existing.updatedAt)) return { ok: false, reason: 'INVALID_INPUT' };
     const record = { ...sourceOf(existing), ...input, id, status: existing.status, revision: existing.revision + 1, createdAt: existing.createdAt, updatedAt } as CalendarEventRecord;
@@ -50,5 +49,15 @@ export class CalendarEventApplicationService {
     try { return this.repository.update(clone(record)) ? { ok: true, record: clone(record) } : { ok: false, reason: 'NOT_FOUND' }; } catch { return { ok: false, reason: 'PERSISTENCE_FAILED' }; }
   }
 }
+
+const isSameCorrection = (record: CalendarEventRecord, input: CorrectCalendarEventInput) => {
+  if (record.title !== input.title || record.note !== input.note || record.timeKind !== input.timeKind) return false;
+  if (record.timeKind === 'ALL_DAY' && input.timeKind === 'ALL_DAY') {
+    return record.startDate === input.startDate && record.endDate === input.endDate;
+  }
+  if (record.timeKind === 'TIMED' && input.timeKind === 'TIMED') {
+    return record.startsAt === input.startsAt && record.endsAt === input.endsAt && record.timeZone === input.timeZone;
+  }
+  return false;
+};
 const sourceOf = (record: CalendarEventRecord) => record.source === 'MANUAL' ? { source: record.source } : { source: record.source, conversationProvenance: clone(record.conversationProvenance) };
-const timeOf = (record: CalendarEventRecord) => record.timeKind === 'ALL_DAY' ? { timeKind: record.timeKind, startDate: record.startDate, endDate: record.endDate } : { timeKind: record.timeKind, startsAt: record.startsAt, endsAt: record.endsAt, timeZone: record.timeZone };
