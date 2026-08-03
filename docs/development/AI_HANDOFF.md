@@ -1,5 +1,12 @@
 # AI Handoff Document
 
+## 2026-08-03 個人向け疲労度ML評価計画（Issue #98）
+
+最初の個人内翌日疲労度実験は[`PERSONAL_FATIGUE_ML_EVALUATION_PLAN.md`](../research/PERSONAL_FATIGUE_ML_EVALUATION_PLAN.md)を評価契約とする。入力はIssue #97の`ML_READY_DATASET_V1`だけで、DからD+1を予測し、D+1 00:00 strict cutoff、`LATEST_CREATED_AT_THEN_ID_ASC` target選択、schema / feature / rule versionとtraceを維持する。raw Repositoryの再joinや本文feature化は禁止する。
+
+4 baseline、21件の初期trainingから7件block expanding walk-forward、MAE主指標、補助指標、最低28 / 推奨90件の段階gateを定義した。candidateはregularized linear、ordinal logistic、180件以上の場合だけsmall tree ensembleである。baselineを安定して上回らなければ不採用とする。今後も別Issueで明示承認されるまでproductionモデル、学習 / 推論、UI、NN / cloud、artifact永続化 / backup、UserModel自動更新、医療用途へ拡張しない。
+
+
 ## 2026-08-03 ML-ready dataset projection（Issue #97）
 
 Issue #96のstrict / non-mutating Source Reader上に、DのfeatureからD+1 fatigue targetを作る読み取り専用projectionを追加した。cutoffはrow timezoneにおけるD+1 00:00で、createdAt / updatedAt / Weather fetchedAtの全てをstrict-before検査する。v1 featureはfatigue lag・3/7日平均、Sleep duration/source、Calendar TIMED duration・ALL_DAY / status / 時間帯件数、分離したforecast / observed-historical、曜日に限定する。

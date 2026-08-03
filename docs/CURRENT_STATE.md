@@ -5,6 +5,13 @@ usedBy: []
 lastUpdated: "2026-08-03"
 ---
 
+## 2026-08-03 個人向け疲労度ML評価計画（Issue #98）
+
+Issue #97の`ML_READY_DATASET_V1`をSource of Authorityとする、翌日疲労度のdocs-only評価計画を追加した。D+1 00:00のstrict cutoffと同日target選択ruleを変更せず、前日・3日・7日・expanding meanの4 baseline、expanding-window walk-forward、主指標MAEと補助指標、coverage、サンプル数別の4段階、低複雑度candidate、採用gateを定義した。
+
+最低28件、推奨90件とし、small tree ensembleは180件以上の場合だけ候補にする。baselineを安定して上回らないモデルは不採用である。これは評価設計のみで、productionモデル、学習 / 推論処理、UI、ニューラルネットワーク、クラウド学習、永続化 / backup、UserModel自動更新、医療判断への利用は追加していない。
+
+
 ## 2026-08-03 ML-ready dataset projection（Issue #97）
 
 Life Timelineのstrict `getItem` ReaderをSource of Authorityとして、非永続の`ML_READY_DATASET_V1`を追加した。DからD+1 fatigue targetを作り、D+1 00:00のquery IANA timezone instantより前にcreatedAt / updatedAt / fetchedAtが揃うRecordだけをfeatureに使う。fatigue lag・3/7日平均、Sleep duration/source、CalendarのTIMED duration・ALL_DAY / status / 時間帯件数、forecastとobserved/historicalを分離したWeather、曜日だけを返す。
