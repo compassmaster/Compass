@@ -4,10 +4,34 @@ const BASE_KEYS = ['id', 'title', 'note', 'timeKind', 'status', 'source', 'conve
 const ALL_DAY_KEYS = [...BASE_KEYS, 'startDate', 'endDate'];
 const TIMED_KEYS = [...BASE_KEYS, 'startsAt', 'endsAt', 'timeZone'];
 const PROVENANCE_KEYS = ['capturedAt', 'consentedAt', 'extractorVersion', 'sourceExcerpt'];
+const OFFSET_INSTANT_PATTERN = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,9}))?)?(Z|[+-](\d{2}):(\d{2}))$/;
 const hasOnlyKeys = (value: object, keys: string[]) => Object.keys(value).every((key) => keys.includes(key));
 const nonBlank = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
-export const isOffsetInstant = (value: unknown): value is string =>
-  nonBlank(value) && /(Z|[+-]\d{2}:\d{2})$/.test(value) && Number.isFinite(Date.parse(value));
+
+const isLeapYear = (year: number) => year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+const daysInMonth = (year: number, month: number) => {
+  const days = [31, isLeapYear(year) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  return days[month - 1] ?? 0;
+};
+
+export const isOffsetInstant = (value: unknown): value is string => {
+  if (!nonBlank(value)) return false;
+  const match = value.match(OFFSET_INSTANT_PATTERN);
+  if (!match) return false;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const hour = Number(match[4]);
+  const minute = Number(match[5]);
+  const second = Number(match[6] ?? '0');
+  const offsetHour = Number(match[9] ?? '0');
+  const offsetMinute = Number(match[10] ?? '0');
+
+  if (month < 1 || month > 12 || day < 1 || day > daysInMonth(year, month)) return false;
+  if (hour > 23 || minute > 59 || second > 59 || offsetHour > 23 || offsetMinute > 59) return false;
+  return Number.isFinite(Date.parse(value));
+};
 
 export function isCalendarDate(value: unknown): value is string {
   if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
