@@ -3,7 +3,7 @@ import type { LifeTimelineSourceFailureCode } from '../../life-timeline/types/li
 
 export const ML_DATASET_SCHEMA_VERSION = 1 as const;
 export const ML_FEATURE_DEFINITION = { id: 'FATIGUE_DATASET_FEATURES', version: 1 } as const;
-export const ML_ROW_SELECTION_RULE = { id: 'LATEST_CREATED_AT_THEN_ID', version: 1 } as const;
+export const ML_ROW_SELECTION_RULE = { id: 'LATEST_CREATED_AT_THEN_ID_ASC', version: 1 } as const;
 export const ML_CUTOFF_RULE = { id: 'TARGET_DATE_MIDNIGHT_STRICTLY_BEFORE', version: 1 } as const;
 
 export type MlFeatureName = 'fatigueLag1' | 'fatigueMean3Days' | 'fatigueMean7Days' | 'sleepDurationMinutes' | 'calendarTimedDurationMinutes' | 'calendarAllDayCount' | 'calendarStatusCounts' | 'calendarTimeOfDayCounts' | 'weatherForecast' | 'weatherObserved' | 'dayOfWeek';

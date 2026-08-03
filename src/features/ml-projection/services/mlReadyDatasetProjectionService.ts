@@ -11,7 +11,7 @@ const compareText = (a: string, b: string) => a < b ? -1 : a > b ? 1 : 0;
 const addDays = (date: string, amount: number) => new Date(Date.parse(`${date}T00:00:00Z`) + amount * 86_400_000).toISOString().slice(0, 10);
 const range = (from: string, to: string) => { const result: string[] = []; for (let value = from; value <= to; value = addDays(value, 1)) result.push(value); return result; };
 const midnight = (date: string, timeZone: string) => sleepDateTimeToInstant(`${date}T00:00:00`, timeZone);
-const latest = <T extends { readonly id: string; readonly createdAt: string }>(records: readonly T[]) => [...records].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt) || compareText(b.id, a.id))[0];
+const latest = <T extends { readonly id: string; readonly createdAt: string }>(records: readonly T[]) => [...records].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt) || compareText(a.id, b.id))[0];
 const localHour = (instant: string, timeZone: string) => Number(new Intl.DateTimeFormat('en', { timeZone, hour: '2-digit', hourCycle: 'h23' }).format(new Date(instant)));
 const period = (hour: number): 'MORNING' | 'AFTERNOON' | 'EVENING' | 'NIGHT' => hour >= 5 && hour < 12 ? 'MORNING' : hour < 17 ? 'AFTERNOON' : hour < 22 ? 'EVENING' : 'NIGHT';
 const measurements = (record: WeatherForecastSnapshot | ObservedWeatherRecord): WeatherMeasurements => structuredClone(record.kind === 'WEATHER_FORECAST_SNAPSHOT' ? record.forecastValues : record.observedValues);
