@@ -2,13 +2,13 @@ import type { CalendarEventId, CalendarEventRecord, CalendarEventTimeInput, Crea
 import { localDateTimeToOffsetInstant } from '../../calendar/components/calendarDateTime.ts';
 
 export type CalendarCaptureStep = 'TITLE' | 'NOTE' | 'TIME_KIND' | 'START_DATE' | 'END_DATE' | 'STARTS_AT' | 'ENDS_AT' | 'TIME_ZONE';
-export type CalendarCaptureDraft = { title: string; note: string; timeKind: '' | 'ALL_DAY' | 'TIMED'; startDate: string; endDate: string; startsAt: string; endsAt: string; timeZone: string };
+export type CalendarCaptureDraft = { title: string; note: string; timeKind: '' | 'ALL_DAY' | 'TIMED'; startDate: string; endDate: string; startsAt: string; endsAt: string; timeZone: string; dateHint: string };
 export type CalendarCaptureFlow = { sourceExcerpt: string; capturedAt: string; step: CalendarCaptureStep; draft: CalendarCaptureDraft; skipKnown?: boolean };
 export type CalendarCandidateStatus = 'PROPOSED' | 'EDITING' | 'READY' | 'COMMITTING' | 'FAILED' | 'COMMITTED';
 export type CalendarCaptureCandidate = { id: string; fingerprint: string; sourceExcerpt: string; capturedAt: string; draft: CalendarCaptureDraft; status: CalendarCandidateStatus; attempt: number; commitToken?: string; failure?: string; receipt?: { recordId: CalendarEventId; targetDate: string } };
 export type CalendarCaptureState = { generation: number; flow: CalendarCaptureFlow | null; candidate: CalendarCaptureCandidate | null; rejectedFingerprints: string[] };
 export const emptyCalendarCaptureState = (): CalendarCaptureState => ({ generation: 0, flow: null, candidate: null, rejectedFingerprints: [] });
-export const initialCalendarCaptureDraft = (date: string, timeZone: string): CalendarCaptureDraft => ({ title: '', note: '', timeKind: '', startDate: date, endDate: date, startsAt: '', endsAt: '', timeZone });
+export const initialCalendarCaptureDraft = (date: string, timeZone: string): CalendarCaptureDraft => ({ title: '', note: '', timeKind: '', startDate: date, endDate: date, startsAt: '', endsAt: '', timeZone, dateHint: '' });
 
 export function startCalendarCapture(state: CalendarCaptureState, sourceExcerpt: string, capturedAt: string, draft: CalendarCaptureDraft): CalendarCaptureState {
   if (state.flow || state.candidate) return state;

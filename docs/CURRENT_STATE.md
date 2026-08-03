@@ -7,7 +7,7 @@ lastUpdated: "2026-08-03"
 
 ## 2026-08-03 Calendar intent structured extraction（Issue #111）
 
-詳細付きの予定追加依頼をCalendar intentとして認識し、予定名、絶対・相対日付、開始・終了時刻、補足をin-memory Candidateへ仮入力する。相対日は入力時刻と端末timezoneで解決し、取得済み項目は再質問せず不足・曖昧な項目だけを確認する。Candidateは明示的な「カレンダーに追加」操作まで保存せず、既存Application Service、validation、編集・拒否、二重保存防止境界を維持する。
+詳細付きの予定追加依頼をCalendar intentとして認識し、予定名、絶対・相対日付、開始・終了時刻、補足をin-memory Candidateへ仮入力する。相対日は入力時刻と端末timezoneで解決し、取得済み項目は再質問せず不足・曖昧な項目だけを確認する。日付だけの入力は終日へ推測せず予定種別を確認し、選択後も抽出日を再利用する。Candidateは明示的な「カレンダーに追加」操作まで保存せず、既存Application Service、validation、編集・拒否、二重保存防止境界を維持する。
 
 ## 2026-08-03 個人向け疲労度ML評価計画（Issue #98）
 

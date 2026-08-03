@@ -47,6 +47,7 @@ function extractTitle(text: string): string {
 export function extractCalendarInput(text: string, capturedAt: string, timeZone: string): CalendarExtraction {
   const date = resolveDate(text, capturedAt, timeZone);
   const draft = initialCalendarCaptureDraft('', timeZone);
+  draft.dateHint = date;
   draft.title = extractTitle(text);
   draft.note = /(?:メモ|補足)[：:]\s*(.+?)(?=[。.!！]?$)/.exec(text)?.[1]?.trim() ?? '';
   const range = /(\d{1,2})時(?:(\d{1,2})分)?から(\d{1,2})時(?:(\d{1,2})分)?まで/.exec(text);
@@ -56,8 +57,6 @@ export function extractCalendarInput(text: string, capturedAt: string, timeZone:
     const start = range ?? single!;
     draft.startsAt = `${date}T${start[1].padStart(2, '0')}:${(start[2] ?? '0').padStart(2, '0')}`;
     if (range) draft.endsAt = `${date}T${range[3].padStart(2, '0')}:${(range[4] ?? '0').padStart(2, '0')}`;
-  } else if (date && !/(?:午前|午後|朝|昼|夕方|夜)/.test(text)) {
-    draft.timeKind = 'ALL_DAY'; draft.startDate = date; draft.endDate = date;
   }
   const firstMissingStep: CalendarCaptureStep | null = !draft.title ? 'TITLE'
     : !draft.timeKind ? 'TIME_KIND'
