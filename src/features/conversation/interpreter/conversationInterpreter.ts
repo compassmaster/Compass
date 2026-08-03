@@ -9,7 +9,9 @@ export function interpretConversationInput(input: string): ConversationIntent {
 
   // Anchored allowlist: additional context, negation and a mere event mention
   // intentionally fall through instead of broad substring matching.
-  if (/^(?:予定を(?:追加|登録|保存)したい|予定を入れたい|カレンダーに(?:予定を)?(?:追加|登録|保存)したい|カレンダーに予定を入れたい)[。.!！]?$/.test(normalized)) return 'RECORD_CALENDAR';
+  const calendarRequest = /(?:予定を(?:入れ|追加|登録|保存)(?:たい|てほしい)|カレンダーに.*(?:予定を)?(?:入れ|追加|登録|保存)(?:たい|てほしい)|(?:予定|カレンダー).*(?:入れ|追加|登録|保存)したい)[。.!！]?$/;
+  const calendarNegation = /(?:ないで|たくない|しない|やめ|削除|消し|変更|直し|確認したい)/;
+  if (calendarRequest.test(normalized) && !calendarNegation.test(normalized)) return 'RECORD_CALENDAR';
 
   if (/明日.*(?:天気|気象|予報)/.test(normalized)) return 'VIEW_WEATHER';
   if (/明日.*(?:見通し|調子|疲れ|疲労)/.test(normalized)) return 'VIEW_PREDICTION';

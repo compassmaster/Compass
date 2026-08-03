@@ -1,5 +1,9 @@
 # AI Handoff Document
 
+## 2026-08-03 Calendar intent structured extraction（Issue #111）
+
+予定追加の明示的な依頼文から予定名、絶対・相対日付、開始・終了時刻、明示された補足を決定的に抽出し、in-memory Calendar Candidateへ仮入力する。相対日はConversationのoccurredAtを端末timezoneへ変換した日を基準に解決する。取得済み項目は質問せず、不足項目（例: 開始時刻だけなら終了時刻）だけを確認する。日付だけならALL_DAYへ推測せず予定種別を確認し、ALL_DAY選択時は抽出日を開始・終了日に、TIMED選択時は同じ日を時刻入力へ引き継ぐ。曖昧な時間帯は具体時刻へ補完しない。抽出完了後もPROPOSEDのままで、既存の確認カード、編集、拒否、Application Service経由commit、commit tokenによる二重保存防止境界を維持する。
+
 ## 2026-08-03 個人向け疲労度ML評価計画（Issue #98）
 
 最初の個人内翌日疲労度実験は[`PERSONAL_FATIGUE_ML_EVALUATION_PLAN.md`](../research/PERSONAL_FATIGUE_ML_EVALUATION_PLAN.md)を評価契約とする。入力はIssue #97の`ML_READY_DATASET_V1`だけで、DからD+1を予測し、D+1 00:00 strict cutoff、`LATEST_CREATED_AT_THEN_ID_ASC` target選択、schema / feature / rule versionとtraceを維持する。raw Repositoryの再joinや本文feature化は禁止する。

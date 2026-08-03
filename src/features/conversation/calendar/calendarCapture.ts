@@ -2,22 +2,31 @@ import type { CalendarEventId, CalendarEventRecord, CalendarEventTimeInput, Crea
 import { localDateTimeToOffsetInstant } from '../../calendar/components/calendarDateTime.ts';
 
 export type CalendarCaptureStep = 'TITLE' | 'NOTE' | 'TIME_KIND' | 'START_DATE' | 'END_DATE' | 'STARTS_AT' | 'ENDS_AT' | 'TIME_ZONE';
-export type CalendarCaptureDraft = { title: string; note: string; timeKind: '' | 'ALL_DAY' | 'TIMED'; startDate: string; endDate: string; startsAt: string; endsAt: string; timeZone: string };
-export type CalendarCaptureFlow = { sourceExcerpt: string; capturedAt: string; step: CalendarCaptureStep; draft: CalendarCaptureDraft };
+export type CalendarCaptureDraft = { title: string; note: string; timeKind: '' | 'ALL_DAY' | 'TIMED'; startDate: string; endDate: string; startsAt: string; endsAt: string; timeZone: string; dateHint: string };
+export type CalendarCaptureFlow = { sourceExcerpt: string; capturedAt: string; step: CalendarCaptureStep; draft: CalendarCaptureDraft; skipKnown?: boolean };
 export type CalendarCandidateStatus = 'PROPOSED' | 'EDITING' | 'READY' | 'COMMITTING' | 'FAILED' | 'COMMITTED';
 export type CalendarCaptureCandidate = { id: string; fingerprint: string; sourceExcerpt: string; capturedAt: string; draft: CalendarCaptureDraft; status: CalendarCandidateStatus; attempt: number; commitToken?: string; failure?: string; receipt?: { recordId: CalendarEventId; targetDate: string } };
 export type CalendarCaptureState = { generation: number; flow: CalendarCaptureFlow | null; candidate: CalendarCaptureCandidate | null; rejectedFingerprints: string[] };
 export const emptyCalendarCaptureState = (): CalendarCaptureState => ({ generation: 0, flow: null, candidate: null, rejectedFingerprints: [] });
-export const initialCalendarCaptureDraft = (date: string, timeZone: string): CalendarCaptureDraft => ({ title: '', note: '', timeKind: '', startDate: date, endDate: date, startsAt: '', endsAt: '', timeZone });
+export const initialCalendarCaptureDraft = (date: string, timeZone: string): CalendarCaptureDraft => ({ title: '', note: '', timeKind: '', startDate: date, endDate: date, startsAt: '', endsAt: '', timeZone, dateHint: '' });
 
 export function startCalendarCapture(state: CalendarCaptureState, sourceExcerpt: string, capturedAt: string, draft: CalendarCaptureDraft): CalendarCaptureState {
   if (state.flow || state.candidate) return state;
   return { ...state, generation: state.generation + 1, flow: { sourceExcerpt, capturedAt, step: 'TITLE', draft } };
 }
+export function startExtractedCalendarCapture(state: CalendarCaptureState, sourceExcerpt: string, capturedAt: string, draft: CalendarCaptureDraft, firstMissingStep: CalendarCaptureStep | null): CalendarCaptureState {
+  if (state.flow || state.candidate) return state;
+  const generation = state.generation + 1;
+  if (firstMissingStep) return { ...state, generation, flow: { sourceExcerpt, capturedAt, step: firstMissingStep, draft, skipKnown: true } };
+  if (!draft.title.trim() || !toTimeInput(draft)) return state;
+  const fingerprint = calendarCandidateFingerprint(draft);
+  if (state.rejectedFingerprints.includes(fingerprint)) return { ...state, generation };
+  return { ...state, generation, candidate: { id: `calendar-candidate-${generation}`, fingerprint, sourceExcerpt, capturedAt, draft, status: 'PROPOSED', attempt: 0 } };
+}
 export function answerCalendarCapture(state: CalendarCaptureState, draft: CalendarCaptureDraft): { state: CalendarCaptureState; error?: string; suppressed?: boolean } {
   const flow = state.flow; if (!flow) return { state, error: 'FLOW_NOT_ACTIVE' };
   const validation = validateStep(flow.step, draft); if (validation) return { state, error: validation };
-  const next = nextStep(flow.step, draft.timeKind);
+  const next = flow.skipKnown ? nextMissingStep(flow.step, draft) : nextStep(flow.step, draft.timeKind);
   if (next) return { state: { ...state, flow: { ...flow, step: next, draft } } };
   if (!toTimeInput(draft)) return { state, error: '日時・IANA timezone・期間を確認してください。DST gap / foldの日時は使用できません。' };
   const fingerprint = calendarCandidateFingerprint(draft);
@@ -54,3 +63,9 @@ function toCreateInput(candidate: CalendarCaptureCandidate, consentedAt: string)
 function toTimeInput(draft: CalendarCaptureDraft): CalendarEventTimeInput | null { if (draft.timeKind === 'ALL_DAY') return draft.startDate && draft.endDate >= draft.startDate ? { timeKind: 'ALL_DAY', startDate: draft.startDate, endDate: draft.endDate } : null; if (draft.timeKind !== 'TIMED') return null; const startsAt = localDateTimeToOffsetInstant(draft.startsAt, draft.timeZone), endsAt = localDateTimeToOffsetInstant(draft.endsAt, draft.timeZone); return startsAt && endsAt && Date.parse(startsAt) < Date.parse(endsAt) ? { timeKind: 'TIMED', startsAt, endsAt, timeZone: draft.timeZone } : null; }
 function validateStep(step: CalendarCaptureStep, draft: CalendarCaptureDraft) { if (step === 'TITLE' && !draft.title.trim()) return '予定名を入力してください。'; if (step === 'TIME_KIND' && !draft.timeKind) return '終日か時刻指定を選んでください。'; if (step === 'START_DATE' && !draft.startDate) return '開始日を入力してください。'; if (step === 'END_DATE' && (!draft.endDate || draft.endDate < draft.startDate)) return '終了日は開始日以降にしてください。'; if (step === 'STARTS_AT' && !draft.startsAt) return '開始日時を入力してください。'; if (step === 'ENDS_AT' && !draft.endsAt) return '終了日時を入力してください。'; return undefined; }
 function nextStep(step: CalendarCaptureStep, kind: CalendarCaptureDraft['timeKind']): CalendarCaptureStep | null { const sequence: CalendarCaptureStep[] = kind === 'ALL_DAY' ? ['TITLE','NOTE','TIME_KIND','START_DATE','END_DATE'] : ['TITLE','NOTE','TIME_KIND','STARTS_AT','ENDS_AT','TIME_ZONE']; const index = sequence.indexOf(step); return sequence[index + 1] ?? null; }
+function nextMissingStep(step: CalendarCaptureStep, draft: CalendarCaptureDraft): CalendarCaptureStep | null {
+  const sequence: CalendarCaptureStep[] = draft.timeKind === 'ALL_DAY' ? ['TITLE','NOTE','TIME_KIND','START_DATE','END_DATE'] : ['TITLE','NOTE','TIME_KIND','STARTS_AT','ENDS_AT','TIME_ZONE'];
+  const missing = (candidate: CalendarCaptureStep) => candidate === 'TITLE' ? !draft.title.trim() : candidate === 'TIME_KIND' ? !draft.timeKind : candidate === 'START_DATE' ? !draft.startDate : candidate === 'END_DATE' ? !draft.endDate : candidate === 'STARTS_AT' ? !draft.startsAt : candidate === 'ENDS_AT' ? !draft.endsAt : candidate === 'TIME_ZONE' ? !draft.timeZone : false;
+  const remaining = sequence.slice(sequence.indexOf(step) + 1);
+  return remaining.find(missing) ?? null;
+}

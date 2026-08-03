@@ -5,6 +5,10 @@ usedBy: []
 lastUpdated: "2026-08-03"
 ---
 
+## 2026-08-03 Calendar intent structured extraction（Issue #111）
+
+詳細付きの予定追加依頼をCalendar intentとして認識し、予定名、絶対・相対日付、開始・終了時刻、補足をin-memory Candidateへ仮入力する。相対日は入力時刻と端末timezoneで解決し、取得済み項目は再質問せず不足・曖昧な項目だけを確認する。日付だけの入力は終日へ推測せず予定種別を確認し、選択後も抽出日を再利用する。Candidateは明示的な「カレンダーに追加」操作まで保存せず、既存Application Service、validation、編集・拒否、二重保存防止境界を維持する。
+
 ## 2026-08-03 個人向け疲労度ML評価計画（Issue #98）
 
 Issue #97の`ML_READY_DATASET_V1`をSource of Authorityとする、翌日疲労度のdocs-only評価計画を追加した。D+1 00:00のstrict cutoffと同日target選択ruleを変更せず、前日・3日・7日・expanding meanの4 baseline、expanding-window walk-forward、主指標MAEと補助指標、coverage、サンプル数別の4段階、低複雑度candidate、採用gateを定義した。
