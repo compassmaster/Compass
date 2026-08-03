@@ -1,5 +1,9 @@
 # Compass Agent Instructions
 
+## 2026-08-03 CalendarEventRecord domain foundation（Issue #92）
+
+CalendarEventRecordの型、runtime validator、独立localStorage Repository、Application Serviceを実装済み。作成はrevision 1、訂正とstatus変更は意味のある成功時だけrevisionを増加し、source / provenance / createdAtを保持する。UI、Life Timeline read model、Conversation Calendar Capture、backup resource、外部連携は未実装である。
+
 ## 2026-08-03 Calendar / Life Timeline design boundary（Issue #91）
 
 D-0018でStage 3 v1の正式名称をCalendarEventRecord、sourceをMANUAL / CONVERSATION_CAPTUREとし、時間validation、Conversation provenance、privacy・保持・backup、revision / updatedAt、future leakage、status・訂正・削除、本文をML featureにしない境界をAcceptedとした。実装状態は変わらず、型、Repository、Application Service、storage / backup、Calendar UI、外部連携は未実装である。DailyLogやUnderstandingを予定の代用保存先にしない。

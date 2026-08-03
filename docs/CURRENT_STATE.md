@@ -6,6 +6,10 @@ lastUpdated: "2026-08-03"
 ---
 # Current State (現在のプロジェクト状況)
 
+## 2026-08-03 CalendarEventRecord domain foundation（Issue #92）
+
+D-0018に従い、`CalendarEventRecord`の厳密なdiscriminated union、runtime validation、専用Repository / localStorage key、Application Serviceを実装した。ALL_DAY / TIMEDの排他性、calendar date・IANA timezone・offset整合性、最小Conversation provenance、revision、許可されたstatus transition、訂正とstatus変更と削除のcommand分離を保証する。Calendar / Timeline UI、Conversation Candidate、backup resource、外部Calendar連携は引き続き未実装である。
+
 ## 2026-08-03 Calendar / Life Timeline design boundary（Issue #91）
 
 D-0018をAcceptedとし、Stage 3 v1の正式Record名を`CalendarEventRecord`、sourceを`MANUAL` / `CONVERSATION_CAPTURE`と決定した。ALL_DAY / TIMED validation、Conversation provenance、privacy・保持・backup、status transitionと訂正・削除、revision / updatedAtおよびfuture leakage防止、MLで本文fieldを使用しない境界を設計済みである。
