@@ -1,8 +1,32 @@
 # レスポンシブ QA チェックリスト
 
+<!-- STAGE2_COMPLETION_2026_08_03 -->
+## 2026-08-03 Stage 2 Conversation Capture 最終手動QA
+
+実施環境: Windows / Chromium系ブラウザ / `npm run dev` / main `10b1add2dedfb08864f07c7dbbb4e5889829176e`。
+
+| 対象 | 360px | 390px | 768px | desktop |
+| --- | --- | --- | --- | --- |
+| Conversation composer / flow card | OK | OK | OK | OK |
+| Candidate review / READY / COMMITTED | OK | OK | OK | OK |
+| DailyLog Record action / edit form | OK | OK | OK | OK |
+| 削除dialog、文字切れ、button重なり、横scroll | OK | OK | OK | OK |
+
+追加確認:
+
+- Tab / Shift+Tabで主要操作へ到達し、focus-visibleを確認した。
+- 削除dialogをkeyboardで開き、cancel後に元Recordへfocusが戻った。
+- Candidate修正は適用前に最終確認・保存できず、適用後も自動保存されなかった。
+- 却下後にCandidateが消え、同一session内の再提案抑制理由が表示された。
+- reload後にConversation session / Candidateは復元されず、保存済みDailyLogだけが残った。
+- backup export / preview / restoreが動作し、provenance付きDailyLogは復元、Conversation transient stateは復元されなかった。
+
+物理端末のsoft keyboardとスクリーンリーダー実読み上げは今回のStage 2完了QAには含めていない。下記の過去セクションにある「未実施」は各Issue時点の履歴であり、この節のStage 2対象面に関する最終結果を上書きしない。
+
+
 ## Issue #83 Conversation Capture / DailyLog導線
 
-360px、390px、768px、desktopで、COMMITTED cardの「保存した記録を見る／編集する／削除する」が横にはみ出さずkeyboardで操作できることを確認する。VIEWは対象article、EDITは対象日のfield、DELETEはdialog headingへfocusし、取消後は元Recordへ戻る。存在しないRecordでは日本語alertを一度だけ表示し、別Recordを開かない。自動テストとCSS契約は実施し、実ブラウザ4幅の確認は未実施。
+360px、390px、768px、desktopで、COMMITTED cardの「保存した記録を見る／編集する／削除する」が横にはみ出さずkeyboardで操作できることを確認する。VIEWは対象article、EDITは対象日のfield、DELETEはdialog headingへfocusし、取消後は元Recordへ戻る。存在しないRecordでは日本語alertを一度だけ表示し、別Recordを開かない。自動テストとCSS契約に加え、2026-08-03に実ブラウザ4幅の確認を完了した。
 
 Issue #68 の主要8画面を、同じ手順で再確認するための手動QA表です。ブラウザを起動し、DevTools の Responsive Design Mode で **360px、390px、768px、desktop（800px以上）** をそれぞれ選択してください。ズーム100%、縦向きを基本とします。
 
