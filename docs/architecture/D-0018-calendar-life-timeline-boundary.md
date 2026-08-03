@@ -30,9 +30,11 @@ Stage 3 v1は、本人が管理する予定・出来事のSource of Truthとし�
 | `revision` | 1から始まり意味のある成功mutationごとに1増える整数 |
 | `createdAt`, `updatedAt` | 作成・最終更新のinstant |
 
+`category`と`expectedLoad`はStage 3 v1のfieldに含めない。カテゴリ体系と負荷尺度が未確定であり、予定から実際の疲労や感情を推測する誤用を避けるためである。将来追加する場合は、別Decisionでcontrolled vocabularyとscaleを定義し、optionalかつ本人が明示入力・確認した値だけを保存する。本文からの自動分類や実際の疲労・感情の代用保存は行わない。
+
 `CalendarEventRecord`はDailyLog、SleepRecord、Weather record、Understanding、Conversation messageの別名ではなく、これらを複製するコンテナでもない。目標、習慣、タスク、リマインダー、Conversation transcriptも偽装して保存しない。将来のGoal / Task / Reminderには、それぞれの意味とlifecycleを持つ専用Recordが必要である。節目をCalendar上へ表示する場合も、元RecordをSource of Truthとし、表示のためだけにCalendarEventRecordを複製しない。
 
-`source = MANUAL`では`conversationProvenance`を禁止する。`source = CONVERSATION_CAPTURE`では、保存成功時に本人へ提示した範囲だけから成る`conversationProvenance`を必須とする。v1 provenanceは`capturedAt`、`consentedAt`、`extractorVersion`、`sourceExcerpt`だけを持つ。Message ID、Candidate ID、session ID、会話全文、非表示の前後文脈を保存しない。provenanceはRecordに従属し、Recordの削除と同時に削除する。
+`source = MANUAL`では`conversationProvenance`を禁止する。`source = CONVERSATION_CAPTURE`では、保存成功時に本人へ提示した範囲だけから成る`conversationProvenance`を必須とする。v1 provenanceは`capturedAt`、`consentedAt`、`extractionMethod`、`extractorVersion`、`sourceExcerpt`だけを持つ。Message ID、Candidate ID、session ID、deduplicationKey、却下本文、会話全文、非表示の前後文脈を保存しない。provenanceはRecordに従属し、訂正・status変更では保持し、Recordの削除と同時に削除する。
 
 ### 時間とtimezoneの境界
 
@@ -43,7 +45,7 @@ Stage 3 v1は、本人が管理する予定・出来事のSource of Truthとし�
 - event作成後に端末またはBase Locationのtimezoneが変わっても、保存済みeventのtimezoneを自動書き換えしない。編集時は本人が変更を確認する。
 - daylight-saving timeにより存在しないlocal timeまたは一意でないlocal timeは、黙って補正せず入力エラーまたは明示的なoffset選択として扱う。
 
-共通validationとして、`id`は空でない一意値、`title`はtrim後に空でない文字列、`note`は文字列または未設定、`revision`は1以上の整数とする。`createdAt`と`updatedAt`はparse可能なinstantで`createdAt <= updatedAt`、新規作成時は`revision = 1`かつ両時刻を同じ値とする。`capturedAt`と`consentedAt`もparse可能なinstantで`capturedAt <= consentedAt <= createdAt`を必須とする。status、source、provenance、時刻種別の不整合を含むRecordは保存・restore前に拒否する。
+共通validationとして、`id`は空でない一意値、`title`はtrim後に空でない文字列、`note`は文字列または未設定、`revision`は1以上の整数とする。`createdAt`と`updatedAt`はparse可能なinstantで`createdAt <= updatedAt`、新規作成時は`revision = 1`かつ両時刻を同じ値とする。`capturedAt`と`consentedAt`もparse可能なinstantで`capturedAt <= consentedAt <= createdAt`を必須とし、`extractionMethod`、`extractorVersion`、`sourceExcerpt`は空でない文字列とする。status、source、provenance、時刻種別の不整合を含むRecordは保存・restore前に拒否する。
 
 Base LocationのtimezoneはWeather取得の境界であり、CalendarEventRecordのtimezoneのSource of Truthとして流用しない。端末localeは表示形式に利用できるが、保存値の意味を変更しない。
 
@@ -68,15 +70,17 @@ status transitionは`PLANNED → COMPLETED`、`PLANNED → CANCELLED`、およ�
 
 削除は確認対象をtitleと時間で明示し、dialogを開く操作と確定削除を別event boundaryにする。削除したCalendarEventRecordはTimelineからも消えるが、同時刻のDailyLog、SleepRecord、Weather、Understandingを連鎖削除しない。逆方向も同様とする。
 
-`title`、`note`、`sourceExcerpt`は生活・健康・人間関係等のセンシティブ情報を含み得る本文fieldである。画面表示と本人が明示したRecord用途以外へ二次利用せず、ログ、telemetry、外部API、Analysis、Understanding、Formal UserModel、ML featureへ渡さない。v1は自動expiryを行わず、本人が削除するまでRecordと従属provenanceを保持する。この保持方針と削除手段を保存確認時に示し、将来の保持期間変更や新用途には別Decisionと再同意を必要とする。
+`title`、`note`、`sourceExcerpt`は生活・健康・人間関係等のセンシティブ情報を含み得る本文fieldである。Stage 3 v1は参加者、参加者ID、住所、位置情報、会議URL、連絡先を専用fieldとして定義せず、UIやConversation flowでも入力を要求しない。本人がtitleまたはnoteへ任意に記載した場合もセンシティブ本文として同じ保護を適用する。これらの本文fieldは画面表示と本人が明示したRecord用途以外へ二次利用せず、ログ、telemetry、外部API、Analysis、Understanding、Formal UserModel、ML featureへ渡さない。
 
-実装時にはschema version付きの独立backup resource、restore時の全field validation、旧backupにresourceがない場合の空集合、重複IDの拒否をbackup ADR / inventoryへ追加する。backupはCalendarEventRecordと従属provenanceを一体でexport / restoreし、会話全文や未保存Candidateを含めない。invalid itemを部分的に推測修復せず隔離し、既存Recordを無検証で上書きしない。export済みbackupファイルはアプリ外で本人が管理する別copyであり、アプリ内Recordの削除では消せないことをexport / 削除UIで説明する。restore後のRecordには同じ保持・削除境界を適用する。Stage 3の実装前に暫定localStorage keyを作らず、既存resourceへ混入させない。v1では削除済みeventの履歴やtombstoneを永続化しない。
+v1は自動expiryを行わず、`PLANNED`、`COMPLETED`、`CANCELLED`のいずれも本人が削除するまでRecordと従属provenanceを保持する。この保持方針と削除手段を保存確認時に示し、将来の保持期間変更や新用途には別Decisionと再同意を必要とする。
+
+実装時にはschema version付きの独立backup resource、restore時の全field validation、旧backupにresourceがない場合の空集合、重複IDの拒否をbackup ADR / inventoryへ追加する。backupは`title`、`note`、`sourceExcerpt`を含むCalendarEventRecordと従属provenanceを一体でexport / restoreし、会話全文や未保存Candidateを含めない。invalid itemを部分的に推測修復せず隔離し、既存Recordを無検証で上書きしない。export済みbackupファイルはアプリ外で本人が管理する別copyであり、アプリ内Recordの削除では消せないことをexport / 削除UIで説明する。restore後のRecordには同じ保持・削除境界を適用する。Stage 3の実装前に暫定localStorage keyを作らず、既存resourceへ混入させない。v1では削除済みeventの履歴やtombstoneを永続化しない。
 
 ### ML・時点整合性の境界
 
-将来、本人が用途を明示的に許可した場合に限り、本文ではない`timeKind`、開始・終了から決定論的に得る曜日・時間帯・duration、`status`、`source`を候補featureとして別設計で評価できる。`title`、`note`、`conversationProvenance.sourceExcerpt`、token、埋め込み、本文由来category / sentiment / topicをML featureにしない。許可された非本文fieldも、データ量、欠損、timezone、比較可能性、目的、停止・削除を別ADRで定めるまでは利用しない。
+将来、本人が用途を明示的に許可した場合に限り、本文ではない`timeKind`、開始・終了から決定論的に得る曜日・時間帯・duration、`status`、`source`を候補featureとして別設計で評価できる。`title`、`note`、`conversationProvenance.sourceExcerpt`、token、埋め込み、本文由来category / sentiment / topicをML featureにしない。将来、controlled `category`や`expectedLoad`を追加する場合も、本人が明示入力・確認した非本文fieldだけを候補とし、別Decisionと同意なしに利用しない。許可された非本文fieldも、データ量、欠損、timezone、比較可能性、目的、停止・削除を別ADRで定めるまでは利用しない。
 
-学習・評価・予測では、対象時点以前に利用可能だった`revision`だけをas-ofで参照し、そのrevisionの`updatedAt`を保持する。対象時点より後の訂正、COMPLETED / CANCELLEDへのtransition、削除の事実を過去時点のfeatureへ混ぜない。現在の最終Recordだけで過去datasetを再構成するfuture leakageを禁止する。v1はrevision履歴を保存しないため、as-ofを証明できないRecordを学習用履歴へ使用しない。
+学習・評価・予測では、対象時点以前に利用可能だった`revision`だけをas-ofで参照し、そのrevisionの`updatedAt`を保持する。対象時点より後の訂正、COMPLETED / CANCELLEDへのtransition、削除の事実を過去時点のfeatureへ混ぜない。現在の最終Recordだけで過去datasetを再構成するfuture leakageを禁止する。v1はrevision履歴を保存しないため、少なくとも`createdAt`と`updatedAt`がfeature cutoff以前で、as-ofの状態を証明できるRecordだけを学習用履歴へ使用し、証明できないRecordは欠損または除外として扱う。
 
 ### Conversation Captureとの境界
 
