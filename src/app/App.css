@@ -75,7 +75,7 @@
 }
 
 #home-primary-heading:focus-visible, #home-weather-section:focus-visible,
-#log-primary-heading:focus-visible, #sleep-primary-heading:focus-visible,
+#log-primary-heading:focus-visible, #calendar-heading:focus-visible, #sleep-primary-heading:focus-visible,
 #prediction-primary-heading:focus-visible, #compass-map-primary-heading:focus-visible,
 #backup-primary-heading:focus-visible { outline: 3px solid #d97706; outline-offset: 4px; }
 

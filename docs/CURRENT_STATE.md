@@ -428,3 +428,5 @@ Conversation sessionは未保存Capture Candidateを最大1件だけin-memoryで
 ### Issue #82 review follow-up
 
 指定日保存APIは従来互換の有限な数値または`null`の`sleepHours`を受け入れ、Conversation adapterだけが`null`へ固定する。Conversation UIの初回保存と再試行は同じexact-once executorを通り、callback例外や不正outcomeは安全なretryable failureとなる。非同期outcomeは現在のsessionとattemptに一致する場合だけ反映する。
+
+- Calendar UI: MANUALのALL_DAY / TIMED予定を作成・編集・状態変更・確認削除できる。IANA timezoneとoffset付きinstantを保持し、Conversationからの保存は未実装。

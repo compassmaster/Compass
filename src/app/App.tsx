@@ -34,15 +34,16 @@ import { ConversationTab } from '../features/conversation/components/Conversatio
 import { createConversationSession, dismissCommittedReceiptForRecordChange } from '../features/conversation/session/conversationSession.ts';
 import { DailyLogCaptureCommitAdapter } from '../features/conversation/application/dailyLogCaptureCommitAdapter.ts';
 import type { DailyLogNavigationTarget, DailyLogRecordChange } from '../features/daily-log/types/navigation.ts';
+import { CalendarTab } from '../features/calendar/components/CalendarTab.tsx';
 
 import './App.css';
 
 const dailyLogCaptureCommitAdapter = new DailyLogCaptureCommitAdapter(dailyLogApplicationService);
 
-type AppTab = 'conversation' | 'home' | 'log' | 'weeklySummary' | 'relationships' | 'prediction' | 'compassMap' | 'backup';
+type AppTab = 'conversation' | 'home' | 'log' | 'calendar' | 'weeklySummary' | 'relationships' | 'prediction' | 'compassMap' | 'backup';
 
 const TAB_FOCUS_TARGETS: Partial<Record<AppTab, string>> = {
-  home: 'home-primary-heading', log: 'log-primary-heading', prediction: 'prediction-primary-heading',
+  home: 'home-primary-heading', log: 'log-primary-heading', calendar: 'calendar-heading', prediction: 'prediction-primary-heading',
   compassMap: 'compass-map-primary-heading', backup: 'backup-primary-heading',
 };
 
@@ -270,6 +271,7 @@ export function App() {
         >
           📝 記録
         </button>
+        <button className={`tab-button ${activeTab === 'calendar' ? 'active-tab' : ''}`} aria-current={activeTab === 'calendar' ? 'page' : undefined} onClick={() => setActiveTab('calendar')}>📅 カレンダー</button>
         <button className={`tab-button ${activeTab === 'weeklySummary' ? 'active-tab' : ''}`} aria-current={activeTab === 'weeklySummary' ? 'page' : undefined} onClick={() => setActiveTab('weeklySummary')}>
           📊 ふりかえり
         </button>
@@ -352,6 +354,7 @@ export function App() {
           />
         )}
         {activeTab === 'log' && <LogTab onSaveSuccess={refreshLogs} onSleepChanged={refreshFirstUseGuide} navigationTarget={dailyLogNavigationTarget} onNavigationTargetConsumed={() => setDailyLogNavigationTarget(null)} onRecordChanged={handleDailyLogRecordChanged} />}
+        {activeTab === 'calendar' && <CalendarTab />}
         {activeTab === 'weeklySummary' && <WeeklySummaryTab />}
         {activeTab === 'relationships' && <RelationshipExplorerTab />}
         {activeTab === 'prediction' && <PredictionTab />}

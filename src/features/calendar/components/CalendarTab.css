@@ -1,0 +1,23 @@
+.calendar { max-width: 760px; margin: auto; }
+.calendar-date-navigation { display: grid; grid-template-columns: auto auto minmax(180px, 1fr) auto; gap: 8px; align-items: end; margin-bottom: 16px; }
+.calendar-date-navigation label, .calendar-form label { display: grid; gap: 6px; font-weight: 600; }
+.calendar-form, .calendar-event { background: #fff; border: 1px solid #cbd5e0; border-radius: 12px; padding: 16px; margin-bottom: 16px; overflow-wrap: anywhere; }
+.calendar-form label { margin: 10px 0; }
+.calendar-form input, .calendar-form select, .calendar-form textarea, .calendar-date-navigation input { min-width: 0; width: 100%; padding: 10px; font: inherit; border: 1px solid #a0aec0; border-radius: 6px; background: #fff; color: inherit; }
+.calendar-form fieldset { display: flex; gap: 20px; border: 0; padding: 8px 0; }
+.calendar-form fieldset label { display: flex; align-items: center; }
+.calendar-form fieldset input { width: auto; }
+.calendar-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.calendar-event header { display: flex; justify-content: space-between; gap: 10px; align-items: start; }
+.calendar-event.status-completed { border-left: 6px solid #2f855a; }
+.calendar-event.status-cancelled { border-left: 6px solid #718096; }
+.calendar-event.status-planned { border-left: 6px solid #3182ce; }
+.calendar-status { white-space: nowrap; }
+.calendar-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.calendar-actions button, .calendar-date-navigation button { min-height: 44px; padding: 8px 14px; }
+.calendar-alert { padding: 12px; background: #fff5f5; border: 1px solid #c53030; }
+.calendar-dialog-backdrop { position: fixed; inset: 0; background: #0008; display: grid; place-items: center; padding: 16px; z-index: 10; }
+.calendar-dialog { background: white; max-width: 460px; width: 100%; border-radius: 12px; padding: 20px; }
+@media (max-width: 768px) { .calendar-date-navigation { grid-template-columns: repeat(3, 1fr); } .calendar-date-navigation label { grid-column: 1 / -1; grid-row: 1; } }
+@media (max-width: 600px) { .calendar-fields { grid-template-columns: 1fr; } .calendar-form, .calendar-event { padding: 12px; } .calendar-event header { display: block; } }
+@media (max-width: 400px) { .calendar-date-navigation { grid-template-columns: 1fr 1fr; } .calendar-date-navigation button:nth-of-type(3) { grid-column: 1 / -1; } .calendar-actions > button { flex: 1 1 130px; } .calendar-dialog { padding: 16px; } }

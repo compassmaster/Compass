@@ -5,3 +5,4 @@ export * from './services/localStorageCalendarEventRepository.ts';
 export * from './services/calendarEventFactory.ts';
 export * from './services/calendarEventStatusTransition.ts';
 export * from './services/calendarEventApplicationService.ts';
+export * from './services/compositionRoot.ts';
