@@ -1,11 +1,12 @@
-import type { CalendarEventId, CalendarEventRecord, CalendarEventStatus, CorrectCalendarEventInput, CreateCalendarEventInput } from '../types/calendarEvent.ts';
+import type { CalendarEventId, CalendarEventRecord, CorrectCalendarEventInput, CreateCalendarEventInput } from '../types/calendarEvent.ts';
 import type { CalendarEventRepository } from './calendarEventRepository.ts';
 import { isCalendarEventRecord } from './calendarEventValidation.ts';
+import { createCalendarEventRecord } from './calendarEventFactory.ts';
+import { transitionCalendarEventStatus, type CalendarEventStatusCommand } from './calendarEventStatusTransition.ts';
 
 export type CalendarMutationResult = { ok: true; record: CalendarEventRecord } | { ok: false; reason: 'INVALID_INPUT' | 'NOT_FOUND' | 'NO_CHANGE' | 'INVALID_TRANSITION' | 'PERSISTENCE_FAILED' };
 export type CalendarDeleteResult = { ok: true } | { ok: false; reason: 'NOT_FOUND' | 'PERSISTENCE_FAILED' };
 const clone = <T>(value: T): T => structuredClone(value);
-const allowedTransition = (from: CalendarEventStatus, to: CalendarEventStatus) => from === to || from === 'PLANNED' || to === 'PLANNED';
 
 export class CalendarEventApplicationService {
   private readonly repository: CalendarEventRepository;
@@ -18,27 +19,31 @@ export class CalendarEventApplicationService {
   list() { return this.repository.getAll().map(clone); }
   get(id: CalendarEventId) { const record = this.repository.getById(id); return record ? clone(record) : null; }
   create(input: CreateCalendarEventInput): CalendarMutationResult {
-    const timestamp = this.now();
-    const record = { ...input, id: this.generateId(), status: 'PLANNED', revision: 1, createdAt: timestamp, updatedAt: timestamp } as CalendarEventRecord;
-    if (!isCalendarEventRecord(record)) return { ok: false, reason: 'INVALID_INPUT' };
-    try { this.repository.save(clone(record)); return { ok: true, record: clone(record) }; } catch { return { ok: false, reason: 'PERSISTENCE_FAILED' }; }
+    const created = createCalendarEventRecord(input, { id: this.generateId(), now: this.now() });
+    if (!created.ok) return created;
+    try { this.repository.save(clone(created.record)); return { ok: true, record: clone(created.record) }; } catch { return { ok: false, reason: 'PERSISTENCE_FAILED' }; }
   }
   correct(id: CalendarEventId, input: CorrectCalendarEventInput): CalendarMutationResult {
     const existing = this.repository.getById(id); if (!existing) return { ok: false, reason: 'NOT_FOUND' };
     const unchanged = JSON.stringify({ title: existing.title, note: existing.note, ...timeOf(existing) }) === JSON.stringify(input);
     if (unchanged) return { ok: false, reason: 'NO_CHANGE' };
-    const record = { ...sourceOf(existing), ...input, id, status: existing.status, revision: existing.revision + 1, createdAt: existing.createdAt, updatedAt: this.now() } as CalendarEventRecord;
+    const updatedAt = this.now();
+    if (Date.parse(updatedAt) <= Date.parse(existing.updatedAt)) return { ok: false, reason: 'INVALID_INPUT' };
+    const record = { ...sourceOf(existing), ...input, id, status: existing.status, revision: existing.revision + 1, createdAt: existing.createdAt, updatedAt } as CalendarEventRecord;
     return this.update(record);
   }
-  changeStatus(id: CalendarEventId, status: CalendarEventStatus): CalendarMutationResult {
-    const existing = this.repository.getById(id); if (!existing) return { ok: false, reason: 'NOT_FOUND' };
-    if (existing.status === status) return { ok: false, reason: 'NO_CHANGE' };
-    if (!allowedTransition(existing.status, status)) return { ok: false, reason: 'INVALID_TRANSITION' };
-    return this.update({ ...existing, status, revision: existing.revision + 1, updatedAt: this.now() });
-  }
+  complete(id: CalendarEventId): CalendarMutationResult { return this.applyStatusCommand(id, 'COMPLETE'); }
+  cancel(id: CalendarEventId): CalendarMutationResult { return this.applyStatusCommand(id, 'CANCEL'); }
+  reopen(id: CalendarEventId): CalendarMutationResult { return this.applyStatusCommand(id, 'REOPEN'); }
   delete(id: CalendarEventId): CalendarDeleteResult {
     if (!this.repository.getById(id)) return { ok: false, reason: 'NOT_FOUND' };
     try { return this.repository.delete(id) ? { ok: true } : { ok: false, reason: 'NOT_FOUND' }; } catch { return { ok: false, reason: 'PERSISTENCE_FAILED' }; }
+  }
+  private applyStatusCommand(id: CalendarEventId, command: CalendarEventStatusCommand): CalendarMutationResult {
+    const existing = this.repository.getById(id); if (!existing) return { ok: false, reason: 'NOT_FOUND' };
+    const transitioned = transitionCalendarEventStatus(existing, command, this.now());
+    if (!transitioned.ok) return { ok: false, reason: transitioned.reason === 'INVALID_TRANSITION' ? 'INVALID_TRANSITION' : 'INVALID_INPUT' };
+    return this.update(transitioned.record);
   }
   private update(record: CalendarEventRecord): CalendarMutationResult {
     if (!isCalendarEventRecord(record)) return { ok: false, reason: 'INVALID_INPUT' };

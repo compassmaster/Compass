@@ -5,7 +5,6 @@ export type CalendarEventSource = 'MANUAL' | 'CONVERSATION_CAPTURE';
 export interface ConversationProvenance {
   capturedAt: string;
   consentedAt: string;
-  extractionMethod: string;
   extractorVersion: string;
   sourceExcerpt: string;
 }
@@ -31,7 +30,10 @@ export type CalendarEventTimeInput =
   | { timeKind: 'ALL_DAY'; startDate: string; endDate: string }
   | { timeKind: 'TIMED'; startsAt: string; endsAt: string; timeZone: string };
 
-export type CreateCalendarEventInput = Pick<CalendarEventRecord, 'title' | 'note' | 'source'> &
-  CalendarEventTimeInput & { conversationProvenance?: ConversationProvenance };
+type CreateCalendarEventContent = Pick<CalendarEventRecord, 'title' | 'note'> & CalendarEventTimeInput;
+export type CreateCalendarEventInput = CreateCalendarEventContent & (
+  | { source: 'MANUAL'; conversationProvenance?: never }
+  | { source: 'CONVERSATION_CAPTURE'; conversationProvenance: ConversationProvenance }
+);
 
 export type CorrectCalendarEventInput = Pick<CalendarEventRecord, 'title' | 'note'> & CalendarEventTimeInput;

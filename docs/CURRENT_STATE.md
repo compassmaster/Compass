@@ -8,7 +8,7 @@ lastUpdated: "2026-08-03"
 
 ## 2026-08-03 CalendarEventRecord domain foundation（Issue #92）
 
-D-0018に従い、`CalendarEventRecord`の厳密なdiscriminated union、runtime validation、専用Repository / localStorage key、Application Serviceを実装した。ALL_DAY / TIMEDの排他性、calendar date・IANA timezone・offset整合性、最小Conversation provenance、revision、許可されたstatus transition、訂正とstatus変更と削除のcommand分離を保証する。Calendar / Timeline UI、Conversation Candidate、backup resource、外部Calendar連携は引き続き未実装である。
+D-0018に従い、`CalendarEventRecord`の厳密なdiscriminated union、runtime validation、pure Factory / status transition、Repository interface（Application port）、Application Serviceを実装した。ALL_DAY / TIMEDの排他性、calendar date・IANA timezone・offset整合性、4 fieldの最小Conversation provenance、revision、訂正とcomplete / cancel / reopen / deleteのcommand分離を保証する。具体Repository、storage key、Calendar / Timeline UI、Conversation Candidate、backup resource、外部Calendar連携は引き続き未実装である。
 
 ## 2026-08-03 Calendar / Life Timeline design boundary（Issue #91）
 

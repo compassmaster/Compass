@@ -2,7 +2,7 @@
 
 ## 2026-08-03 CalendarEventRecord domain foundation（Issue #92）
 
-D-0018の最初の実装sliceとしてCalendarEventRecordの型、strict runtime validation、独立localStorage Repository、Application Service、検証scriptを追加した。ALL_DAYとTIMEDは混在不可で、TIMEDはoffset付きinstant、IANA timezone、およびそのoffset整合を検証する。sourceと最小provenanceは作成後不変であり、訂正・status変更の成功時だけrevisionを進める。Calendar / Timeline UI、Conversation Candidate、backup registry、外部Calendarは後続Issueであり、現時点で既存Domainへ予定を複製しない。
+D-0018の最初の実装sliceとしてCalendarEventRecordの型、strict runtime validation、pure Factory / status transition、Repository interface（Application port）、Application Service、検証scriptを追加した。ALL_DAYとTIMEDは混在不可で、TIMEDはoffset付きinstant、IANA timezone、およびそのoffset整合を検証する。sourceと4 fieldの最小provenanceは作成後不変であり、訂正・complete / cancel / reopenの成功時だけrevisionを進める。具体Repository、storage key、Calendar / Timeline UI、Conversation Candidate、backup registry、外部Calendarは後続Issueであり、現時点で既存Domainへ予定を複製しない。
 
 ## 2026-08-03 Calendar / Life Timeline boundary（Issue #91）
 
