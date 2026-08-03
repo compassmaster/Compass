@@ -16,6 +16,15 @@
 .calendar-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .calendar-actions button, .calendar-date-navigation button { min-height: 44px; padding: 8px 14px; }
 .calendar-alert { padding: 12px; background: #fff5f5; border: 1px solid #c53030; }
+.life-timeline { border-top: 2px solid #cbd5e0; margin-top: 28px; padding-top: 18px; }
+.life-timeline-items { display: grid; gap: 10px; }
+.life-timeline-item { background: #fff; border: 1px solid #cbd5e0; border-left: 6px solid #4a5568; border-radius: 8px; padding: 12px; overflow-wrap: anywhere; }
+.life-timeline-item p { margin: 6px 0; }
+.life-timeline-item.type-calendar_event { border-left-color: #3182ce; }
+.life-timeline-item.type-daily_log { border-left-color: #805ad5; }
+.life-timeline-item.type-sleep_record { border-left-color: #319795; }
+.life-timeline-item.type-weather_forecast { border-left-color: #d69e2e; }
+.life-timeline-item.type-weather_observation { border-left-color: #2f855a; }
 .calendar-dialog-backdrop { position: fixed; inset: 0; background: #0008; display: grid; place-items: center; padding: 16px; z-index: 10; }
 .calendar-dialog { background: white; max-width: 460px; width: 100%; border-radius: 12px; padding: 20px; }
 @media (max-width: 768px) { .calendar-date-navigation { grid-template-columns: repeat(3, 1fr); } .calendar-date-navigation label { grid-column: 1 / -1; grid-row: 1; } }

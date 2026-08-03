@@ -1,5 +1,11 @@
 # AI Handoff Document
 
+## 2026-08-03 Life Timeline read model（Issue #96）
+
+D-0018に従い、Calendar Event、DailyLog、SleepRecord、保存済みWeather forecast / observationを期間単位で合成する非永続・読み取り専用`LifeTimelineQueryService`を追加した。各itemはrecordType、元Record ID、元Recordの意味と状態を保持し、複数日eventは保存せず表示時だけ日へ展開する。TIMEDは保存timezoneとexclusive endでDST / midnight境界を扱う。Source別に候補数、使用・除外ID、rule、`LOADED / NO_RECORDS / FAILED`を返し、一部失敗でも成功結果を保持する。Calendar内の専用sectionは予定、本人記録、睡眠、予報、観測・履歴天気を文字と色で区別する。
+
+Timeline用Repository、localStorage / backup / query cache、write、外部Weather API、Analysis / Understanding / Formal UserModel / ML接続は追加していない。Weatherは既存の保存Repositoryをreadするだけで、forecastとobservationを別recordTypeのまま扱う。
+
 ## 2026-08-03 CalendarEventRecord repository / backup（Issue #93）
 
 CalendarEventRecord専用のschema v1 localStorage Repositoryとbackup resourceを追加した。Repositoryは全envelopeを厳格検証してから読み書きし、破損JSON、不正schema / Record、重複IDを拒否するため、破損状態をmutationで上書きしない。返却値はdeep copy、一覧はpure comparatorで決定的である。backupはpreviewとrestore直前に同じRegistry validationを実行し、Calendar 1件の不正でも全restoreを拒否する。Calendar resourceのない旧backupだけは空集合へ復元する。Conversation session / Candidate / reject state、Life Timeline、ML projectionは引き続き非永続である。

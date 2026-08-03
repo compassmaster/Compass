@@ -4,6 +4,10 @@ dependsOn: []
 usedBy: []
 lastUpdated: "2026-08-03"
 ---
+
+## 2026-08-03 Life Timeline read model
+
+Calendar画面に、Calendar Event / DailyLog / SleepRecord / 保存済みWeather forecast / observationを別recordTypeのまま合成する読み取り専用Life Timelineを実装した。read modelは永続化せず、sourceごとの読み込み失敗とrecordなしを区別し、一部source失敗時も成功項目を返す。期間選択、DST / midnight、複数日ALL_DAY、決定的sort、使用・除外Record追跡をquery serviceが担当し、UIはRepositoryを直接横断しない。
 # Current State (現在のプロジェクト状況)
 
 ## 2026-08-03 CalendarEventRecord repository / backup（Issue #93）
