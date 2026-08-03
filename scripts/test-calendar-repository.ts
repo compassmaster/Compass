@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { CALENDAR_EVENT_STORAGE_KEY, CalendarEventApplicationService, CalendarEventRepositoryError, LocalStorageCalendarEventRepository, type CalendarEventId, type CalendarEventRecord } from '../src/features/calendar/index.ts';
 
 class MemoryStorage {
@@ -31,6 +32,8 @@ const sameDayRecords = [
 ];
 for (const record of sameDayRecords) repository.save(record);
 assert.deepEqual(repository.getAll().map((record) => record.id), ['all-day', 'offset-earlier', 'same-a1', 'same-a2', 'same-b', 'offset-later'], 'display date, kind, parsed instants, title, and ID define order');
+const repositorySource = readFileSync(new URL('../src/features/calendar/services/localStorageCalendarEventRepository.ts', import.meta.url), 'utf8');
+assert.doesNotMatch(repositorySource, /\.localeCompare\(/, 'Calendar ordering must not depend on the device locale');
 
 for (const corrupt of ['{', JSON.stringify([]), JSON.stringify({ schemaVersion: 2, records: [] }), JSON.stringify({ schemaVersion: 1, records: [{ ...first, title: '' }] }), JSON.stringify({ schemaVersion: 1, records: [first, first] })]) {
   storage.setItem(CALENDAR_EVENT_STORAGE_KEY, corrupt);
