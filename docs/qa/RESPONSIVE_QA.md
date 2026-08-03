@@ -1,5 +1,18 @@
 # レスポンシブ QA チェックリスト
 
+## Issue #96 Life Timeline Read Model
+
+Life TimelineはCalendar内で次の4幅を確認する。自動契約は全幅の1列projection card、768pxの幅境界、360px / 390pxのshrink境界、長い元Record IDの折り返しを検証する。実ブラウザ確認前の項目をOKとはしない。
+
+| 確認項目 | 360px | 390px | 768px | desktop |
+| --- | --- | --- | --- | --- |
+| 全recordType cardが1列で、横scrollを生まない | 自動契約確認 | 自動契約確認 | 自動契約確認 | 自動契約確認 |
+| 種類、状態、Forecast / Observed、欠損理由が文字で読める | DOM確認 | DOM確認 | DOM確認 | DOM確認 |
+| 長い元Record IDと一部Source失敗文がcard内で折り返す | 自動契約確認 | 自動契約確認 | 自動契約確認 | 自動契約確認 |
+| Timeline失敗時もAgenda、作成・編集操作を利用できる | DOM確認 | DOM確認 | DOM確認 | DOM確認 |
+
+手動では360px、390px、768px、desktop（800px以上）、zoom 100%で、PLANNED / COMPLETED / CANCELLED、DailyLog、SleepRecord、PARTIAL / UNAVAILABLE Weatherを同日に用意して確認する。物理端末とスクリーンリーダー確認は未実施であり、自動契約確認を手動QA済みとは扱わない。
+
 ## Issue #94 Calendar固有QA
 
 Calendarタブは次の4幅をDevToolsのResponsive Design Mode（zoom 100%）で確認する。自動契約ではdesktopの4列日付navigation、768px以下の3列＋日付行、390px / 360pxを含む400px以下の2列操作、600px以下の1列予定入力を検証する。実ブラウザで未確認の項目をOKとはしない。
