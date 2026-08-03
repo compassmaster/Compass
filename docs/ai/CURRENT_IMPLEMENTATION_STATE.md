@@ -1,5 +1,9 @@
 # Compass Agent Instructions
 
+## 2026-08-03 Calendar / Life Timeline design boundary（Issue #91）
+
+D-0018でStage 3 v1の正式名称をCalendarEventRecord、sourceをMANUAL / CONVERSATION_CAPTUREとし、時間validation、Conversation provenance、privacy・保持・backup、revision / updatedAt、future leakage、status・訂正・削除、本文をML featureにしない境界をAcceptedとした。実装状態は変わらず、型、Repository、Application Service、storage / backup、Calendar UI、外部連携は未実装である。DailyLogやUnderstandingを予定の代用保存先にしない。
+
 <!-- STAGE2_COMPLETION_2026_08_03 -->
 ## 2026-08-03 Current implementation: Stage 2 completed（Issue #85）
 
