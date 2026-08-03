@@ -112,6 +112,96 @@ describe('ML-ready dataset v1 projection', () => {
     expect(JSON.stringify(result)).not.toContain('PRIVATE TITLE');
   });
 
+  it('separates Weather provider availability from query-boundary missing reasons', () => {
+    const partialForecast = {
+      id: 'partial-forecast',
+      kind: 'WEATHER_FORECAST_SNAPSHOT',
+      createdAt: '2026-01-01T01:00:00Z',
+      source: { fetchedAt: '2026-01-01T02:00:00Z', provider: 'test', sourceType: 'FORECAST' },
+      availability: { status: 'PARTIAL', missingReasons: ['PROVIDER_VALUE_MISSING'] },
+      targetPeriod: { localDate: '2026-01-01' },
+      forecastValues: { temperature: { value: 10 } },
+    };
+    const unavailableObserved = {
+      id: 'unavailable-observed',
+      kind: 'OBSERVED_WEATHER_RECORD',
+      createdAt: '2026-01-01T01:00:00Z',
+      source: { fetchedAt: '2026-01-01T02:00:00Z', provider: 'test', sourceType: 'OBSERVED' },
+      availability: { status: 'UNAVAILABLE', reason: 'API_REQUEST_FAILED' },
+      observedPeriod: { localDate: '2026-01-01' },
+      observedValues: {},
+    };
+
+    const providerResult = service({
+      forecast: reader([partialForecast]),
+      observation: reader([unavailableObserved]),
+    }).project({
+      fromFeatureDate: '2026-01-01',
+      toFeatureDate: '2026-01-01',
+      timeZone: 'UTC',
+    });
+
+    expect(providerResult.ok).toBe(true);
+    if (!providerResult.ok) return;
+
+    expect(providerResult.rows[0].missing.weatherForecast).toEqual({
+      missing: true,
+      reason: null,
+      providerMissingReasons: ['PROVIDER_VALUE_MISSING'],
+    });
+    expect(providerResult.rows[0].missing.weatherObserved).toEqual({
+      missing: true,
+      reason: null,
+      providerMissingReasons: ['API_REQUEST_FAILED'],
+    });
+
+    const availableResult = service({
+      forecast: reader([{
+        ...partialForecast,
+        id: 'available-forecast',
+        availability: { status: 'AVAILABLE' },
+      }]),
+      observation: reader([{
+        ...unavailableObserved,
+        id: 'available-observed',
+        availability: { status: 'AVAILABLE' },
+        observedValues: { temperature: { value: 11 } },
+      }]),
+    }).project({
+      fromFeatureDate: '2026-01-01',
+      toFeatureDate: '2026-01-01',
+      timeZone: 'UTC',
+    });
+
+    expect(availableResult.ok).toBe(true);
+    if (!availableResult.ok) return;
+
+    expect(availableResult.rows[0].missing.weatherForecast).toEqual({
+      missing: false,
+      reason: null,
+      providerMissingReasons: [],
+    });
+    expect(availableResult.rows[0].missing.weatherObserved).toEqual({
+      missing: false,
+      reason: null,
+      providerMissingReasons: [],
+    });
+
+    const boundaryResult = service().project({
+      fromFeatureDate: '2026-01-01',
+      toFeatureDate: '2026-01-01',
+      timeZone: 'UTC',
+    });
+
+    expect(boundaryResult.ok).toBe(true);
+    if (!boundaryResult.ok) return;
+
+    expect(boundaryResult.rows[0].missing.weatherForecast).toEqual({
+      missing: true,
+      reason: 'NO_RECORD',
+      providerMissingReasons: [],
+    });
+  });
   it('includes quality period, reports typed source failure/missing rates, never mutates input, writes Storage, or reads backup', () => {
     localStorage.clear();
     const source = [log('x', '2026-01-01', 3, '2025-12-31T20:00:00Z')], snapshot = structuredClone(source), beforeKeys = Object.keys(localStorage), setItem = vi.spyOn(Storage.prototype, 'setItem'), removeItem = vi.spyOn(Storage.prototype, 'removeItem'), clear = vi.spyOn(Storage.prototype, 'clear');

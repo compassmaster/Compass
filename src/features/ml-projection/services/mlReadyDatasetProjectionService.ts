@@ -1,7 +1,7 @@
 import type { CalendarEventRecord, CalendarEventStatus } from '../../calendar/types/calendarEvent.ts';
 import type { DailyLog } from '../../daily-log/types/log.ts';
 import type { ObservedWeatherRecord, WeatherForecastSnapshot, WeatherMeasurements } from '../../external-context/weather/types/weather.ts';
-import type { WeatherDataAvailability } from '../../external-context/weather/types/weather.ts';
+import type { WeatherDataAvailability, WeatherMissingReason } from '../../external-context/weather/types/weather.ts';
 import type { SleepRecord } from '../../sleep/types/sleepRecord.ts';
 import { sleepDateTimeToInstant, validateSleepRecordForTimeline, type LifeTimelineSourceReader, type SourceReadResult } from '../../life-timeline/services/lifeTimelineSourceReader.ts';
 import { ML_CALENDAR_CANCELLED_RULE, ML_CUTOFF_RULE, ML_DATASET_SCHEMA_VERSION, ML_FEATURE_DEFINITION, ML_ROW_SELECTION_RULE, type MlFeatureName, type MlFeatureSourceAudit, type MlMissingReason, type MlReadyDatasetResult, type MlReadyDatasetRow, type MlSource, type MlWeatherFeature } from '../types/mlReadyDataset.ts';
@@ -40,7 +40,19 @@ const localHour = (instant: string, timeZone: string) => Number(new Intl.DateTim
 const period = (hour: number): 'MORNING' | 'AFTERNOON' | 'EVENING' | 'NIGHT' => hour >= 5 && hour < 12 ? 'MORNING' : hour < 17 ? 'AFTERNOON' : hour < 22 ? 'EVENING' : 'NIGHT';
 const measurements = (record: WeatherForecastSnapshot | ObservedWeatherRecord): WeatherMeasurements => structuredClone(record.kind === 'WEATHER_FORECAST_SNAPSHOT' ? record.forecastValues : record.observedValues);
 const weatherAvailability = (record: WeatherForecastSnapshot | ObservedWeatherRecord): WeatherDataAvailability => structuredClone(record.availability);
-const missing = (reason: MlMissingReason | null) => ({ missing: reason !== null, reason });
+const weatherProviderMissingReasons = (record: WeatherForecastSnapshot | ObservedWeatherRecord): readonly WeatherMissingReason[] => {
+  if (record.availability.status === 'AVAILABLE') return [];
+  if (record.availability.status === 'PARTIAL') return [...record.availability.missingReasons];
+  return [record.availability.reason];
+};
+const missing = (
+  reason: MlMissingReason | null,
+  providerMissingReasons: readonly WeatherMissingReason[] = [],
+) => ({
+  missing: reason !== null || providerMissingReasons.length > 0,
+  reason,
+  providerMissingReasons,
+});
 
 export class MlReadyDatasetProjectionService {
   private readonly readers: { readonly calendar: LifeTimelineSourceReader<CalendarEventRecord>; readonly dailyLog: LifeTimelineSourceReader<DailyLog>; readonly sleep: LifeTimelineSourceReader<SleepRecord>; readonly forecast: LifeTimelineSourceReader<WeatherForecastSnapshot>; readonly observation: LifeTimelineSourceReader<ObservedWeatherRecord> };
@@ -185,8 +197,14 @@ export class MlReadyDatasetProjectionService {
         calendarAllDayCount: missing(reason('CALENDAR', !failed.has('CALENDAR') && !calendarHasLeakageCandidates, calendarHasLeakageCandidates)),
         calendarStatusCounts: missing(reason('CALENDAR', !failed.has('CALENDAR') && !calendarHasLeakageCandidates, calendarHasLeakageCandidates)),
         calendarTimeOfDayCounts: missing(reason('CALENDAR', !failed.has('CALENDAR') && !calendarHasLeakageCandidates, calendarHasLeakageCandidates)),
-        weatherForecast: missing(reason('WEATHER_FORECAST', Boolean(forecastResult.record), forecastHasLeakageCandidates)),
-        weatherObserved: missing(reason('WEATHER_OBSERVATION', Boolean(observedResult.record), observedHasLeakageCandidates)),
+        weatherForecast: missing(
+          forecastResult.record ? null : reason('WEATHER_FORECAST', false, forecastHasLeakageCandidates),
+          forecastResult.record ? weatherProviderMissingReasons(forecastResult.record) : [],
+        ),
+        weatherObserved: missing(
+          observedResult.record ? null : reason('WEATHER_OBSERVATION', false, observedHasLeakageCandidates),
+          observedResult.record ? weatherProviderMissingReasons(observedResult.record) : [],
+        ),
         dayOfWeek: missing(null),
         targetFatigue: missing(reason('DAILY_LOG', Boolean(target), false)),
       },

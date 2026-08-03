@@ -1,4 +1,4 @@
-import type { WeatherDataAvailability, WeatherMeasurements } from '../../external-context/weather/types/weather.ts';
+import type { WeatherDataAvailability, WeatherMeasurements, WeatherMissingReason } from '../../external-context/weather/types/weather.ts';
 import type { LifeTimelineSourceFailureCode } from '../../life-timeline/types/lifeTimeline.ts';
 
 export const ML_DATASET_SCHEMA_VERSION = 1 as const;
@@ -44,7 +44,7 @@ export interface MlReadyDatasetRow {
     readonly weatherObserved: MlWeatherFeature | null;
     readonly dayOfWeek: number;
   };
-  readonly missing: Readonly<Record<MlFeatureName | 'targetFatigue', { readonly missing: boolean; readonly reason: MlMissingReason | null }>>;
+  readonly missing: Readonly<Record<MlFeatureName | 'targetFatigue', { readonly missing: boolean; readonly reason: MlMissingReason | null; readonly providerMissingReasons: readonly WeatherMissingReason[] }>>;
   readonly target: { readonly fatigue: number | null; readonly candidateCount: number };
   readonly sourceRecordIds: Readonly<Record<'fatigueLag1' | 'fatigueMean3Days' | 'fatigueMean7Days' | 'sleep' | 'calendar' | 'weatherForecast' | 'weatherObserved' | 'targetAdopted' | 'targetExcluded', readonly string[]>>;
   readonly featureSourceAudit: Readonly<Record<'fatigueLag1' | 'fatigueMean3Days' | 'fatigueMean7Days' | 'sleep' | 'calendar' | 'weatherForecast' | 'weatherObserved', MlFeatureSourceAudit>>;
