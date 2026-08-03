@@ -1,5 +1,9 @@
 # AI Handoff Document
 
+## 2026-08-03 CalendarEventRecord domain foundation（Issue #92）
+
+D-0018の最初の実装sliceとしてCalendarEventRecordの型、strict runtime validation、pure Factory / status transition、Repository interface（Application port）、Application Service、検証scriptを追加した。ALL_DAYとTIMEDは混在不可で、TIMEDはoffset付きinstant、IANA timezone、およびそのoffset整合を検証する。sourceと4 fieldの最小provenanceは作成後不変であり、訂正・complete / cancel / reopenの成功時だけrevisionを進める。具体Repository、storage key、Calendar / Timeline UI、Conversation Candidate、backup registry、外部Calendarは後続Issueであり、現時点で既存Domainへ予定を複製しない。
+
 ## 2026-08-03 Calendar / Life Timeline boundary（Issue #91）
 
 D-0018でStage 3の実装前境界を確定した。予定・出来事は正式名称`CalendarEventRecord`をSource of Truthとし、sourceはMANUAL / CONVERSATION_CAPTUREだけに限定する。DailyLog、Understanding、Goal / Task等へ代用保存しない。ALL_DAYはlocal date、TIMEDはinstantと入力時IANA timezoneを保持する。Life Timelineは各Domainをrecord kind / source IDで合成する非永続read modelであり、編集・削除は元DomainのApplication Serviceへ委譲する。

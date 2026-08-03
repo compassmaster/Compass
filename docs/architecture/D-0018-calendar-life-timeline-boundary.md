@@ -34,7 +34,7 @@ Stage 3 v1は、本人が管理する予定・出来事のSource of Truthとし�
 
 `CalendarEventRecord`はDailyLog、SleepRecord、Weather record、Understanding、Conversation messageの別名ではなく、これらを複製するコンテナでもない。目標、習慣、タスク、リマインダー、Conversation transcriptも偽装して保存しない。将来のGoal / Task / Reminderには、それぞれの意味とlifecycleを持つ専用Recordが必要である。節目をCalendar上へ表示する場合も、元RecordをSource of Truthとし、表示のためだけにCalendarEventRecordを複製しない。
 
-`source = MANUAL`では`conversationProvenance`を禁止する。`source = CONVERSATION_CAPTURE`では、保存成功時に本人へ提示した範囲だけから成る`conversationProvenance`を必須とする。v1 provenanceは`capturedAt`、`consentedAt`、`extractionMethod`、`extractorVersion`、`sourceExcerpt`だけを持つ。Message ID、Candidate ID、session ID、deduplicationKey、却下本文、会話全文、非表示の前後文脈を保存しない。provenanceはRecordに従属し、訂正・status変更では保持し、Recordの削除と同時に削除する。
+`source = MANUAL`では`conversationProvenance`を禁止する。`source = CONVERSATION_CAPTURE`では、保存成功時に本人へ提示した範囲だけから成る`conversationProvenance`を必須とする。v1 provenanceは`capturedAt`、`consentedAt`、`extractorVersion`、`sourceExcerpt`だけを持つ。Message ID、Candidate ID、session ID、deduplicationKey、却下本文、会話全文、非表示の前後文脈を保存しない。provenanceはRecordに従属し、訂正・status変更では保持し、Recordの削除と同時に削除する。
 
 ### 時間とtimezoneの境界
 
@@ -45,7 +45,7 @@ Stage 3 v1は、本人が管理する予定・出来事のSource of Truthとし�
 - event作成後に端末またはBase Locationのtimezoneが変わっても、保存済みeventのtimezoneを自動書き換えしない。編集時は本人が変更を確認する。
 - daylight-saving timeにより存在しないlocal timeまたは一意でないlocal timeは、黙って補正せず入力エラーまたは明示的なoffset選択として扱う。
 
-共通validationとして、`id`は空でない一意値、`title`はtrim後に空でない文字列、`note`は文字列または未設定、`revision`は1以上の整数とする。`createdAt`と`updatedAt`はparse可能なinstantで`createdAt <= updatedAt`、新規作成時は`revision = 1`かつ両時刻を同じ値とする。`capturedAt`と`consentedAt`もparse可能なinstantで`capturedAt <= consentedAt <= createdAt`を必須とし、`extractionMethod`、`extractorVersion`、`sourceExcerpt`は空でない文字列とする。status、source、provenance、時刻種別の不整合を含むRecordは保存・restore前に拒否する。
+共通validationとして、`id`は空でない一意値、`title`はtrim後に空でない文字列、`note`は文字列または未設定、`revision`は1以上の整数とする。`createdAt`と`updatedAt`はparse可能なinstantで`createdAt <= updatedAt`、新規作成時は`revision = 1`かつ両時刻を同じ値とする。`capturedAt`と`consentedAt`もparse可能なoffset付きinstantで`capturedAt <= consentedAt <= createdAt`を必須とし、`extractorVersion`、`sourceExcerpt`は空でない文字列とする。status、source、provenance、時刻種別の不整合を含むRecordは保存・restore前に拒否する。
 
 Base LocationのtimezoneはWeather取得の境界であり、CalendarEventRecordのtimezoneのSource of Truthとして流用しない。端末localeは表示形式に利用できるが、保存値の意味を変更しない。
 
