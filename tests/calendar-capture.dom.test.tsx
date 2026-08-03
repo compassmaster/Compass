@@ -1,17 +1,28 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { CalendarCaptureCard } from '../src/features/conversation/components/CalendarCaptureCard.tsx';
-import type { CalendarEventRecord } from '../src/features/calendar/types/calendarEvent.ts';
+import { answerCalendarCapture, applyCalendarCandidateEdit, beginCalendarCandidateEdit, confirmCalendarCandidate, initialCalendarCaptureDraft, startCalendarCapture, type CalendarCaptureState } from '../src/features/conversation/calendar/calendarCapture.ts';
+
+function Harness({ save = vi.fn() }: { save?: () => void }) {
+  const initial = startCalendarCapture({ generation:0, flow:null, candidate:null, rejectedFingerprints:[] }, '予定を追加したい', '2026-08-03T00:00:00Z', initialCalendarCaptureDraft('2026-08-03','Asia/Tokyo'));
+  const [capture,setCapture] = useState<CalendarCaptureState>(initial);
+  return <CalendarCaptureCard capture={capture} onAnswer={draft=>{const r=answerCalendarCapture(capture,draft);setCapture(r.state);return r.error;}} onConfirm={()=>setCapture(confirmCalendarCandidate(capture))} onBeginEdit={()=>setCapture(beginCalendarCandidateEdit(capture))} onApplyEdit={draft=>{const r=applyCalendarCandidateEdit(capture,draft);setCapture(r.state);return r.error;}} onReject={()=>undefined} onCancel={()=>undefined} onCommit={save} onNavigate={()=>undefined}/>;
+}
 
 describe('Calendar Conversation Capture DOM integration', () => {
-  it('asks one field at a time and requires edit application before commit', async () => {
-    const user = userEvent.setup(); const commit = vi.fn(async (input) => ({ ok: true as const, record: { ...input, id: 'event-1', status: 'PLANNED', revision: 1, createdAt: '2026-08-03T00:02:00Z', updatedAt: '2026-08-03T00:02:00Z' } as CalendarEventRecord }));
-    render(<CalendarCaptureCard request={{ key: 1, sourceExcerpt: '予定を追加したい', capturedAt: '2026-08-03T00:00:00Z' }} onCommit={commit} onClose={vi.fn()} onReceipt={vi.fn()} />);
-    expect(screen.getAllByRole('textbox')).toHaveLength(1); await user.type(screen.getByRole('textbox'), '診察'); await user.click(screen.getByRole('button', { name: '次へ' }));
-    expect(screen.getAllByRole('textbox')).toHaveLength(1); await user.click(screen.getByRole('button', { name: '次へ' })); await user.selectOptions(screen.getByRole('combobox'), 'ALL_DAY'); await user.click(screen.getByRole('button', { name: '次へ' })); await user.click(screen.getByRole('button', { name: '次へ' })); await user.click(screen.getByRole('button', { name: '次へ' }));
-    expect(screen.queryByRole('button', { name: 'この内容で保存' })).toBeNull(); await user.click(screen.getByRole('button', { name: '候補を修正する' })); await user.click(screen.getByRole('button', { name: '修正内容を適用' })); await user.click(screen.getByRole('button', { name: 'この内容で保存' }));
-    expect(commit).toHaveBeenCalledTimes(1); expect(commit.mock.calls[0][0].source).toBe('CONVERSATION_CAPTURE'); expect(commit.mock.calls[0][0].conversationProvenance.sourceExcerpt).toBe('予定を追加したい');
+  it('asks one question, shows excerpt, permits explicit no-edit confirmation, and only then saves', async () => {
+    const user=userEvent.setup(), save=vi.fn(); render(<Harness save={save}/>);
+    expect(screen.getAllByRole('textbox')).toHaveLength(1); await user.type(screen.getByRole('textbox'),'診察');
+    for (let index=0;index<2;index++) await user.click(screen.getByRole('button',{name:'次へ'}));
+    await user.selectOptions(screen.getByRole('combobox'),'ALL_DAY'); for(let index=0;index<3;index++) await user.click(screen.getByRole('button',{name:'次へ'}));
+    expect(screen.getByText('元の発言: 予定を追加したい')).toBeTruthy(); expect(screen.queryByRole('button',{name:'この内容で保存'})).toBeNull();
+    expect(Object.keys(localStorage).some(key=>/conversation|candidate|capture/i.test(key))).toBe(false);
+    await user.click(screen.getByRole('button',{name:'この内容を確認する'})); await user.click(screen.getByRole('button',{name:'この内容で保存'})); expect(save).toHaveBeenCalledTimes(1);
+  });
+  it('does not restore flow or Candidate on reload',()=>{ const first=render(<Harness/>); expect(screen.getByText('予定名は何ですか？')).toBeTruthy(); first.unmount(); render(<Harness/>); expect(screen.getByText('予定名は何ですか？')).toBeTruthy(); expect(screen.queryByText('Calendar専用Candidate')).toBeNull(); });
+  it('allows changing ALL_DAY to TIMED while editing', async () => {
+    const user=userEvent.setup(); render(<Harness/>); await user.type(screen.getByRole('textbox'),'会議'); for(let i=0;i<2;i++) await user.click(screen.getByRole('button',{name:'次へ'})); await user.selectOptions(screen.getByRole('combobox'),'ALL_DAY'); for(let i=0;i<3;i++) await user.click(screen.getByRole('button',{name:'次へ'})); await user.click(screen.getByRole('button',{name:'候補を修正する'})); await user.click(screen.getByRole('radio',{name:'時刻指定'})); expect(screen.getByLabelText('IANA timezone')).toBeTruthy();
   });
 });

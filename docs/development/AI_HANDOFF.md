@@ -500,3 +500,9 @@ Conversationには最大1件のCapture Candidate確認カードが接続され�
 独立したCalendarタブを追加し、CalendarEventApplicationServiceだけを経由するMANUAL予定の作成・訂正・状態変更・削除を実装した。ALL_DAYとTIMEDを別入力にし、TIMEDはIANA timezoneからoffset付きinstantを決定し、DST gap / foldは黙って補正せず拒否する。状態は予定・完了・取消を文字と色で表示し、削除はtitle入りdialogの別confirm eventを必須とする。Repository失敗時には既存の表示を保持する。Conversation CaptureはIssue #95まで未接続のままである。
 
 PR #103 review対応でselectedDate、日付navigation、選択日Agenda、複数日判定pure helperを追加した。初期日はUTCでなく端末local dateを使い、formは選択日に追従する。timezoneは日本語labelのselectとした。dialogは初期focus、Escape、Tab循環を持ち、編集開始、作成／訂正／状態変更／削除後のfocus移動を明示した。初期・再読込と全mutationの失敗時に空表示へ置換せず、入力と表示を保持する。
+
+## 2026-08-03 Calendar Conversation Capture review follow-up（Issue #95 / PR #104）
+
+Calendar captureのflow、Candidate lifecycle、fingerprint、commit request/outcome適用は`conversation/calendar/calendarCapture.ts`、Application Serviceとの信頼境界は`calendarCaptureCommitAdapter.ts`に分離した。intentは完全一致allowlistのみ。却下抑制は開始文ではなく正規化したCandidate内容のfingerprintに対して同一session内だけ行う。consentedAtはREADY生成時ではなく保存クリックでrequestを作る瞬間に確定する。
+
+UIは遷移規則や保存を所有しない。COMMITTINGの同一attempt再発行を拒否し、adapterのthrow/reject/invalid outcomeはFAILEDへ正規化する。generation、Candidate ID、attempt、COMMITTING statusが一致しないoutcomeはreset、unmount後の再mount、新Candidateを上書きしない。Calendar側の対象Record訂正・状態変更・削除通知で該当receiptを破棄する。flow、Candidate、receipt、却下fingerprint、transcriptはlocalStorage / backupへ追加しない。

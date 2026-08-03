@@ -8,6 +8,8 @@ const cases = new Map<string, string>([
   ['予定を追加したい', 'RECORD_CALENDAR'],
   ['カレンダーに登録したい', 'RECORD_CALENDAR'],
   ['明日会議がある', 'UNKNOWN'],
+  ['予定を追加したくない', 'UNKNOWN'],
+  ['明日の予定を追加したいけどまだ迷う', 'UNKNOWN'],
   ['睡眠を記録したい', 'RECORD_SLEEP'],
   ['睡眠', 'RECORD_SLEEP'],
   ['日々の状態', 'RECORD_DAILY_LOG'],

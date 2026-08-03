@@ -13,6 +13,11 @@ beforeEach(() => { localStorage.clear(); tick = Date.parse('2026-08-03T00:00:00Z
 async function create(title = '診察') { const user = userEvent.setup(); render(<CalendarTab service={service} />); await user.type(screen.getByRole('textbox', { name: '予定名' }), title); await user.click(screen.getByRole('button', { name: '予定を作成' })); await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('heading', { name: /のAgenda/ }))); return user; }
 
 describe('Calendar DOM integration', () => {
+  it('focuses a receipt target and reports edit, cancel, and delete so its stale receipt can be dismissed', async () => {
+    const created = service.create({ title:'会話予定', timeKind:'ALL_DAY', startDate:localToday(), endDate:localToday(), source:'CONVERSATION_CAPTURE', conversationProvenance:{capturedAt:'2026-08-03T00:00:00Z',consentedAt:'2026-08-03T00:00:01Z',extractorVersion:'v1',sourceExcerpt:'予定を追加したい'} });
+    expect(created.ok).toBe(true); if(!created.ok) return; const changed=vi.fn(), consumed=vi.fn(); const user=userEvent.setup(); render(<CalendarTab service={service} navigationTarget={{recordId:created.record.id,targetDate:localToday()}} onNavigationTargetConsumed={consumed} onRecordChanged={changed}/>);
+    await waitFor(()=>expect(document.activeElement).toBe(screen.getByText('会話予定').closest('article'))); expect(consumed).toHaveBeenCalled(); await user.click(screen.getByRole('button',{name:'取消にする'})); expect(changed).toHaveBeenCalledWith(created.record.id);
+  });
   it('navigates selectedDate, initializes the form date from it, and shows only its Agenda with a count', async () => {
     const user = userEvent.setup(); render(<CalendarTab service={service} />); const selected = screen.getByLabelText('表示する日') as HTMLInputElement;
     expect(selected.value).toBe(localToday()); await user.click(screen.getByRole('button', { name: '次の日' }));

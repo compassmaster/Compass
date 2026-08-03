@@ -36,11 +36,13 @@ import { DailyLogCaptureCommitAdapter } from '../features/conversation/applicati
 import type { DailyLogNavigationTarget, DailyLogRecordChange } from '../features/daily-log/types/navigation.ts';
 import { CalendarTab } from '../features/calendar/components/CalendarTab.tsx';
 import { calendarEventApplicationService } from '../features/calendar/services/compositionRoot.ts';
-import type { CalendarCaptureReceipt } from '../features/conversation/components/CalendarCaptureCard.tsx';
+import { CalendarCaptureCommitAdapter } from '../features/conversation/calendar/calendarCaptureCommitAdapter.ts';
+import { dismissCalendarReceipt } from '../features/conversation/calendar/calendarCapture.ts';
 
 import './App.css';
 
 const dailyLogCaptureCommitAdapter = new DailyLogCaptureCommitAdapter(dailyLogApplicationService);
+const calendarCaptureCommitAdapter = new CalendarCaptureCommitAdapter(calendarEventApplicationService);
 
 type AppTab = 'conversation' | 'home' | 'log' | 'calendar' | 'weeklySummary' | 'relationships' | 'prediction' | 'compassMap' | 'backup';
 
@@ -106,7 +108,7 @@ export function App() {
   const [conversationSession, setConversationSession] = useState(createConversationSession);
   const [conversationScrollPosition, setConversationScrollPosition] = useState(0);
   const [dailyLogNavigationTarget, setDailyLogNavigationTarget] = useState<DailyLogNavigationTarget | null>(null);
-  const [calendarNavigationTarget, setCalendarNavigationTarget] = useState<CalendarCaptureReceipt | null>(null);
+  const [calendarNavigationTarget, setCalendarNavigationTarget] = useState<{ recordId: string; targetDate: string } | null>(null);
   const [firstUseGuide, setFirstUseGuide] = useState(() => firstUseGuideQueryService.get());
   const [logs, setLogs] = useState<DailyLog[]>(() => dailyLogApplicationService.listDailyLogs());
   const [, setUserModel] = useState<UserModel>(() => loadInitialUserModel());
@@ -324,10 +326,7 @@ export function App() {
               if (outcome.ok) refreshLogs();
               return outcome;
             }}
-            onCalendarCommit={async (input) => {
-              const result = calendarEventApplicationService.create(input);
-              return result.ok ? { ok: true, record: result.record } : { ok: false };
-            }}
+            onCalendarCommit={(request) => calendarCaptureCommitAdapter.commit(request)}
             onNavigateToCalendarRecord={(receipt) => { setCalendarNavigationTarget(receipt); setActiveTab('calendar'); }}
           />
         )}
@@ -362,7 +361,7 @@ export function App() {
           />
         )}
         {activeTab === 'log' && <LogTab onSaveSuccess={refreshLogs} onSleepChanged={refreshFirstUseGuide} navigationTarget={dailyLogNavigationTarget} onNavigationTargetConsumed={() => setDailyLogNavigationTarget(null)} onRecordChanged={handleDailyLogRecordChanged} />}
-        {activeTab === 'calendar' && <CalendarTab navigationTarget={calendarNavigationTarget} onNavigationTargetConsumed={() => setCalendarNavigationTarget(null)} />}
+        {activeTab === 'calendar' && <CalendarTab navigationTarget={calendarNavigationTarget} onNavigationTargetConsumed={() => setCalendarNavigationTarget(null)} onRecordChanged={(recordId) => setConversationSession((current) => ({ ...current, calendarCapture: dismissCalendarReceipt(current.calendarCapture, recordId) }))} />}
         {activeTab === 'weeklySummary' && <WeeklySummaryTab />}
         {activeTab === 'relationships' && <RelationshipExplorerTab />}
         {activeTab === 'prediction' && <PredictionTab />}

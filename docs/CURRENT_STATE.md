@@ -438,3 +438,7 @@ Conversation sessionは未保存Capture Candidateを最大1件だけin-memoryで
 - 保存は`CalendarEventApplicationService`を通し、`source = CONVERSATION_CAPTURE`と最小provenance（capturedAt、consentedAt、extractorVersion、sourceExcerpt）だけをRecordへ保存する。会話全文、Candidate、却下状態はRepository / backupへ保存しない。
 - COMMITTING中は多重送信を拒否し、失敗時はCandidateを保持して再試行できる。非同期結果は開始したcapture generationと一致するときだけ反映し、成功receiptから対象日・対象Eventへ移動してfocusできる。
 - Calendar CaptureはDailyLog、Understanding、Goal、Life Timeline、Analysis / MLへ接続しない。
+
+### PR #104 review follow-up
+
+Calendar intentを完全一致allowlistへ限定し、却下抑制をCandidate fingerprintへ変更した。flow / lifecycle / commit adapterをUIから分離し、修正なしの明示確認、ALL_DAY / TIMED変更、sourceExcerpt表示、保存操作時のconsentedAt確定を実装した。throw / reject / invalid outcomeはFAILEDへ変換し、generation・Candidate ID・attemptでCOMMITTING二重実行とstale outcomeを拒否する。対象Calendar Recordの訂正・状態変更・削除ではreceiptを破棄する。transient stateはreload / backupで復元しない。
