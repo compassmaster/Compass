@@ -5,7 +5,7 @@ import type { CalendarCaptureDraft, CalendarCaptureState } from '../calendar/cal
 type Props = {
   capture: CalendarCaptureState;
   onAnswer: (draft: CalendarCaptureDraft) => string | undefined;
-  onConfirm: () => void;
+  onConfirmAndCommit: () => void;
   onBeginEdit: () => void;
   onApplyEdit: (draft: CalendarCaptureDraft) => string | undefined;
   onReject: () => void;
@@ -40,7 +40,7 @@ function calendarCandidateDateTime(draft: CalendarCaptureDraft): { date: string;
   };
 }
 
-export function CalendarCaptureCard({ capture, onAnswer, onConfirm, onBeginEdit, onApplyEdit, onReject, onCancel, onCommit, onNavigate, onDismissReceipt }: Props) {
+export function CalendarCaptureCard({ capture, onAnswer, onConfirmAndCommit, onBeginEdit, onApplyEdit, onReject, onCancel, onCommit, onNavigate, onDismissReceipt }: Props) {
   const source = capture.flow?.draft ?? capture.candidate?.draft;
   const [draft, setDraft] = useState<CalendarCaptureDraft>(() => structuredClone(source!));
   const [error, setError] = useState('');
@@ -79,7 +79,7 @@ export function CalendarCaptureCard({ capture, onAnswer, onConfirm, onBeginEdit,
   if (candidate.status === 'COMMITTED' && candidate.receipt) return <section ref={reviewRef} tabIndex={-1} className="capture-review" aria-label="カレンダー追加結果"><h3>予定をカレンダーに追加しました</h3><button type="button" onClick={() => onNavigate(candidate.receipt!)}>カレンダーでこの予定を見る</button><button type="button" onClick={onDismissReceipt}>閉じる</button></section>;
   if (candidate.status === 'EDITING') return <form className="capture-review" onSubmit={e=>{e.preventDefault();setError(onApplyEdit(draft)??'');}}><h3>予定の内容を直す</h3><label>予定名<input ref={titleRef} required value={draft.title} onChange={e=>setDraft({...draft,title:e.target.value})}/></label><label>メモ<textarea value={draft.note} onChange={e=>setDraft({...draft,note:e.target.value})}/></label><fieldset><legend>予定の種類</legend><label><input type="radio" checked={draft.timeKind==='ALL_DAY'} onChange={()=>setDraft({...draft,timeKind:'ALL_DAY'})}/>終日</label><label><input type="radio" checked={draft.timeKind==='TIMED'} onChange={()=>setDraft({...draft,timeKind:'TIMED'})}/>時刻指定</label></fieldset>{draft.timeKind==='ALL_DAY'?<><label>開始日<input ref={startDateRef} type="date" value={draft.startDate} onChange={e=>setDraft({...draft,startDate:e.target.value})}/></label><label>終了日<input ref={endDateRef} type="date" value={draft.endDate} onChange={e=>setDraft({...draft,endDate:e.target.value})}/></label></>:<><label>開始日時<input ref={startsAtRef} type="datetime-local" value={draft.startsAt} onChange={e=>setDraft({...draft,startsAt:e.target.value})}/></label><label>終了日時<input ref={endsAtRef} type="datetime-local" value={draft.endsAt} onChange={e=>setDraft({...draft,endsAt:e.target.value})}/></label><label>タイムゾーン<select ref={timeZoneRef} value={draft.timeZone} onChange={e=>setDraft({...draft,timeZone:e.target.value})}>{availableTimeZones(draft.timeZone).map(z=><option key={z}>{z}</option>)}</select></label></>}{error&&<p role="alert">{error}</p>}<button type="submit">修正内容を適用</button></form>;
   const dateTime = calendarCandidateDateTime(candidate.draft);
-  const add = candidate.status === 'PROPOSED' ? onConfirm : onCommit;
+  const add = candidate.status === 'PROPOSED' ? onConfirmAndCommit : onCommit;
   return <section ref={reviewRef} tabIndex={-1} className="capture-review calendar-candidate-review" aria-label="カレンダー保存候補">
     <h3>予定をカレンダーに追加しますか？</h3>
     <div className="calendar-candidate-summary">
@@ -92,7 +92,7 @@ export function CalendarCaptureCard({ capture, onAnswer, onConfirm, onBeginEdit,
     {candidate.failure && <p role="alert">追加できませんでした。もう一度お試しください。</p>}
     <div className="capture-review-actions">
       {candidate.status !== 'FAILED' && <button type="button" disabled={candidate.status === 'COMMITTING'} onClick={onBeginEdit}>内容を直す</button>}
-      {(candidate.status === 'PROPOSED' || candidate.status === 'READY' || candidate.status === 'FAILED') && <button ref={retryRef} type="button" onClick={add}>{candidate.status === 'FAILED' ? 'もう一度追加する' : 'カレンダーに追加'}</button>}
+      <button ref={retryRef} type="button" disabled={candidate.status === 'COMMITTING'} onClick={add}>{candidate.status === 'FAILED' ? 'もう一度追加する' : candidate.status === 'COMMITTING' ? '追加しています…' : 'カレンダーに追加'}</button>
       <button type="button" disabled={candidate.status === 'COMMITTING'} onClick={onReject}>追加しない</button>
     </div>
   </section>;
