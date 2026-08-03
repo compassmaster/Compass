@@ -2,7 +2,7 @@ import type { DateString } from '../../daily-log/types/log.ts';
 import type { SleepRecord, SleepRecordId } from '../types/sleepRecord.ts';
 import type { ISleepRecordRepository } from './sleepRecordRepository.ts';
 
-const STORAGE_KEY = 'compass_sleep_records';
+export const SLEEP_RECORD_STORAGE_KEY = 'compass_sleep_records';
 
 export class DuplicateSleepDateError extends Error {
   constructor(sleepDate: DateString) {
@@ -67,7 +67,7 @@ export class LocalStorageSleepRecordRepository implements ISleepRecordRepository
 
   private load(): SleepRecord[] {
     try {
-      const raw = this.storage.getItem(STORAGE_KEY);
+      const raw = this.storage.getItem(SLEEP_RECORD_STORAGE_KEY);
       if (!raw) return [];
       const data = JSON.parse(raw);
       if (!Array.isArray(data)) return [];
@@ -82,6 +82,6 @@ export class LocalStorageSleepRecordRepository implements ISleepRecordRepository
   private persist(records: SleepRecord[]): void {
     const sorted = records.map((record) => ({ ...record })).sort((a, b) =>
       b.sleepDate.localeCompare(a.sleepDate) || a.id.localeCompare(b.id));
-    this.storage.setItem(STORAGE_KEY, JSON.stringify(sorted));
+    this.storage.setItem(SLEEP_RECORD_STORAGE_KEY, JSON.stringify(sorted));
   }
 }

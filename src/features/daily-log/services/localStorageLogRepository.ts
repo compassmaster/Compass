@@ -5,7 +5,7 @@
 import type { DailyLog, DateString, EntryId } from '../types/log.ts';
 import type { ILogRepository } from './logRepository.ts';
 
-const STORAGE_KEY = 'compass_daily_logs';
+export const DAILY_LOG_STORAGE_KEY = 'compass_daily_logs';
 const cloneLog = (log: DailyLog): DailyLog => ({ ...log, events: [...log.events], captureProvenance: log.captureProvenance ? { ...log.captureProvenance, extraction: { ...log.captureProvenance.extraction } } : undefined });
 
 /**
@@ -93,7 +93,7 @@ export class LocalStorageLogRepository implements ILogRepository {
   /** localStorage からデータを読み込み、日付降順でソートして返す */
   private load(): DailyLog[] {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(DAILY_LOG_STORAGE_KEY);
       if (!raw) return [];
 
       const data = JSON.parse(raw);
@@ -123,7 +123,7 @@ export class LocalStorageLogRepository implements ILogRepository {
         if (dateCompare !== 0) return dateCompare;
         return b.createdAt.localeCompare(a.createdAt);
       });
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(sorted));
+      localStorage.setItem(DAILY_LOG_STORAGE_KEY, JSON.stringify(sorted));
     } catch (e) {
       console.error('[Compass] Failed to save to localStorage:', e);
       throw e;
