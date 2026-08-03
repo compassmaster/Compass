@@ -93,7 +93,12 @@ export function CalendarTab({ service = defaultService, navigationTarget = null,
   useEffect(() => { if (deleting) requestAnimationFrame(() => dialogRef.current?.querySelector<HTMLButtonElement>('[data-initial-focus]')?.focus()); }, [deleting]);
   useEffect(() => {
     if (!navigationTarget) return;
-    afterRender(() => { recordRefs.current.get(navigationTarget.recordId as CalendarEventId)?.focus(); onNavigationTargetConsumed?.(); });
+    afterRender(() => {
+      const record = recordRefs.current.get(navigationTarget.recordId as CalendarEventId);
+      if (record) record.focus();
+      else { setMessage('保存した予定が見つかりませんでした。予定が編集または削除された可能性があります。'); agendaHeadingRef.current?.focus(); }
+      onNavigationTargetConsumed?.();
+    });
   }, [navigationTarget, onNavigationTargetConsumed]);
 
   const agenda = loaded.records.filter((record) => calendarEventOccursOnDate(record, selectedDate));

@@ -506,3 +506,7 @@ PR #103 review対応でselectedDate、日付navigation、選択日Agenda、複�
 Calendar captureのflow、Candidate lifecycle、fingerprint、commit request/outcome適用は`conversation/calendar/calendarCapture.ts`、Application Serviceとの信頼境界は`calendarCaptureCommitAdapter.ts`に分離した。intentは完全一致allowlistのみ。却下抑制は開始文ではなく正規化したCandidate内容のfingerprintに対して同一session内だけ行う。consentedAtはREADY生成時ではなく保存クリックでrequestを作る瞬間に確定する。
 
 UIは遷移規則や保存を所有しない。COMMITTINGの同一attempt再発行を拒否し、adapterのthrow/reject/invalid outcomeはFAILEDへ正規化する。generation、Candidate ID、attempt、COMMITTING statusが一致しないoutcomeはreset、unmount後の再mount、新Candidateを上書きしない。Calendar側の対象Record訂正・状態変更・削除通知で該当receiptを破棄する。flow、Candidate、receipt、却下fingerprint、transcriptはlocalStorage / backupへ追加しない。
+
+### PR #104 re-review follow-up
+
+StrictModeのeffect再実行時はmounted guardをtrueへ戻す。commit callbackはexecutorが同期throw・reject・invalid outcomeまでFAILEDへ正規化し、token一致時だけ現在sessionへ適用する。COMMITTED receiptは「閉じる」でtransient stateだけを破棄し、保存Recordは変更しないため次の予定追加を開始できる。却下抑制時は同一Candidateだけを再表示しない理由を会話内に提示する。Calendar receipt対象が欠落した場合はAgenda headingへfocusし、本人へ説明する。

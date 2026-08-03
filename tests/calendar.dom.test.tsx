@@ -18,6 +18,7 @@ describe('Calendar DOM integration', () => {
     expect(created.ok).toBe(true); if(!created.ok) return; const changed=vi.fn(), consumed=vi.fn(); const user=userEvent.setup(); render(<CalendarTab service={service} navigationTarget={{recordId:created.record.id,targetDate:localToday()}} onNavigationTargetConsumed={consumed} onRecordChanged={changed}/>);
     await waitFor(()=>expect(document.activeElement).toBe(screen.getByText('会話予定').closest('article'))); expect(consumed).toHaveBeenCalled(); await user.click(screen.getByRole('button',{name:'取消にする'})); expect(changed).toHaveBeenCalledWith(created.record.id);
   });
+  it('focuses the Agenda and explains when a receipt target is missing', async () => { const consumed=vi.fn(); render(<CalendarTab service={service} navigationTarget={{recordId:'missing',targetDate:localToday()}} onNavigationTargetConsumed={consumed}/>); await waitFor(()=>expect(document.activeElement).toBe(screen.getByRole('heading',{name:/のAgenda/}))); expect(screen.getByRole('alert').textContent).toContain('見つかりません'); expect(consumed).toHaveBeenCalled(); });
   it('navigates selectedDate, initializes the form date from it, and shows only its Agenda with a count', async () => {
     const user = userEvent.setup(); render(<CalendarTab service={service} />); const selected = screen.getByLabelText('表示する日') as HTMLInputElement;
     expect(selected.value).toBe(localToday()); await user.click(screen.getByRole('button', { name: '次の日' }));

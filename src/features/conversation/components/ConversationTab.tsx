@@ -14,6 +14,7 @@ import type { DailyLogCaptureAnswer } from '../session/dailyLogCaptureFlow.ts';
 import { executeCaptureCommit } from '../application/captureCommitExecutor.ts';
 import type { DailyLogNavigationTarget } from '../../daily-log/types/navigation.ts';
 import { CalendarCaptureCard } from './CalendarCaptureCard.tsx';
+import { executeCalendarCaptureCommit } from '../calendar/calendarCaptureCommitExecutor.ts';
 import { answerCalendarCapture, applyCalendarCandidateEdit, applyCalendarCommitOutcome, beginCalendarCandidateEdit, beginCalendarCommit, confirmCalendarCandidate, rejectCalendarCandidate, type CalendarCommitOutcome, type CalendarCommitRequest } from '../calendar/calendarCapture.ts';
 
 type ConversationTabProps = {
@@ -64,7 +65,7 @@ export function ConversationTab({
   const sessionRef = useRef(session);
   const mountedRef = useRef(true);
 
-  useEffect(() => () => { mountedRef.current = false; }, []);
+  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
   useLayoutEffect(() => {
     sessionRef.current = session;
@@ -203,8 +204,8 @@ export function ConversationTab({
         onBack={() => onSessionChange(backActiveDailyLogCaptureFlow(session).session)}
         onCancel={() => { onSessionChange(cancelActiveDailyLogCaptureFlow(session).session); requestAnimationFrame(focusInput); }} />}
       {(session.calendarCapture.flow || session.calendarCapture.candidate) && <CalendarCaptureCard key={`${session.calendarCapture.generation}-${session.calendarCapture.flow?.step ?? session.calendarCapture.candidate?.status}`} capture={session.calendarCapture}
-        onAnswer={(value) => { const result = answerCalendarCapture(session.calendarCapture, value); onSessionChange({ ...session, calendarCapture: result.state }); return result.error; }} onConfirm={() => onSessionChange({ ...session, calendarCapture: confirmCalendarCandidate(session.calendarCapture) })} onBeginEdit={() => onSessionChange({ ...session, calendarCapture: beginCalendarCandidateEdit(session.calendarCapture) })} onApplyEdit={(value) => { const result = applyCalendarCandidateEdit(session.calendarCapture, value); onSessionChange({ ...session, calendarCapture: result.state }); return result.error; }} onReject={() => onSessionChange({ ...session, calendarCapture: rejectCalendarCandidate(session.calendarCapture) })} onCancel={() => onSessionChange({ ...session, calendarCapture: { ...session.calendarCapture, flow: null } })}
-        onCommit={() => { const begun = beginCalendarCommit(sessionRef.current.calendarCapture); if (!begun.request) return; const request = begun.request; applySession({ ...sessionRef.current, calendarCapture: begun.state }); void onCalendarCommit(request).then((outcome) => { if (!mountedRef.current) return; const current = sessionRef.current; const next = applyCalendarCommitOutcome(current.calendarCapture, request, outcome); if (next !== current.calendarCapture) applySession({ ...current, calendarCapture: next }); }); }} onNavigate={onNavigateToCalendarRecord} />}
+        onAnswer={(value) => { const result = answerCalendarCapture(session.calendarCapture, value); const notice = result.suppressed ? { id: `message-${session.nextMessageNumber}`, role: 'assistant' as const, text: '同じ内容の候補は、この会話で以前「保存しない」と選ばれたため再表示しませんでした。内容が異なる予定は追加できます。' } : null; onSessionChange({ ...session, calendarCapture: result.state, messages: notice ? [...session.messages, notice] : session.messages, nextMessageNumber: notice ? session.nextMessageNumber + 1 : session.nextMessageNumber }); return result.error; }} onConfirm={() => onSessionChange({ ...session, calendarCapture: confirmCalendarCandidate(session.calendarCapture) })} onBeginEdit={() => onSessionChange({ ...session, calendarCapture: beginCalendarCandidateEdit(session.calendarCapture) })} onApplyEdit={(value) => { const result = applyCalendarCandidateEdit(session.calendarCapture, value); onSessionChange({ ...session, calendarCapture: result.state }); return result.error; }} onReject={() => onSessionChange({ ...session, calendarCapture: rejectCalendarCandidate(session.calendarCapture) })} onCancel={() => onSessionChange({ ...session, calendarCapture: { ...session.calendarCapture, flow: null } })}
+        onCommit={() => { const begun = beginCalendarCommit(sessionRef.current.calendarCapture); if (!begun.request) return; const request = begun.request; applySession({ ...sessionRef.current, calendarCapture: begun.state }); void executeCalendarCaptureCommit(request, onCalendarCommit).then((outcome) => { if (!mountedRef.current) return; const current = sessionRef.current; const next = applyCalendarCommitOutcome(current.calendarCapture, request, outcome); if (next !== current.calendarCapture) applySession({ ...current, calendarCapture: next }); }); }} onNavigate={onNavigateToCalendarRecord} onDismissReceipt={() => { onSessionChange({ ...session, calendarCapture: { ...session.calendarCapture, candidate: null } }); requestAnimationFrame(focusInput); }} />}
       {session.activeCaptureCandidate && <CaptureCandidateReviewCard ref={reviewRef} candidate={session.activeCaptureCandidate}
         onBeginEdit={() => onSessionChange(beginActiveCaptureCandidateEdit(session, new Date().toISOString()).session)}
         onApplyEdit={(payload: DailyLogCapturePayload) => { const result = applyActiveCaptureCandidateEdit(session, payload, new Date().toISOString()); onSessionChange(result.session); return { error: result.error, validationErrors: result.validationErrors }; }}

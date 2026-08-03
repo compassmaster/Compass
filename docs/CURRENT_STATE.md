@@ -442,3 +442,7 @@ Conversation sessionは未保存Capture Candidateを最大1件だけin-memoryで
 ### PR #104 review follow-up
 
 Calendar intentを完全一致allowlistへ限定し、却下抑制をCandidate fingerprintへ変更した。flow / lifecycle / commit adapterをUIから分離し、修正なしの明示確認、ALL_DAY / TIMED変更、sourceExcerpt表示、保存操作時のconsentedAt確定を実装した。throw / reject / invalid outcomeはFAILEDへ変換し、generation・Candidate ID・attemptでCOMMITTING二重実行とstale outcomeを拒否する。対象Calendar Recordの訂正・状態変更・削除ではreceiptを破棄する。transient stateはreload / backupで復元しない。
+
+### PR #104 re-review follow-up
+
+React StrictModeでdeferred commitをCOMMITTEDまで反映できるmounted guardに修正した。receiptは閉じてもCalendarEventRecordを削除せず、次の予定追加を妨げない。UI callback自体の同期throw・reject・invalid outcomeもexecutorでFAILEDへ変換する。却下抑制理由を日本語Messageで表示し、missing receipt targetではAgendaへfocusして説明する。画面上のtimezone表記は「タイムゾーン」に統一した。

@@ -156,3 +156,9 @@ Issue #68 の主要8画面を、同じ手順で再確認するための手動QA�
 | receipt遷移後に対象Calendar Eventへfocusする | DOM確認 | DOM確認 | DOM確認 | DOM確認 |
 
 物理端末とスクリーンリーダーの手動確認は未実施。自動確認を手動QA済みとは扱わない。reloadでflow / Candidate / receiptが復元されず、保存済みCalendarEventRecordだけが復元されること、backupにConversation transient stateが含まれないことも回帰項目とする。
+
+### PR #104 再レビュー自動確認
+
+- StrictMode内のdeferred保存成功、receipt close、次予定開始をDOMテストで確認する。
+- FAILED保持・retry、二重実行拒否、missing RecordのAgenda focusと説明を自動確認する。
+- 実backup export文字列にflow / Candidate / fingerprint / commitToken / attempt / transcriptがないことをcontract testで確認する。
