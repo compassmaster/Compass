@@ -11,6 +11,11 @@ Life Timelineのstrict `getItem` ReaderをSource of Authorityとして、非永�
 
 rowはschema / feature definition / timezone、missing reason、source ID、target候補数と採用・除外ID、version付きrule、leakage reasonを持ち、qualityはfeature missing rateとtyped source failureを返す。本文、imputation、NLP、学習、予測UI、外部API、Repository write、backup、Analysis / Understanding / UserModel更新は接続していない。
 
+### PR #106 review follow-up
+
+不正Gregorian dateで例外を出さずINVALID_DATEを返し、Forecast / Observedそれぞれのavailabilityとmissing reasonを分離して保持するよう修正した。cutoff除外をLEAKAGE_EXCLUDEDとしてNO_RECORDと区別し、featureごとのcandidate / adopted / excluded Record ID、fatigue source IDをlag1 / 3日平均 / 7日平均ごとに分けた。calendarEventCountの追加、CANCELLEDの集計方針をrule IDで明示、qualityへの対象期間追加を行った。履歴不足時はLEAKAGE_EXCLUDEDではなくINSUFFICIENT_HISTORYを優先する。
+
+
 ## 2026-08-03 Life Timeline read model
 
 Calendar画面に、Calendar Event / DailyLog / SleepRecord / 保存済みWeather forecast / observationを別recordTypeのまま合成する読み取り専用Life Timelineを実装した。read modelは永続化せず、`getItem`限定のstrict Source Readerが欠損keyとstorage / JSON / schema / Record失敗を区別する。一部source失敗時も成功projectionを返し、raw RecordやConversation provenanceをRead Modelへ保持しない。期間・query timezone、DST / midnight、複数日ALL_DAY、実instantによるversion付き決定的sort、Sleep datetime-local、使用・除外Recordとcovered / missing dateの追跡をquery serviceが担当し、UIはRepositoryを直接横断しない。

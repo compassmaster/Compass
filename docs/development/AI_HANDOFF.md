@@ -6,6 +6,11 @@ Issue #96のstrict / non-mutating Source Reader上に、DのfeatureからD+1 fat
 
 schema / feature definition / cutoff・target選定ruleをversion化し、feature別missing reason/rate、typed source failure、source ID、target候補数・採用/除外ID、field別leakage traceを返す。入力Recordのmutation、Storage / backup write、backup read、本文流入、imputation、NLP、外部取得、Analysis / Understanding / UserModel更新、モデル学習、予測表示は行わない。
 
+### PR #106 review follow-up
+
+不正Gregorian dateで例外を出さずINVALID_DATEを返し、Forecast / Observedそれぞれのavailabilityとmissing reasonを分離して保持するよう修正した。cutoff除外をLEAKAGE_EXCLUDEDとしてNO_RECORDと区別し、featureごとのcandidate / adopted / excluded Record ID、fatigue source IDをlag1 / 3日平均 / 7日平均ごとに分けた。calendarEventCountの追加、CANCELLEDの集計方針をrule IDで明示、qualityへの対象期間追加を行った。履歴不足時はLEAKAGE_EXCLUDEDではなくINSUFFICIENT_HISTORYを優先する。
+
+
 ## 2026-08-03 Life Timeline read model（Issue #96）
 
 D-0018に従い、Calendar Event、DailyLog、SleepRecord、保存済みWeather forecast / observationを期間単位で合成する非永続・読み取り専用`LifeTimelineQueryService`を追加した。各itemはrecordType、元Record ID、元Recordの意味と状態を保持し、複数日eventは保存せず表示時だけ日へ展開する。TIMEDは保存timezoneとexclusive endでDST / midnight境界を扱う。Source別に候補数、使用・除外ID、rule、`LOADED / NO_RECORDS / FAILED`を返し、一部失敗でも成功結果を保持する。Calendar内の専用sectionは予定、本人記録、睡眠、予報、観測・履歴天気を文字と色で区別する。
