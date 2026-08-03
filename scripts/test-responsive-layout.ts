@@ -6,6 +6,7 @@ const app = read('../src/app/App.tsx');
 const appCss = read('../src/app/App.css');
 const globalCss = read('../src/index.css');
 const firstUseCss = read('../src/features/first-use-guide/components/FirstUseGuide.css');
+const calendarCss = read('../src/features/calendar/components/CalendarTab.css');
 
 for (const label of ['会話', 'ホーム', '記録', 'カレンダー', 'ふりかえり', '関係', '明日の見通し', 'Compass Map', 'バックアップ']) {
   assert.ok(app.includes(label), `navigation must retain ${label}`);
@@ -21,6 +22,10 @@ assert.match(globalCss, /\*,\s*\n\*::before,\s*\n\*::after[\s\S]*?box-sizing:\s*
 assert.match(globalCss, /color-scheme:\s*light/);
 assert.match(globalCss, /button,[\s\S]*?min-height:\s*44px/);
 assert.match(firstUseCss, /@media \(max-width: 600px\)[\s\S]*?\.first-use-steps\s*{\s*grid-template-columns:\s*1fr/);
+assert.match(calendarCss, /@media \(max-width: 768px\)/, 'Calendar needs a tablet contract');
+assert.match(calendarCss, /@media \(max-width: 600px\)/, 'Calendar needs a narrow contract');
+assert.match(calendarCss, /@media \(max-width: 400px\)/, 'Calendar needs 360px and 390px contracts');
+assert.match(calendarCss, /\.calendar-date-navigation[\s\S]*?grid-template-columns/, 'Calendar date navigation must reflow');
 
 for (const stylesheet of [
   '../src/features/backup/components/BackupPanel.css',

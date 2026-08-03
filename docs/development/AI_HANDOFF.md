@@ -498,3 +498,5 @@ Conversationには最大1件のCapture Candidate確認カードが接続され�
 ## 2026-08-03 Calendar UI（Issue #94）
 
 独立したCalendarタブを追加し、CalendarEventApplicationServiceだけを経由するMANUAL予定の作成・訂正・状態変更・削除を実装した。ALL_DAYとTIMEDを別入力にし、TIMEDはIANA timezoneからoffset付きinstantを決定し、DST gap / foldは黙って補正せず拒否する。状態は予定・完了・取消を文字と色で表示し、削除はtitle入りdialogの別confirm eventを必須とする。Repository失敗時には既存の表示を保持する。Conversation CaptureはIssue #95まで未接続のままである。
+
+PR #103 review対応でselectedDate、日付navigation、選択日Agenda、複数日判定pure helperを追加した。初期日はUTCでなく端末local dateを使い、formは選択日に追従する。timezoneは日本語labelのselectとした。dialogは初期focus、Escape、Tab循環を持ち、編集開始、作成／訂正／状態変更／削除後のfocus移動を明示した。初期・再読込と全mutationの失敗時に空表示へ置換せず、入力と表示を保持する。

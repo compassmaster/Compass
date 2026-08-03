@@ -1,5 +1,18 @@
 # レスポンシブ QA チェックリスト
 
+## Issue #94 Calendar固有QA
+
+Calendarタブは次の4幅をDevToolsのResponsive Design Mode（zoom 100%）で確認する。自動契約ではdesktopの4列日付navigation、768px以下の3列＋日付行、390px / 360pxを含む400px以下の2列操作、600px以下の1列予定入力を検証する。実ブラウザで未確認の項目をOKとはしない。
+
+| 確認項目 | 360px | 390px | 768px | desktop |
+| --- | --- | --- | --- | --- |
+| 前の日・今日・次の日・日付選択が欠けず、横scrollを生まない | コード確認 | コード確認 | コード確認 | コード確認 |
+| ALL_DAY / TIMED入力、タイムゾーンselectが幅内に収まる | コード確認 | コード確認 | コード確認 | コード確認 |
+| Agenda cardの状態・入力元・日時・全操作を読める | コード確認 | コード確認 | コード確認 | コード確認 |
+| 削除dialogが収まり、Tab循環・Escape・focus復帰が動く | DOMテストOK | DOMテストOK | DOMテストOK | DOMテストOK |
+
+手動確認では複数日にまたがる終日／時刻指定予定を作り、各日へ移動したときだけAgendaに現れること、保存・状態変更・削除後のfocus位置、Repository失敗時に既存cardと入力が残ることも確認する。
+
 <!-- STAGE2_COMPLETION_2026_08_03 -->
 ## 2026-08-03 Stage 2 Conversation Capture 最終手動QA
 
