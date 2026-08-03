@@ -1,5 +1,9 @@
 # Compass Agent Instructions
 
+## 2026-08-03 CalendarEventRecord repository / backup（Issue #93）
+
+`compass_calendar_event_records_v1`のschema-versioned RepositoryとCalendar backup resourceを実装済み。破損・不正Record・重複IDは除外せずstorage全体を拒否し、破損中のmutationは上書きしない。Repositoryは防御的copyとpure comparatorの決定的順序を返す。旧backupでCalendar resourceだけがない場合は空集合を使い、preview / restore共通validationと全体rollbackを維持する。transient Conversation / Candidate / reject state、Life Timeline、ML projectionは永続化していない。
+
 ## 2026-08-03 CalendarEventRecord domain foundation（Issue #92）
 
 CalendarEventRecordの型、runtime validator、pure Factory / status transition、Repository interface、Application Serviceを実装済み。作成はrevision 1、訂正とcomplete / cancel / reopenは意味のある成功時だけrevisionを増加し、source / provenance / createdAtを保持する。具体Repository、storage key、UI、Life Timeline read model、Conversation Calendar Capture、backup resource、外部連携は未実装である。

@@ -6,9 +6,13 @@ lastUpdated: "2026-08-03"
 ---
 # Current State (現在のプロジェクト状況)
 
+## 2026-08-03 CalendarEventRecord repository / backup（Issue #93）
+
+schema v1の独立localStorage Repositoryとbackup resourceを実装した。破損JSON・不正envelope・不正Record・重複IDは読み書き前に拒否し、返却値は防御的copy、一覧はpure comparatorによる決定的順序とする。backup preview / restoreは同じ厳格validationを用い、Calendarが1件でも不正なら全体を書き込まず、旧backupにCalendar resourceがない場合だけ空集合として扱う。Conversation session、Candidate、却下状態、Life Timeline、ML projectionは永続化しない。
+
 ## 2026-08-03 CalendarEventRecord domain foundation（Issue #92）
 
-D-0018に従い、`CalendarEventRecord`の厳密なdiscriminated union、runtime validation、pure Factory / status transition、Repository interface（Application port）、Application Serviceを実装した。ALL_DAY / TIMEDの排他性、calendar date・IANA timezone・offset整合性、4 fieldの最小Conversation provenance、revision、訂正とcomplete / cancel / reopen / deleteのcommand分離を保証する。具体Repository、storage key、Calendar / Timeline UI、Conversation Candidate、backup resource、外部Calendar連携は引き続き未実装である。
+D-0018に従い、`CalendarEventRecord`の厳密なdiscriminated union、runtime validation、pure Factory / status transition、Repository interface（Application port）、Application Serviceを実装した。ALL_DAY / TIMEDの排他性、calendar date・IANA timezone・offset整合性、4 fieldの最小Conversation provenance、revision、訂正とcomplete / cancel / reopen / deleteのcommand分離を保証する。Calendar / Timeline UI、Conversation Candidate、外部Calendar連携は引き続き未実装である。
 
 ## 2026-08-03 Calendar / Life Timeline design boundary（Issue #91）
 

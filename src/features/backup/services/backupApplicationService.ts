@@ -58,6 +58,7 @@ export class BackupApplicationService {
     for (const item of unknownResources) errors.push({ code: 'UNKNOWN_RESOURCE', resourceName: item.name, message: `unknown resource: ${item.name}（${item.occurrences}件）` });
     for (const name of missingResources) {
       if (name === 'understandingHistory') warnings.push({ code: 'LEGACY_BACKUP_WITHOUT_HISTORY', resourceName: name, message: '旧バックアップに理解履歴はありません。履歴を推測せず空の状態で復元します。' });
+      else if (name === 'calendarEvents') warnings.push({ code: 'LEGACY_BACKUP_WITHOUT_CALENDAR', resourceName: name, message: '旧バックアップにCalendar resourceはありません。予定を推測せず空の状態で復元します。' });
       else errors.push({ code: 'MISSING_RESOURCE', resourceName: name, message: `resourceが欠落しています: ${name}` });
     }
     for (const name of duplicateResources) errors.push({ code: 'DUPLICATE_RESOURCE', resourceName: name, message: `resourceが重複しています: ${name}` });
@@ -77,9 +78,11 @@ export class BackupApplicationService {
 
   restore(prepared: ImportPreparation): void {
     if (!prepared.preview.restorable || !prepared.envelope) throw new Error('検証済みで復元可能なバックアップが必要です。');
+    const revalidated = this.prepareImport(JSON.stringify(prepared.envelope));
+    if (!revalidated.preview.restorable || !revalidated.envelope) throw new Error('復元時の再検証に失敗しました。');
     const before = new Map(this.registry.map((item) => [item.storageKey, this.storage.getItem(item.storageKey)]));
     try {
-      const byName = new Map(prepared.envelope.resources.map((item) => [item.name, item.data]));
+      const byName = new Map(revalidated.envelope.resources.map((item) => [item.name, item.data]));
       for (const definition of this.registry) { const source = byName.has(definition.name) ? byName.get(definition.name) : definition.emptyValue; const data = definition.normalize(source); const absent = data === null || (Array.isArray(data) && data.length === 0); if (absent) this.storage.removeItem(definition.storageKey); else this.storage.setItem(definition.storageKey, canonicalStringify(data)); }
       this.afterRestore();
     } catch (error) { for (const [key, raw] of before) { if (raw === null) this.storage.removeItem(key); else this.storage.setItem(key, raw); } throw error; }
