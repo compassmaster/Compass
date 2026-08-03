@@ -4,6 +4,8 @@
 
 CalendarEventRecord専用のschema v1 localStorage Repositoryとbackup resourceを追加した。Repositoryは全envelopeを厳格検証してから読み書きし、破損JSON、不正schema / Record、重複IDを拒否するため、破損状態をmutationで上書きしない。返却値はdeep copy、一覧はpure comparatorで決定的である。backupはpreviewとrestore直前に同じRegistry validationを実行し、Calendar 1件の不正でも全restoreを拒否する。Calendar resourceのない旧backupだけは空集合へ復元する。Conversation session / Candidate / reject state、Life Timeline、ML projectionは引き続き非永続である。
 
+PR #102 review対応として、一覧順を表示日、同日ALL_DAY優先、TIMEDの`Date.parse(startsAt)` / `Date.parse(endsAt)`、title、idの順へ明確化した。Repository errorは`DUPLICATE_ID` / `CORRUPT_STORAGE` / `PERSISTENCE_FAILED` / `INVALID_RECORD`をcodeで区別し、Application Serviceもduplicateと一般的な永続化失敗を分ける。BackupPanelはCalendarのtitle / note / Conversation sourceExcerptを含む個人情報境界を明示する。
+
 ## 2026-08-03 CalendarEventRecord domain foundation（Issue #92）
 
 D-0018の最初の実装sliceとしてCalendarEventRecordの型、strict runtime validation、pure Factory / status transition、Repository interface（Application port）、Application Service、検証scriptを追加した。ALL_DAYとTIMEDは混在不可で、TIMEDはoffset付きinstant、IANA timezone、およびそのoffset整合を検証する。sourceと4 fieldの最小provenanceは作成後不変であり、訂正・complete / cancel / reopenの成功時だけrevisionを進める。具体Repository、storage key、Calendar / Timeline UI、Conversation Candidate、backup registry、外部Calendarは後続Issueであり、現時点で既存Domainへ予定を複製しない。
