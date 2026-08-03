@@ -7,10 +7,10 @@ const appCss = read('../src/app/App.css');
 const globalCss = read('../src/index.css');
 const firstUseCss = read('../src/features/first-use-guide/components/FirstUseGuide.css');
 
-for (const label of ['会話', 'ホーム', '記録', 'ふりかえり', '関係', '明日の見通し', 'Compass Map', 'バックアップ']) {
+for (const label of ['会話', 'ホーム', '記録', 'カレンダー', 'ふりかえり', '関係', '明日の見通し', 'Compass Map', 'バックアップ']) {
   assert.ok(app.includes(label), `navigation must retain ${label}`);
 }
-assert.equal((app.match(/aria-current=/g) ?? []).length, 8, 'every tab exposes its current-page state');
+assert.equal((app.match(/aria-current=/g) ?? []).length, 9, 'every tab exposes its current-page state');
 assert.match(app, /aria-label="主要画面"/);
 assert.match(appCss, /@media \(max-width: 600px\)/);
 assert.match(appCss, /\.app-nav\s*{[\s\S]*?flex-wrap:\s*nowrap/);
@@ -27,6 +27,7 @@ for (const stylesheet of [
   '../src/features/daily-log/components/LogTab.css',
   '../src/features/relationship-explorer/components/RelationshipExplorerTab.css',
   '../src/features/compass-map/components/MapTab.css',
+  '../src/features/calendar/components/CalendarTab.css',
 ]) {
   assert.match(read(stylesheet), /@media \(max-width: (?:560|600)px\)/, `${stylesheet} needs a narrow layout contract`);
 }

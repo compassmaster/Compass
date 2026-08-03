@@ -494,3 +494,7 @@ Conversationには最大1件のCapture Candidate確認カードが接続され�
 ### Commit executor invariants
 
 `captureCommitExecutor.ts`はcallbackを信頼境界として扱う。UIは初回とretryで同じexecutor/guardを使い、outcomeは開始時snapshotではなく現在sessionへ適用すること。共有DailyLog Application Serviceでは有限な従来`sleepHours`を許容し、Conversation adapterだけが`null`を構築する。
+
+## 2026-08-03 Calendar UI（Issue #94）
+
+独立したCalendarタブを追加し、CalendarEventApplicationServiceだけを経由するMANUAL予定の作成・訂正・状態変更・削除を実装した。ALL_DAYとTIMEDを別入力にし、TIMEDはIANA timezoneからoffset付きinstantを決定し、DST gap / foldは黙って補正せず拒否する。状態は予定・完了・取消を文字と色で表示し、削除はtitle入りdialogの別confirm eventを必須とする。Repository失敗時には既存の表示を保持する。Conversation CaptureはIssue #95まで未接続のままである。
