@@ -162,3 +162,7 @@ Issue #68 の主要8画面を、同じ手順で再確認するための手動QA�
 - StrictMode内のdeferred保存成功、receipt close、次予定開始をDOMテストで確認する。
 - FAILED保持・retry、二重実行拒否、missing RecordのAgenda focusと説明を自動確認する。
 - 実backup export文字列にflow / Candidate / fingerprint / commitToken / attempt / transcriptがないことをcontract testで確認する。
+
+### PR #104 final focus / unmount QA
+
+タブ移動でConversationTabをunmountした保存中予定が、完了後に会話へ戻るとreceiptになることをStrictMode DOMテストで確認する。review section、編集予定名、invalid field、FAILED retry、receipt section、close後composerのfocusをkeyboard回帰対象とする。

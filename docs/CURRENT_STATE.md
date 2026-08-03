@@ -446,3 +446,7 @@ Calendar intentを完全一致allowlistへ限定し、却下抑制をCandidate f
 ### PR #104 re-review follow-up
 
 React StrictModeでdeferred commitをCOMMITTEDまで反映できるmounted guardに修正した。receiptは閉じてもCalendarEventRecordを削除せず、次の予定追加を妨げない。UI callback自体の同期throw・reject・invalid outcomeもexecutorでFAILEDへ変換する。却下抑制理由を日本語Messageで表示し、missing receipt targetではAgendaへfocusして説明する。画面上のtimezone表記は「タイムゾーン」に統一した。
+
+### PR #104 final re-review
+
+Calendar commit outcomeはAppのfunctional ConversationSession updateへ移し、ConversationTabのmount状態から独立させた。タブ移動中の成功も現在sessionとrequest tokenが一致すればCOMMITTEDとなり、reset / 新Candidate後はno-opになる。receipt closeをpure transitionにし、review・editing・validation error・FAILED retry・receipt・composerのfocus境界を追加した。

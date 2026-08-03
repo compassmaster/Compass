@@ -37,7 +37,8 @@ import type { DailyLogNavigationTarget, DailyLogRecordChange } from '../features
 import { CalendarTab } from '../features/calendar/components/CalendarTab.tsx';
 import { calendarEventApplicationService } from '../features/calendar/services/compositionRoot.ts';
 import { CalendarCaptureCommitAdapter } from '../features/conversation/calendar/calendarCaptureCommitAdapter.ts';
-import { dismissCalendarReceipt } from '../features/conversation/calendar/calendarCapture.ts';
+import { applyCalendarCommitOutcome, dismissCalendarReceipt } from '../features/conversation/calendar/calendarCapture.ts';
+import { executeCalendarCaptureCommit } from '../features/conversation/calendar/calendarCaptureCommitExecutor.ts';
 
 import './App.css';
 
@@ -326,7 +327,7 @@ export function App() {
               if (outcome.ok) refreshLogs();
               return outcome;
             }}
-            onCalendarCommit={(request) => calendarCaptureCommitAdapter.commit(request)}
+            onCalendarCommit={(request) => { void executeCalendarCaptureCommit(request, (current) => calendarCaptureCommitAdapter.commit(current)).then((outcome) => setConversationSession((current) => ({ ...current, calendarCapture: applyCalendarCommitOutcome(current.calendarCapture, request, outcome) }))); }}
             onNavigateToCalendarRecord={(receipt) => { setCalendarNavigationTarget(receipt); setActiveTab('calendar'); }}
           />
         )}

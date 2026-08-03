@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { CalendarCaptureCard } from '../src/features/conversation/components/CalendarCaptureCard.tsx';
@@ -17,12 +17,13 @@ describe('Calendar Conversation Capture DOM integration', () => {
     expect(screen.getAllByRole('textbox')).toHaveLength(1); await user.type(screen.getByRole('textbox'),'診察');
     for (let index=0;index<2;index++) await user.click(screen.getByRole('button',{name:'次へ'}));
     await user.selectOptions(screen.getByRole('combobox'),'ALL_DAY'); for(let index=0;index<3;index++) await user.click(screen.getByRole('button',{name:'次へ'}));
-    expect(screen.getByText('元の発言: 予定を追加したい')).toBeTruthy(); expect(screen.queryByRole('button',{name:'この内容で保存'})).toBeNull();
+    expect(screen.getByText('元の発言: 予定を追加したい')).toBeTruthy(); expect(document.activeElement).toBe(screen.getByRole('region',{name:'カレンダー保存候補'})); expect(screen.queryByRole('button',{name:'この内容で保存'})).toBeNull();
     expect(Object.keys(localStorage).some(key=>/conversation|candidate|capture/i.test(key))).toBe(false);
     await user.click(screen.getByRole('button',{name:'この内容を確認する'})); await user.click(screen.getByRole('button',{name:'この内容で保存'})); expect(save).toHaveBeenCalledTimes(1);
   });
   it('does not restore flow or Candidate on reload',()=>{ const first=render(<Harness/>); expect(screen.getByText('予定名は何ですか？')).toBeTruthy(); first.unmount(); render(<Harness/>); expect(screen.getByText('予定名は何ですか？')).toBeTruthy(); expect(screen.queryByText('Calendar専用Candidate')).toBeNull(); });
   it('allows changing ALL_DAY to TIMED while editing', async () => {
-    const user=userEvent.setup(); render(<Harness/>); await user.type(screen.getByRole('textbox'),'会議'); for(let i=0;i<2;i++) await user.click(screen.getByRole('button',{name:'次へ'})); await user.selectOptions(screen.getByRole('combobox'),'ALL_DAY'); for(let i=0;i<3;i++) await user.click(screen.getByRole('button',{name:'次へ'})); await user.click(screen.getByRole('button',{name:'候補を修正する'})); await user.click(screen.getByRole('radio',{name:'時刻指定'})); expect(screen.getByLabelText('タイムゾーン')).toBeTruthy();
+    const user=userEvent.setup(); render(<Harness/>); await user.type(screen.getByRole('textbox'),'会議'); for(let i=0;i<2;i++) await user.click(screen.getByRole('button',{name:'次へ'})); await user.selectOptions(screen.getByRole('combobox'),'ALL_DAY'); for(let i=0;i<3;i++) await user.click(screen.getByRole('button',{name:'次へ'})); await user.click(screen.getByRole('button',{name:'候補を修正する'})); expect(document.activeElement).toBe(screen.getByRole('textbox',{name:'予定名'})); await user.clear(screen.getByLabelText('終了日')); await user.click(screen.getByRole('button',{name:'修正内容を適用'})); expect(document.activeElement).toBe(screen.getByLabelText('終了日')); await user.click(screen.getByRole('radio',{name:'時刻指定'})); expect(screen.getByLabelText('タイムゾーン')).toBeTruthy();
   });
+  it('focuses retry and hides edit for FAILED Candidate',async()=>{ const draft={...initialCalendarCaptureDraft('2026-08-03','Asia/Tokyo'),title:'失敗予定',timeKind:'ALL_DAY' as const}; const capture:CalendarCaptureState={generation:1,flow:null,rejectedFingerprints:[],candidate:{id:'failed',fingerprint:'fp',sourceExcerpt:'予定を追加したい',capturedAt:'2026-08-03T00:00:00Z',draft,status:'FAILED',attempt:1,failure:'failed'}}; render(<CalendarCaptureCard capture={capture} onAnswer={()=>undefined} onConfirm={()=>undefined} onBeginEdit={()=>undefined} onApplyEdit={()=>undefined} onReject={()=>undefined} onCancel={()=>undefined} onCommit={()=>undefined} onNavigate={()=>undefined} onDismissReceipt={()=>undefined}/>); await waitFor(()=>expect(document.activeElement).toBe(screen.getByRole('button',{name:'保存を再試行'}))); expect(screen.queryByRole('button',{name:'候補を修正する'})).toBeNull(); });
 });

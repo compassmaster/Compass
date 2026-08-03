@@ -510,3 +510,7 @@ UIは遷移規則や保存を所有しない。COMMITTINGの同一attempt再発�
 ### PR #104 re-review follow-up
 
 StrictModeのeffect再実行時はmounted guardをtrueへ戻す。commit callbackはexecutorが同期throw・reject・invalid outcomeまでFAILEDへ正規化し、token一致時だけ現在sessionへ適用する。COMMITTED receiptは「閉じる」でtransient stateだけを破棄し、保存Recordは変更しないため次の予定追加を開始できる。却下抑制時は同一Candidateだけを再表示しない理由を会話内に提示する。Calendar receipt対象が欠落した場合はAgenda headingへfocusし、本人へ説明する。
+
+### PR #104 final re-review
+
+Calendar commitの非同期実行とoutcome適用はAppが所有する。Appはfunctional `setConversationSession(current => ...)`内でtoken一致を検証して適用するため、ConversationTabがタブ移動でunmountされてもCOMMITTINGへ取り残さず、戻った時にreceiptを表示する。receipt closeはpure lifecycle transitionでありRecordを変更しない。Candidate review、editing title、validation対象、FAILED retry、COMMITTED receipt、close後composerのfocus契約をDOMで固定した。
