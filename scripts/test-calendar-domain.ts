@@ -25,6 +25,7 @@ if (!factoryResult.ok) throw new Error();
 assert.equal(factoryResult.record.revision, 1);
 assert.equal(factoryResult.record.createdAt, factoryResult.record.updatedAt);
 assert.equal(createCalendarEventRecord(manualInput, { id, now: '2026-08-03T00:00:00' }).ok, false, 'offset-less metadata instant is rejected');
+assert.equal(createCalendarEventRecord(manualInput, { id, now: '2026-02-30T00:00:00Z' }).ok, false, 'nonexistent metadata date is rejected');
 
 const transitionInput = structuredClone(factoryResult.record);
 const completedPure = transitionCalendarEventStatus(transitionInput, 'COMPLETE', '2026-08-03T01:00:00Z');
@@ -63,6 +64,15 @@ if (!corrected.ok || corrected.record.timeKind !== 'TIMED') throw new Error();
 assert.equal(corrected.record.source, 'MANUAL');
 assert.equal(corrected.record.revision, 6);
 assert.deepEqual(service.correct(id, correction), { ok: false, reason: 'NO_CHANGE' });
+const reorderedCorrection = {
+  timeKind: 'TIMED' as const,
+  startsAt: corrected.record.startsAt,
+  endsAt: corrected.record.endsAt,
+  timeZone: corrected.record.timeZone,
+  note: corrected.record.note,
+  title: corrected.record.title,
+};
+assert.deepEqual(service.correct(id, reorderedCorrection), { ok: false, reason: 'NO_CHANGE' }, 'field insertion order must not create a revision');
 
 const conversationInput: CreateCalendarEventInput = {
   title: '面談', source: 'CONVERSATION_CAPTURE', timeKind: 'TIMED', startsAt: '2026-11-01T01:30:00-04:00', endsAt: '2026-11-01T02:30:00-05:00', timeZone: 'America/New_York',
@@ -77,6 +87,7 @@ assert.equal(isCalendarEventRecord({ ...factoryResult.record, conversationProven
 assert.equal(createCalendarEventRecord({ ...manualInput, title: ' ' }, { id, now: '2026-08-03T03:00:00Z' }).ok, false, 'blank titles are rejected');
 assert.equal(createCalendarEventRecord({ ...manualInput, startDate: '2026-08-05', endDate: '2026-08-04' }, { id, now: '2026-08-03T03:00:00Z' }).ok, false, 'reversed all-day ranges are rejected');
 assert.equal(createCalendarEventRecord({ ...conversationInput, startsAt: '2026-11-01T01:30:00' }, { id, now: '2026-08-03T03:00:00Z' }).ok, false, 'offset-less event instant is rejected');
+assert.equal(createCalendarEventRecord({ ...conversationInput, startsAt: '2026-02-30T10:00:00-05:00', endsAt: '2026-03-02T11:00:00-05:00' }, { id, now: '2026-08-03T03:00:00Z' }).ok, false, 'nonexistent timed calendar dates are rejected');
 assert.equal(createCalendarEventRecord({ ...conversationInput, startsAt: '2026-11-01T01:30:00+09:00' }, { id, now: '2026-08-03T03:00:00Z' }).ok, false, 'an offset inconsistent with the IANA timezone is rejected');
 assert.equal(createCalendarEventRecord({ ...conversationInput, conversationProvenance: { ...conversationInput.conversationProvenance, capturedAt: '2026-08-03T01:00:00' } }, { id, now: '2026-08-03T03:00:00Z' }).ok, false, 'offset-less provenance instant is rejected');
 assert.equal(createCalendarEventRecord({ ...conversationInput, conversationProvenance: { ...conversationInput.conversationProvenance, extractionMethod: 'LLM' } } as CreateCalendarEventInput, { id, now: '2026-08-03T03:00:00Z' }).ok, false, 'provenance has exactly four fields');
