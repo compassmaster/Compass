@@ -12,6 +12,7 @@ export function BackupPanel({ onRestored }: BackupPanelProps) {
   const restore = () => { if (!prepared?.preview.restorable) return; try { backupApplicationService.restore(prepared); setPrepared(null); onRestored(); setMessage('全データを置き換え、表示を更新しました。'); } catch { setMessage('復元に失敗したため、復元前のデータへロールバックしました。'); } };
   return <section className="backup-panel"><h2 id="backup-primary-heading" tabIndex={-1}>バックアップと復元</h2>
     <p><strong>重要:</strong> バックアップには記録・睡眠・地域・理解などの個人情報が含まれます。安全な場所に保管してください。</p>
+    <p>予定のタイトル・メモ、および会話から保存した予定の発言抜粋もバックアップに含まれます。</p>
     <p>ファイルはこの端末内だけで作成・検証され、外部サーバーへ送信されません。復元は現在の対象データをすべて置き換えます（結合は行いません）。</p>
     <div className="backup-actions"><button type="button" onClick={previewExport}>書き出し対象を確認</button><label className="backup-file">バックアップを選択<input type="file" accept="application/json,.json" onChange={selectFile} /></label></div>
     {message && <p role="status">{message}</p>}

@@ -8,6 +8,7 @@ import type { UnderstandingHistoryEnvelope } from '../../understanding/types/und
 import { getInsightDedupeKey } from '../../analysis/services/insightDeduplication.ts';
 import type { Insight } from '../../analysis/types/analysis.ts';
 import { normalizeCandidate } from '../../compass-map/services/userModelUpdateCandidateService.ts';
+import { CALENDAR_EVENT_STORAGE_KEY, isCalendarEventStorageEnvelope } from '../../calendar/services/localStorageCalendarEventRepository.ts';
 
 export interface BackupResourceDefinition {
   readonly name: string;
@@ -123,6 +124,7 @@ function resource(name: string, storageKey: string, emptyValue: unknown, validat
 /** Sole backup allow-list. Its order is also the deterministic envelope order. */
 export const BACKUP_RESOURCE_REGISTRY: readonly BackupResourceDefinition[] = [
   resource('dailyLogs', 'compass_daily_logs', [], arrayOf(dailyLog), normalizeArray),
+  resource('calendarEvents', CALENDAR_EVENT_STORAGE_KEY, { schemaVersion: 1, records: [] }, isCalendarEventStorageEnvelope, normalizeEnvelope),
   resource('sleepRecords', 'compass_sleep_records', [], arrayOf(sleepRecord), normalizeArray),
   resource('baseLocation', 'compass_base_location_v1', null, nullable((value) => record(value) && value.schemaVersion === 1 && isBaseLocation(value.location)), identity),
   resource('weatherForecastSnapshots', 'compass_weather_forecast_snapshots_v1', null, nullable(versionedRecords(isWeatherForecastSnapshot)), normalizeEnvelope),
