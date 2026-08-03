@@ -8,8 +8,8 @@ import { buildConversationResponse, buildDailyLogCaptureBlockedResponse, buildDa
 import type { CaptureCandidate, CaptureCommitOutcome, CaptureCommitRequest, DailyLogCapturePayload } from '../types/captureCandidate.ts';
 import { applyCaptureCandidateEdit, beginCaptureCandidateCommit, beginCaptureCandidateEdit, cancelCaptureCandidate, createCaptureCommitRequest, markCaptureCandidateCommitted, markCaptureCandidateFailed, markCaptureCandidateReady, rejectCaptureCandidate, retryCaptureCandidate, type CaptureCandidateValidationError } from './captureCandidateLifecycle.ts';
 import { answerDailyLogCaptureStep, cancelDailyLogCaptureFlow, completeDailyLogCaptureFlow, moveBackDailyLogCaptureFlow, startDailyLogCaptureFlow, type DailyLogCaptureAnswer, type DailyLogCaptureFlow } from './dailyLogCaptureFlow.ts';
-import { emptyCalendarCaptureState, initialCalendarCaptureDraft, startCalendarCapture, type CalendarCaptureState } from '../calendar/calendarCapture.ts';
-import { localToday } from '../../calendar/components/calendarDateTime.ts';
+import { emptyCalendarCaptureState, startExtractedCalendarCapture, type CalendarCaptureState } from '../calendar/calendarCapture.ts';
+import { extractCalendarInput } from '../calendar/calendarInputExtractor.ts';
 
 export type ConversationSession = { messages: Message[]; nextMessageNumber: number; activeCaptureCandidate: CaptureCandidate | null; dailyLogCaptureFlow: DailyLogCaptureFlow | null; calendarCapture: CalendarCaptureState; rejectedDeduplicationKeys: string[] };
 export type ConversationSessionEvent =
@@ -42,7 +42,10 @@ export function transitionConversationSession(session: ConversationSession, even
     if (started.ok) dailyLogCaptureFlow = started.flow;
   }
   let calendarCapture = session.calendarCapture;
-  if (intent === 'RECORD_CALENDAR' && !dailyLogCaptureFlow && !session.activeCaptureCandidate && !calendarCapture.flow && !calendarCapture.candidate && validOccurredAt) calendarCapture = startCalendarCapture(calendarCapture, text, event.occurredAt, initialCalendarCaptureDraft(localToday(), Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'));
+  if (intent === 'RECORD_CALENDAR' && !dailyLogCaptureFlow && !session.activeCaptureCandidate && !calendarCapture.flow && !calendarCapture.candidate && validOccurredAt) {
+    const extracted = extractCalendarInput(text, event.occurredAt, Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC');
+    calendarCapture = startExtractedCalendarCapture(calendarCapture, text, event.occurredAt, extracted.draft, extracted.firstMissingStep);
+  }
   return {
     messages: [
       ...session.messages,
