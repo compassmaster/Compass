@@ -7,6 +7,10 @@ export function normalizeConversationInput(input: string): string {
 export function interpretConversationInput(input: string): ConversationIntent {
   const normalized = normalizeConversationInput(input);
 
+  // Anchored allowlist: additional context, negation and a mere event mention
+  // intentionally fall through instead of broad substring matching.
+  if (/^(?:予定を(?:追加|登録|保存)したい|予定を入れたい|カレンダーに(?:予定を)?(?:追加|登録|保存)したい|カレンダーに予定を入れたい)[。.!！]?$/.test(normalized)) return 'RECORD_CALENDAR';
+
   if (/明日.*(?:天気|気象|予報)/.test(normalized)) return 'VIEW_WEATHER';
   if (/明日.*(?:見通し|調子|疲れ|疲労)/.test(normalized)) return 'VIEW_PREDICTION';
   if (/^(?:睡眠|眠り|寝たこと)[。.!！]?$|(?:睡眠|寝た|眠り|就寝|起床).*(?:記録|入力|入れ)|(?:記録|入力|入れ).*(?:睡眠|寝た|眠り|就寝|起床)/.test(normalized)) return 'RECORD_SLEEP';

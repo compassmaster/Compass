@@ -12,8 +12,8 @@ const draftFor = (date: string): Draft => ({ title: '', note: '', timeKind: 'ALL
 const initialLoad = (service: CalendarEventApplicationService): LoadState => { try { return { records: service.list(), failed: false }; } catch { return { records: [], failed: true }; } };
 const afterRender = (action: () => void) => requestAnimationFrame(() => requestAnimationFrame(action));
 
-export function CalendarTab({ service = defaultService }: { service?: CalendarEventApplicationService }) {
-  const [selectedDate, setSelectedDate] = useState(localToday);
+export function CalendarTab({ service = defaultService, navigationTarget = null, onNavigationTargetConsumed, onRecordChanged }: { service?: CalendarEventApplicationService; navigationTarget?: { recordId: string; targetDate: string } | null; onNavigationTargetConsumed?: () => void; onRecordChanged?: (recordId: string) => void }) {
+  const [selectedDate, setSelectedDate] = useState(() => navigationTarget?.targetDate ?? localToday());
   const [loaded, setLoaded] = useState(() => initialLoad(service));
   const [draft, setDraft] = useState(() => draftFor(selectedDate));
   const [editing, setEditing] = useState<CalendarEventId | null>(null);
@@ -62,7 +62,7 @@ export function CalendarTab({ service = defaultService }: { service?: CalendarEv
     if (!result.ok) { setMessage('予定を保存できませんでした。表示中の予定と入力内容は保持されています。'); if (result.reason === 'INVALID_INPUT') afterRender(() => titleRef.current?.focus()); return; }
     const targetId = editing;
     const focusRecord = targetId !== null && calendarEventOccursOnDate(result.record, selectedDate);
-    resetCreateForm(); refresh();
+    resetCreateForm(); refresh(); if (editing) onRecordChanged?.(editing);
     afterRender(() => focusRecord && targetId ? recordRefs.current.get(targetId)?.focus() : agendaHeadingRef.current?.focus());
   };
   const beginEdit = (record: CalendarEventRecord) => {
@@ -73,13 +73,13 @@ export function CalendarTab({ service = defaultService }: { service?: CalendarEv
   };
   const changeStatus = (record: CalendarEventRecord, action: 'complete' | 'cancel' | 'reopen') => {
     if (!service[action](record.id).ok) { setMessage('状態を変更できませんでした。表示中の予定は保持されています。'); return; }
-    refresh(); afterRender(() => recordRefs.current.get(record.id)?.focus());
+    refresh(); onRecordChanged?.(record.id); afterRender(() => recordRefs.current.get(record.id)?.focus());
   };
   const closeDialog = () => { setDeleting(null); requestAnimationFrame(() => deleteOpenerRef.current?.focus()); };
   const confirmDelete = () => {
     if (!deleting) return; const result = service.delete(deleting.id);
     if (!result.ok) { setMessage('予定を削除できませんでした。表示中の予定は保持されています。'); setDeleting(null); requestAnimationFrame(() => deleteOpenerRef.current?.focus()); return; }
-    setDeleting(null); refresh(); afterRender(() => agendaHeadingRef.current?.focus());
+    setDeleting(null); refresh(); onRecordChanged?.(deleting.id); afterRender(() => agendaHeadingRef.current?.focus());
   };
   const handleDialogKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Escape') { event.preventDefault(); closeDialog(); return; }
@@ -91,10 +91,19 @@ export function CalendarTab({ service = defaultService }: { service?: CalendarEv
     else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
   };
   useEffect(() => { if (deleting) requestAnimationFrame(() => dialogRef.current?.querySelector<HTMLButtonElement>('[data-initial-focus]')?.focus()); }, [deleting]);
+  useEffect(() => {
+    if (!navigationTarget) return;
+    afterRender(() => {
+      const record = recordRefs.current.get(navigationTarget.recordId as CalendarEventId);
+      if (record) record.focus();
+      else { setMessage('保存した予定が見つかりませんでした。予定が編集または削除された可能性があります。'); agendaHeadingRef.current?.focus(); }
+      onNavigationTargetConsumed?.();
+    });
+  }, [navigationTarget, onNavigationTargetConsumed]);
 
   const agenda = loaded.records.filter((record) => calendarEventOccursOnDate(record, selectedDate));
   return <section className="calendar" aria-labelledby="calendar-heading">
-    <h2 id="calendar-heading">カレンダー</h2><p>手入力の予定を管理します。会話からの予定保存はまだ利用できません。</p>
+    <h2 id="calendar-heading">カレンダー</h2><p>手入力または会話から保存した予定を管理します。</p>
     <div className="calendar-date-navigation" aria-label="Agendaの日付"><button type="button" onClick={() => selectDate(moveLocalDate(selectedDate, -1))}>前の日</button><button type="button" onClick={() => selectDate(localToday())}>今日</button><label>表示する日<input required type="date" value={selectedDate} onChange={(event) => selectDate(event.target.value)} /></label><button type="button" onClick={() => selectDate(moveLocalDate(selectedDate, 1))}>次の日</button></div>
     {message && <p role="alert" className="calendar-alert">{message}</p>}
     <form className="calendar-form" onSubmit={submit}><h3>{editing ? '予定を編集' : '予定を作成'}</h3><label>予定名<input ref={titleRef} required value={draft.title} onChange={(event) => setDraft({ ...draft, title: event.target.value })} /></label><label>メモ（任意）<textarea value={draft.note} onChange={(event) => setDraft({ ...draft, note: event.target.value })} /></label><fieldset><legend>予定の種類</legend><label><input type="radio" checked={draft.timeKind === 'ALL_DAY'} onChange={() => setDraft({ ...draft, timeKind: 'ALL_DAY' })} />終日</label><label><input type="radio" checked={draft.timeKind === 'TIMED'} onChange={() => setDraft({ ...draft, timeKind: 'TIMED' })} />時刻指定</label></fieldset>

@@ -145,3 +145,24 @@ Issue #68 の主要8画面を、同じ手順で再確認するための手動QA�
 - [ ] 初回保存／再試行を連続クリックしても同一attemptが1回だけ発行される。
 - [ ] 保存待機中に会話をresetしても、遅れて完了した結果でCandidateが復活しない。
 - [ ] COMMITTEDの「日々の記録を見る」が既存navigationを1回だけ実行する。
+
+## Calendar Conversation Capture（Issue #95 / PR #104）
+
+| 確認項目 | 360px | 390px | 768px | desktop |
+| --- | --- | --- | --- | --- |
+| 一問一答のinput、ALL_DAY / TIMED、timezoneが横にはみ出さない | 自動契約確認 | 自動契約確認 | 自動契約確認 | DOM確認 |
+| Candidateの保存先・日時・sourceExcerpt・未保存状態が折り返される | 自動契約確認 | 自動契約確認 | 自動契約確認 | DOM確認 |
+| 明示確認、編集、保存、却下、FAILED再試行をkeyboard操作できる | DOM確認 | DOM確認 | DOM確認 | DOM確認 |
+| receipt遷移後に対象Calendar Eventへfocusする | DOM確認 | DOM確認 | DOM確認 | DOM確認 |
+
+物理端末とスクリーンリーダーの手動確認は未実施。自動確認を手動QA済みとは扱わない。reloadでflow / Candidate / receiptが復元されず、保存済みCalendarEventRecordだけが復元されること、backupにConversation transient stateが含まれないことも回帰項目とする。
+
+### PR #104 再レビュー自動確認
+
+- StrictMode内のdeferred保存成功、receipt close、次予定開始をDOMテストで確認する。
+- FAILED保持・retry、二重実行拒否、missing RecordのAgenda focusと説明を自動確認する。
+- 実backup export文字列にflow / Candidate / fingerprint / commitToken / attempt / transcriptがないことをcontract testで確認する。
+
+### PR #104 final focus / unmount QA
+
+タブ移動でConversationTabをunmountした保存中予定が、完了後に会話へ戻るとreceiptになることをStrictMode DOMテストで確認する。review section、編集予定名、invalid field、FAILED retry、receipt section、close後composerのfocusをkeyboard回帰対象とする。

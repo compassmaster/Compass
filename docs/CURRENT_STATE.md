@@ -429,4 +429,24 @@ Conversation sessionは未保存Capture Candidateを最大1件だけin-memoryで
 
 指定日保存APIは従来互換の有限な数値または`null`の`sleepHours`を受け入れ、Conversation adapterだけが`null`へ固定する。Conversation UIの初回保存と再試行は同じexact-once executorを通り、callback例外や不正outcomeは安全なretryable failureとなる。非同期outcomeは現在のsessionとattemptに一致する場合だけ反映する。
 
-- Calendar UI: MANUALのALL_DAY / TIMED予定を作成・編集・状態変更・確認削除できる。IANA timezoneとoffset付きinstantを保持し、Conversationからの保存は未実装。
+- Calendar UI: MANUALのALL_DAY / TIMED予定を作成・編集・状態変更・確認削除できる。IANA timezoneとoffset付きinstantを保持する。
+
+## 2026-08-03 Calendar Conversation Capture（Issue #95）
+
+- 「予定を追加・登録・保存したい」という明示intentだけで、LLMや自由文抽出を使わない一問一答の構造化flowを開始する。予定名、任意メモ、ALL_DAY / TIMED、本人指定の日時とIANA timezoneをin-memoryで収集する。
+- Calendar専用Candidateは保存先、日時、本人入力元、用途、保持方針、未保存状態を提示する。Candidateは修正内容を明示適用してREADYにするまで保存できず、却下抑制は現在のsessionだけに限定する。
+- 保存は`CalendarEventApplicationService`を通し、`source = CONVERSATION_CAPTURE`と最小provenance（capturedAt、consentedAt、extractorVersion、sourceExcerpt）だけをRecordへ保存する。会話全文、Candidate、却下状態はRepository / backupへ保存しない。
+- COMMITTING中は多重送信を拒否し、失敗時はCandidateを保持して再試行できる。非同期結果は開始したcapture generationと一致するときだけ反映し、成功receiptから対象日・対象Eventへ移動してfocusできる。
+- Calendar CaptureはDailyLog、Understanding、Goal、Life Timeline、Analysis / MLへ接続しない。
+
+### PR #104 review follow-up
+
+Calendar intentを完全一致allowlistへ限定し、却下抑制をCandidate fingerprintへ変更した。flow / lifecycle / commit adapterをUIから分離し、修正なしの明示確認、ALL_DAY / TIMED変更、sourceExcerpt表示、保存操作時のconsentedAt確定を実装した。throw / reject / invalid outcomeはFAILEDへ変換し、generation・Candidate ID・attemptでCOMMITTING二重実行とstale outcomeを拒否する。対象Calendar Recordの訂正・状態変更・削除ではreceiptを破棄する。transient stateはreload / backupで復元しない。
+
+### PR #104 re-review follow-up
+
+React StrictModeでdeferred commitをCOMMITTEDまで反映できるmounted guardに修正した。receiptは閉じてもCalendarEventRecordを削除せず、次の予定追加を妨げない。UI callback自体の同期throw・reject・invalid outcomeもexecutorでFAILEDへ変換する。却下抑制理由を日本語Messageで表示し、missing receipt targetではAgendaへfocusして説明する。画面上のtimezone表記は「タイムゾーン」に統一した。
+
+### PR #104 final re-review
+
+Calendar commit outcomeはAppのfunctional ConversationSession updateへ移し、ConversationTabのmount状態から独立させた。タブ移動中の成功も現在sessionとrequest tokenが一致すればCOMMITTEDとなり、reset / 新Candidate後はno-opになる。receipt closeをpure transitionにし、review・editing・validation error・FAILED retry・receipt・composerのfocus境界を追加した。

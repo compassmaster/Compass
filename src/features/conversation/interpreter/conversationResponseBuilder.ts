@@ -9,6 +9,7 @@ export const buildInvalidConversationOccurredAtResponse = (): ConversationRespon
 
 const ACTIONS: Record<Exclude<ConversationIntent, 'AMBIGUOUS_RECORD' | 'UNKNOWN'>, Omit<MessageAction, 'executed'>> = {
   RECORD_DAILY_LOG: { intent: 'RECORD_DAILY_LOG', label: '既存の記録画面を開く' },
+  RECORD_CALENDAR: { intent: 'RECORD_CALENDAR', label: 'カレンダーを開く' },
   RECORD_SLEEP: { intent: 'RECORD_SLEEP', label: '睡眠を記録する' },
   VIEW_PREDICTION: { intent: 'VIEW_PREDICTION', label: '明日の見通しを見る' },
   VIEW_COMPASS_MAP: { intent: 'VIEW_COMPASS_MAP', label: 'Compass Mapを見る' },
@@ -26,6 +27,9 @@ export function buildConversationResponse(intent: ConversationIntent): Conversat
   }
   if (intent === 'RECORD_DAILY_LOG') return {
     text: '会話で記録するため、対象日から一つずつ確認します。既存画面を使う場合は、この記録を取消してからクイックアクションを選んでください。',
+  };
+  if (intent === 'RECORD_CALENDAR') return {
+    text: 'カレンダーへの予定追加を始めます。内容を推測せず、一つずつ確認します。',
   };
   return {
     text: '該当する既存画面を案内できます。移動する場合は、次のボタンを押してください。',

@@ -8,8 +8,10 @@ import { buildConversationResponse, buildDailyLogCaptureBlockedResponse, buildDa
 import type { CaptureCandidate, CaptureCommitOutcome, CaptureCommitRequest, DailyLogCapturePayload } from '../types/captureCandidate.ts';
 import { applyCaptureCandidateEdit, beginCaptureCandidateCommit, beginCaptureCandidateEdit, cancelCaptureCandidate, createCaptureCommitRequest, markCaptureCandidateCommitted, markCaptureCandidateFailed, markCaptureCandidateReady, rejectCaptureCandidate, retryCaptureCandidate, type CaptureCandidateValidationError } from './captureCandidateLifecycle.ts';
 import { answerDailyLogCaptureStep, cancelDailyLogCaptureFlow, completeDailyLogCaptureFlow, moveBackDailyLogCaptureFlow, startDailyLogCaptureFlow, type DailyLogCaptureAnswer, type DailyLogCaptureFlow } from './dailyLogCaptureFlow.ts';
+import { emptyCalendarCaptureState, initialCalendarCaptureDraft, startCalendarCapture, type CalendarCaptureState } from '../calendar/calendarCapture.ts';
+import { localToday } from '../../calendar/components/calendarDateTime.ts';
 
-export type ConversationSession = { messages: Message[]; nextMessageNumber: number; activeCaptureCandidate: CaptureCandidate | null; dailyLogCaptureFlow: DailyLogCaptureFlow | null; rejectedDeduplicationKeys: string[] };
+export type ConversationSession = { messages: Message[]; nextMessageNumber: number; activeCaptureCandidate: CaptureCandidate | null; dailyLogCaptureFlow: DailyLogCaptureFlow | null; calendarCapture: CalendarCaptureState; rejectedDeduplicationKeys: string[] };
 export type ConversationSessionEvent =
   | { type: 'SUBMIT_TEXT'; text: string; occurredAt: string }
   | { type: 'RESET' };
@@ -17,7 +19,7 @@ export type ConversationSessionEvent =
 const WELCOME_MESSAGE = 'こんにちは。今の気持ちや考えていることを、まとまっていなくても自由に書けます。';
 const CAPTURE_SUPPRESSED_MESSAGE = '以前この候補は保存しないと選択されたため、再表示しませんでした。新しい内容を記録する場合は、もう一度「記録したい」と送ってください。';
 export function createConversationSession(): ConversationSession {
-  return { messages: [{ id: 'message-0', role: 'assistant', text: WELCOME_MESSAGE }], nextMessageNumber: 1, activeCaptureCandidate: null, dailyLogCaptureFlow: null, rejectedDeduplicationKeys: [] };
+  return { messages: [{ id: 'message-0', role: 'assistant', text: WELCOME_MESSAGE }], nextMessageNumber: 1, activeCaptureCandidate: null, dailyLogCaptureFlow: null, calendarCapture: emptyCalendarCaptureState(), rejectedDeduplicationKeys: [] };
 }
 
 export function transitionConversationSession(session: ConversationSession, event: ConversationSessionEvent): ConversationSession {
@@ -39,6 +41,8 @@ export function transitionConversationSession(session: ConversationSession, even
     const started = startDailyLogCaptureFlow(null, { sourceMessageId: `message-${userMessageNumber}`, sourceExcerpt: text, startedAt: event.occurredAt, deduplicationKey: `daily-log-flow-${userMessageNumber}` });
     if (started.ok) dailyLogCaptureFlow = started.flow;
   }
+  let calendarCapture = session.calendarCapture;
+  if (intent === 'RECORD_CALENDAR' && !dailyLogCaptureFlow && !session.activeCaptureCandidate && !calendarCapture.flow && !calendarCapture.candidate && validOccurredAt) calendarCapture = startCalendarCapture(calendarCapture, text, event.occurredAt, initialCalendarCaptureDraft(localToday(), Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'));
   return {
     messages: [
       ...session.messages,
@@ -48,6 +52,7 @@ export function transitionConversationSession(session: ConversationSession, even
     nextMessageNumber: assistantMessageNumber + 1,
     activeCaptureCandidate: session.activeCaptureCandidate,
     dailyLogCaptureFlow,
+    calendarCapture,
     rejectedDeduplicationKeys: session.rejectedDeduplicationKeys,
   };
 }
