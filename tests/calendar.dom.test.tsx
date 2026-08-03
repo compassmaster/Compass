@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CalendarTab } from '../src/features/calendar/components/CalendarTab.tsx';
@@ -34,7 +34,7 @@ describe('Calendar DOM integration', () => {
   it('focuses the Agenda when an edit moves the record away from the selected date', async () => {
     const user = await create('移動する予定'); await user.click(screen.getByRole('button', { name: '編集' }));
     const nextDate = moveLocalDate((screen.getByLabelText('表示する日') as HTMLInputElement).value, 1);
-    const start = screen.getByLabelText('開始日'), end = screen.getByLabelText('終了日'); await user.clear(start); await user.type(start, nextDate); await user.clear(end); await user.type(end, nextDate); await user.click(screen.getByRole('button', { name: '変更を保存' }));
+    const start = screen.getByLabelText('開始日'), end = screen.getByLabelText('終了日'); fireEvent.change(start, { target: { value: nextDate } }); fireEvent.change(end, { target: { value: nextDate } }); await user.click(screen.getByRole('button', { name: '変更を保存' }));
     await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('heading', { name: /のAgenda/ }))); expect(screen.queryByText('移動する予定')).toBeNull();
   });
   it('creates TIMED through the Japanese timezone selector with offset instants', async () => {
