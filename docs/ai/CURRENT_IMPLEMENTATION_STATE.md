@@ -1,5 +1,9 @@
 # Compass Agent Instructions
 
+## 2026-08-03 Calendar / Life Timeline design boundary（Issue #91）
+
+D-0018でStage 3のCalendarEvent、時間・timezone、Life Timeline read model、保存・削除・backup、Conversation Capture、外部Calendarの設計境界をAcceptedとした。実装状態は変わらず、CalendarEvent型、Repository、Application Service、storage / backup、Calendar UI、外部連携は未実装である。DailyLogやUnderstandingを予定の代用保存先にしない。
+
 <!-- STAGE2_COMPLETION_2026_08_03 -->
 ## 2026-08-03 Current implementation: Stage 2 completed（Issue #85）
 

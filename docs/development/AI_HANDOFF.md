@@ -1,5 +1,11 @@
 # AI Handoff Document
 
+## 2026-08-03 Calendar / Life Timeline boundary（Issue #91）
+
+D-0018でStage 3の実装前境界を確定した。予定・出来事は専用CalendarEventをSource of Truthとし、DailyLog、Understanding、Goal / Task等へ代用保存しない。ALL_DAYはlocal date、TIMEDはinstantと入力時IANA timezoneを保持する。Life Timelineは各Domainをrecord kind / source IDで合成する非永続read modelであり、編集・削除は元DomainのApplication Serviceへ委譲する。
+
+このDecisionはdocs-onlyである。型、Repository、localStorage / backup resource、UI、ConversationからのCalendar保存、recurrence、通知、外部Calendar接続は未実装のままである。後続実装ではD-0016と同等の明示確認、独立Repository、schema version付きbackup、および削除確認の別event boundaryを維持する。
+
 <!-- STAGE2_COMPLETION_2026_08_03 -->
 ## 2026-08-03 Stage 2 completion handoff（Issue #85）
 
