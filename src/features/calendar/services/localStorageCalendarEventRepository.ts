@@ -14,16 +14,16 @@ const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
 export function compareCalendarEventRecords(a: CalendarEventRecord, b: CalendarEventRecord): number {
-  const dateComparison = displayDate(a).localeCompare(displayDate(b));
+  const dateComparison = compareText(displayDate(a), displayDate(b));
   if (dateComparison !== 0) return dateComparison;
   if (a.timeKind !== b.timeKind) return a.timeKind === 'ALL_DAY' ? -1 : 1;
   const startComparison = compareTime(a, b, 'start');
   if (startComparison !== 0) return startComparison;
   const endComparison = compareTime(a, b, 'end');
   if (endComparison !== 0) return endComparison;
-  const titleComparison = a.title.localeCompare(b.title);
+  const titleComparison = compareText(a.title, b.title);
   if (titleComparison !== 0) return titleComparison;
-  return a.id.localeCompare(b.id);
+  return compareText(a.id, b.id);
 }
 
 export function isCalendarEventStorageEnvelope(value: unknown): value is CalendarEventStorageEnvelope {
@@ -102,7 +102,11 @@ function displayDate(record: CalendarEventRecord): string {
 }
 function compareTime(a: CalendarEventRecord, b: CalendarEventRecord, edge: 'start' | 'end'): number {
   if (a.timeKind === 'TIMED' && b.timeKind === 'TIMED') return Date.parse(edge === 'start' ? a.startsAt : a.endsAt) - Date.parse(edge === 'start' ? b.startsAt : b.endsAt);
-  if (a.timeKind === 'ALL_DAY' && b.timeKind === 'ALL_DAY') return (edge === 'start' ? a.startDate : a.endDate).localeCompare(edge === 'start' ? b.startDate : b.endDate);
+  if (a.timeKind === 'ALL_DAY' && b.timeKind === 'ALL_DAY') return compareText(edge === 'start' ? a.startDate : a.endDate, edge === 'start' ? b.startDate : b.endDate);
   return 0;
+}
+function compareText(a: string, b: string): number {
+  if (a === b) return 0;
+  return a < b ? -1 : 1;
 }
 const clone = <T>(value: T): T => structuredClone(value);
