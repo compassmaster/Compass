@@ -1,5 +1,20 @@
 # Compass Agent Instructions
 
+<!-- STAGE2_COMPLETION_2026_08_03 -->
+## 2026-08-03 Current implementation: Stage 2 completed（Issue #85）
+
+- Conversationは初期activeのPrimary Experienceで、session、Message、flow、Candidate、却下抑制、navigation targetはin-memoryである。
+- 構造化DailyLog CaptureはDATE → MOOD → FATIGUE → NOTE → EVENTSを一問ずつ確認し、本人明示値だけからPROPOSED Candidateを生成する。
+- CandidateはPROPOSED / EDITING / READY / COMMITTING / COMMITTED / REJECTED / FAILED / CANCELLEDを持つ。READYと保存成功を分離し、二重commitを拒否する。
+- 保存はDailyLogApplicationServiceを通り、最小CaptureProvenanceをRecordへ従属させる。会話全文、Candidate ID、Message ID、deduplicationKeyは永続化しない。
+- COMMITTED receiptから正しいRecordをVIEW / EDIT / DELETEできる。削除は確認dialogを必須とし、cancel後に元Recordへfocusを戻す。PR #87で確認前削除のHigh不具合を修正し、DOM統合テストと実ブラウザ再QAを完了した。
+- 同一session内の却下候補はdeduplicationKeyで再提示を抑制し、理由をConversationへ表示する。reset / reloadで抑制状態は破棄される。
+- backup resourceは増やさず、provenance付きDailyLogだけを既存DailyLog resourceとしてexport / restoreする。Conversationのtransient stateはbackup対象外である。
+- 手動QAは360px、390px、768px、desktop、keyboard / focus、reload、backup / restore境界で合格した。詳細は `docs/qa/STAGE2_CONVERSATION_CAPTURE_QA_2026-08-03.md` を参照する。
+
+次のStageはCalendar / Life Timelineであり、自由会話抽出、LLM、会話履歴永続化、外部カレンダー連携は未実装である。
+
+
 ## 2026-08-02 Conversation Capture completion（Issue #83）
 
 Conversation sessionは却下済みdeduplication keyの集合だけを保持し、同じsessionでの再提示を`CAPTURE_SUPPRESSED`として拒否する。Candidate本文・source・ID・purposeは抑制情報へ複製せず、resetで消える。COMMITTED DailyLogはtransient navigation targetを介して記録一覧のVIEW / EDIT / DELETEへ接続済みで、更新・削除通知が同じrecordIdのactive receiptだけを外す。新しいRepository、storage key、backup resourceはない。

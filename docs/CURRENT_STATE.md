@@ -2,9 +2,22 @@
 status: Active
 dependsOn: []
 usedBy: []
-lastUpdated: "2026-08-02"
+lastUpdated: "2026-08-03"
 ---
 # Current State (現在のプロジェクト状況)
+
+<!-- STAGE2_COMPLETION_2026_08_03 -->
+## 2026-08-03 Stage 2 Conversation Capture完了（Issue #85）
+
+- D-0016に基づくStage 2のvertical sliceは、Conversation上の構造化DailyLog flow、Capture Candidateの確認・修正・却下、明示保存、CaptureProvenance、保存後のVIEW / EDIT / DELETEまで実装・確認済みである。
+- 手動QAはWindows上のChromium系ブラウザとlocal main `10b1add2dedfb08864f07c7dbbb4e5889829176e`で実施した。360px、390px、768px、desktopにおいて、Conversation、Candidate、DailyLog編集、Record action、削除dialogの横スクロール・文字切れ・ボタン重なりは確認されなかった。
+- PR #87で、Conversationから削除を開いた直後に確認前削除が起こり得るHigh不具合を修正した。修正後はdialog表示前の削除なし、cancel後のRecord維持とfocus復帰、明示confirmによる対象Recordだけの削除を実ブラウザで再確認した。
+- backup export / preview / restoreは従来どおり動作し、provenance付きDailyLogは復元対象、Conversation session、Candidate、却下key、navigation targetは対象外であることを確認した。backup resource数は増えていない。
+- Conversation sessionは再読み込みで復元されず、保存済みDailyLogだけが残る。会話全文、Candidate ID、Message ID、deduplicationKeyはDailyLogへ保存しない。
+- Stage 2の次はStage 3 — Calendar / Life Timelineである。予定・目標・節目の専用Recordと時間軸UIを設計するまで、DailyLogやUnderstandingを代用保存先にしない。
+
+詳細な実施記録は[Stage 2 Conversation Capture QA結果](qa/STAGE2_CONVERSATION_CAPTURE_QA_2026-08-03.md)とIssue #85を参照する。
+
 
 ## 2026-08-02 Conversation Capture境界完了（Issue #83）
 
@@ -25,9 +38,9 @@ lastUpdated: "2026-08-02"
 
 ## 現在のVersion
 
-**v0.1.0-alpha / Conversation-First Roadmap Stage 1: Conversation Shell**
+**v0.1.0-alpha / Conversation-First Roadmap Stage 2: Conversation Capture completed**
 
-現在はFoundationの機能に加え、保存や人物理解を自動化しないin-memory Conversation Shellと、保存前だけを表すCapture Candidate modelを含む。Capture UI、永続化、DailyLogの実保存は未実装である。
+現在はFoundationの機能に加え、in-memory Conversation ShellとStage 2 Conversation Captureのvertical sliceを含む。構造化DailyLog flow、確認・修正・却下、明示保存、CaptureProvenance、同一session内の却下抑制、保存後のVIEW / EDIT / DELETEまで実装済みである。Candidateと会話履歴は永続化しない。
 
 ## 完了済み
 
@@ -76,7 +89,7 @@ lastUpdated: "2026-08-02"
 ### 未実装
 
 - ConversationをFormal UserModel Resolverへ正式接続する新フロー。
-- Capture Candidateの確認UI、保存処理、DailyLogApplicationService接続、自由会話理解・永続的な会話履歴・LLM生成・Prompt Version管理・Candidate Prioritizer・Calendar連携・ウェアラブル連携・学習型Machine Learning。Domain / Application modelのみ実装済み。
+- 自由会話からの抽出、永続的な会話履歴、LLM生成、Prompt Version管理、Candidate Prioritizer、Calendar連携、ウェアラブル連携、学習型Machine Learning。構造化DailyLog Captureは実装済み。
 - WeatherのDomain / Repository / Base Location / Forecast・Historical取得、限定的な自動取得、読み取り専用のWeather × Fatigue ObservationとPredictionは実装済み。ただし、汎用External Context自動取得、WeatherからFormal Pipelineへの接続、学習型予測は未実装。
 
 ## 実装済み項目
@@ -163,9 +176,15 @@ Understanding Object
 
 ## 次の設計対象
 
-Base Location MVPは実装済みであり、次の実装候補はWeather API Clientである。Base Locationは専用RepositoryをSource of Truthとするユーザー確認済みの通常地域設定1件で、WeatherLocationSnapshotは取得時にコピーする履歴である。変更・削除は過去snapshotを書き換えない。
+Stage 2 Conversation Captureは完了した。次の設計対象はStage 3 — Calendar / Life Timelineである。
 
-未実装として、常時GPS、Geolocation API、詳細住所、複数拠点、一時Location、現在地自動切替を維持する。Base LocationはExternal Context設定でありFormal UserModelを直接更新しない。Weather API ClientでもDailyLog本文等を送信せず、Weather API通信と失敗を独立した境界にする。
+- 予定・目標・節目を表す専用Record。
+- Calendarを人生の時間軸として扱うUI。
+- Conversationから予定候補を作る場合の確認・修正・却下・provenance境界。
+- DailyLog、Understanding、Calendar / Goal Recordを相互に代用しない責務分離。
+- 外部カレンダー連携より先に、ローカルDomainとApplication ServiceのSource of Truthを確定する。
+
+自由会話抽出、LLM、外部カレンダー同期、通知、音声入力はStage 3の初期設計で自動的に採用しない。
 
 ## 2026-07-22 Formal UserModel Phase A実装状態
 

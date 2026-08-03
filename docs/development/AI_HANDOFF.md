@@ -1,5 +1,23 @@
 # AI Handoff Document
 
+<!-- STAGE2_COMPLETION_2026_08_03 -->
+## 2026-08-03 Stage 2 completion handoff（Issue #85）
+
+Stage 2 — Conversation Captureは機能実装、High不具合修正、手動QA、backup境界確認まで完了した。現在のmain基準コミットはPR #87 merge後の `10b1add2dedfb08864f07c7dbbb4e5889829176e` である。
+
+今後の作業で維持する不変条件:
+
+- Conversation transcript、Capture Candidate、却下本文、session内deduplicationKey、navigation targetをRepository、localStorage、backupへ追加しない。
+- 保存前に内容、保存先、対象日、目的、source excerpt、値の由来を表示し、本人の明示確認を必須にする。
+- DailyLog保存・編集・削除は既存Application Serviceとvalidationを迂回しない。
+- mood / fatigueを推測して保存しない。
+- Record削除は確認dialogと明示confirmを必須にし、open eventとconfirm eventを同一操作で処理しない。
+- CaptureProvenanceはRecordへ従属し、編集で保持、削除で同時に消す。
+- Stage 3でCalendar / Goalの専用Recordを設計するまで、DailyLogやUnderstandingを予定・目標の代用保存先にしない。
+
+既知の非ブロッキングUX改善候補として、却下抑制メッセージ「今回は保存しない内容と同じため、再提案を控えます」は、より自然な説明へ変更する余地がある。
+
+
 ## 2026-08-02 PR #84 review follow-up
 
 Suppressionでflow cardが消えた後も安全な案内をConversation messageへ残す。DailyLog targetは純粋resolverでRecordを厳密に選択し、command identity guardによりStrictModeのeffect再実行でも一度だけ適用・consumeする。通常削除とtarget削除は同じfocus-return設定を利用し、return IDを操作終了時に破棄する。
@@ -45,13 +63,13 @@ D-0016で設計したin-memory Capture CandidateのDomain / Application modelを
 
 ---
 
-**Last Updated:** 2026-07-28
+**Last Updated:** 2026-08-03
 
 ## Current Project Status
 
 - **Status:** Active Development
 - **Version:** v0.1.0-alpha
-- **Current phase:** Formal Analysis Framework、Understanding Candidate MVP、Understanding Object MVP、Formal UserModel Phase A〜D、Weather Domain Model MVP、Weather Repository MVPが実装済み。Compass MapとFormal ReflectionはResolvedFormalUserModelへ読み取り専用で接続済み。Base Location MVPまで実装済み。次の実装候補はWeather API Client。Conversation、Weather API Client、Analyzer、Prediction、Machine Learningは未実装。
+- **Current phase:** Conversation-First Roadmap Stage 2 — Conversation Capture completed. 次はStage 3 Calendar / Life TimelineのDomain・保存境界・時間軸UI設計。
 
 ## Current Architecture
 
