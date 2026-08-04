@@ -5,6 +5,40 @@ usedBy: []
 lastUpdated: "2026-08-04"
 ---
 
+<!-- STAGE3_COMPLETION_2026_08_04 -->
+# Current State (現在のプロジェクト状況)
+
+## 現在状態 — 2026-08-04 Stage 3完了（Issue #120）
+
+**現在のVersion: v0.1.0-alpha / Conversation-First Roadmap Stage 3: Calendar / Life Timeline completed**
+
+PR #119マージ後のコードをSource of Truthとして、Stage 3 — Calendar / Life Timelineは機能実装と2026-08-04の手動QAまで完了した。`CalendarEventRecord`は手入力またはConversation Captureから作成でき、Agendaで参照、編集、完了、予定へ戻す、取消、削除できる。
+
+Conversationでは予定名・日時を決定的に仮抽出し、取得できた値をCandidateへ仮入力する。不足・曖昧な項目だけを一問ずつ確認し、本人がCandidateを確認して「カレンダーに追加」を押した場合だけ保存する。抽出直後の自動保存は行わない。
+
+Calendar AgendaとLife Timelineは実装済みである。Life TimelineはCalendar Event、DailyLog、SleepRecord、Weatherを別`recordType`のまま合成する**読み取り専用・非永続Read Model**であり、独立した永続Recordではない。`ML_READY_DATASET_V1`も読み取り専用・非永続で、`title`、`note`、`sourceExcerpt`等の本文をML featureへ含めない。production機械学習モデルの学習・推論は未実装である。
+
+Calendar Eventはbackup対象である。一方、Conversation session、Candidate、commit token、Life Timeline、ML projectionはbackup・localStorage対象外である。
+
+2026-08-04にCalendarは360px、390px、768px、desktop、Conversation Calendar CaptureとLife Timelineはdesktopで表示を実ブラウザ確認した。Tab / Shift+Tabによるfocus移動もdesktopで確認した。これは各幅で全機能操作を通し実行したという意味ではない。機能・保存境界は自動テストおよびコード・設計確認で確認した。360px / 390pxの上部ナビゲーションは9タブの3列Gridである。物理端末のsoft keyboardとscreen readerによる実読み上げは未実施である。詳細は[Stage 3 Calendar / Life Timeline QA結果](qa/STAGE3_CALENDAR_LIFE_TIMELINE_QA_2026-08-04.md)を参照する。
+
+### Stage 3完了後も未実装
+
+- LLMによる自由会話理解
+- Conversation履歴永続化
+- Google Calendar等との外部同期
+- 通知・リマインダー
+- production MLの学習・推論
+- ウェアラブル実連携
+- CalendarからFormal UserModelへの直接更新
+
+#115（Calendar Candidate編集フォームの視認性）と#116（Life Timelineの人間向け表示）はStage 3完了を妨げない非blocking UX改善である。#117（身体的疲労と精神的疲労の分離）はStage 3後の設計・研究候補であり、Stage 3の完了条件には含めない。
+
+## 過去の実装履歴
+
+以下の日付別セクションは各時点の記録である。当時「未実装」と記載された項目が、上記の現在状態では実装済みの場合がある。
+
+
 ## 2026-08-04 Calendar Agenda日時表示（Issue #110）
 
 Calendar Agendaカードの日時を、保存形式を変更しない表示専用formatterによる日本語の日付・曜日・時刻へ変更した。同日・複数日TIMED、1日・複数日ALL_DAYを区別し、IANA timezoneは主表示ではなく折りたたみ詳細に表示する。
@@ -34,8 +68,6 @@ rowはschema / feature definition / timezone、missing reason、source ID、targ
 ## 2026-08-03 Life Timeline read model
 
 Calendar画面に、Calendar Event / DailyLog / SleepRecord / 保存済みWeather forecast / observationを別recordTypeのまま合成する読み取り専用Life Timelineを実装した。read modelは永続化せず、`getItem`限定のstrict Source Readerが欠損keyとstorage / JSON / schema / Record失敗を区別する。一部source失敗時も成功projectionを返し、raw RecordやConversation provenanceをRead Modelへ保持しない。期間・query timezone、DST / midnight、複数日ALL_DAY、実instantによるversion付き決定的sort、Sleep datetime-local、使用・除外Recordとcovered / missing dateの追跡をquery serviceが担当し、UIはRepositoryを直接横断しない。
-# Current State (現在のプロジェクト状況)
-
 ## 2026-08-03 CalendarEventRecord repository / backup（Issue #93）
 
 schema v1の独立localStorage Repositoryとbackup resourceを実装した。破損JSON・不正envelope・不正Record・重複IDは読み書き前に拒否し、返却値は防御的copy、一覧はpure comparatorによる決定的順序とする。backup preview / restoreは同じ厳格validationを用い、Calendarが1件でも不正なら全体を書き込まず、旧backupにCalendar resourceがない場合だけ空集合として扱う。Conversation session、Candidate、却下状態、Life Timeline、ML projectionは永続化しない。
