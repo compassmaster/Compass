@@ -23,9 +23,23 @@ const japaneseTimeFormatter = new Intl.DateTimeFormat('ja-JP', {
 });
 
 function localDateAsUtc(value: string): Date | null {
-  const match = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?/.exec(value);
+  const match = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?$/.exec(value);
   if (!match) return null;
-  return new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]), Number(match[4] ?? 0), Number(match[5] ?? 0)));
+  const parts = match.slice(1).map((part) => Number(part ?? 0));
+  const date = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2], parts[3], parts[4]));
+  if (
+    date.getUTCFullYear() !== parts[0]
+    || date.getUTCMonth() !== parts[1] - 1
+    || date.getUTCDate() !== parts[2]
+    || date.getUTCHours() !== parts[3]
+    || date.getUTCMinutes() !== parts[4]
+  ) return null;
+  return date;
+}
+
+function japaneseLocalDateTime(value: string): string {
+  const date = localDateAsUtc(value);
+  return date ? `${japaneseDateFormatter.format(date)} ${japaneseTimeFormatter.format(date)}` : '';
 }
 
 function calendarCandidateDateTime(draft: CalendarCaptureDraft): { date: string; time: string } {
@@ -65,7 +79,7 @@ export function CalendarCaptureCard({ capture, onAnswer, onConfirmAndCommit, onB
     if (!draft.title.trim()) titleRef.current?.focus();
     else if (draft.timeKind === 'ALL_DAY') (!draft.startDate ? startDateRef : endDateRef).current?.focus();
     else if (!draft.startsAt) startsAtRef.current?.focus();
-    else if (!draft.endsAt) endsAtRef.current?.focus();
+    else if (!draft.endsAt || draft.endsAt <= draft.startsAt) endsAtRef.current?.focus();
     else timeZoneRef.current?.focus();
   }, [error, draft]);
 
@@ -77,7 +91,105 @@ export function CalendarCaptureCard({ capture, onAnswer, onConfirmAndCommit, onB
   }
   if (!candidate) return null;
   if (candidate.status === 'COMMITTED' && candidate.receipt) return <section ref={reviewRef} tabIndex={-1} className="capture-review" aria-label="カレンダー追加結果"><h3>予定をカレンダーに追加しました</h3><button type="button" onClick={() => onNavigate(candidate.receipt!)}>カレンダーでこの予定を見る</button><button type="button" onClick={onDismissReceipt}>閉じる</button></section>;
-  if (candidate.status === 'EDITING') return <form className="capture-review" onSubmit={e=>{e.preventDefault();setError(onApplyEdit(draft)??'');}}><h3>予定の内容を直す</h3><label>予定名<input ref={titleRef} required value={draft.title} onChange={e=>setDraft({...draft,title:e.target.value})}/></label><label>メモ<textarea value={draft.note} onChange={e=>setDraft({...draft,note:e.target.value})}/></label><fieldset><legend>予定の種類</legend><label><input type="radio" checked={draft.timeKind==='ALL_DAY'} onChange={()=>setDraft({...draft,timeKind:'ALL_DAY'})}/>終日</label><label><input type="radio" checked={draft.timeKind==='TIMED'} onChange={()=>setDraft({...draft,timeKind:'TIMED'})}/>時刻指定</label></fieldset>{draft.timeKind==='ALL_DAY'?<><label>開始日<input ref={startDateRef} type="date" value={draft.startDate} onChange={e=>setDraft({...draft,startDate:e.target.value})}/></label><label>終了日<input ref={endDateRef} type="date" value={draft.endDate} onChange={e=>setDraft({...draft,endDate:e.target.value})}/></label></>:<><label>開始日時<input ref={startsAtRef} type="datetime-local" value={draft.startsAt} onChange={e=>setDraft({...draft,startsAt:e.target.value})}/></label><label>終了日時<input ref={endsAtRef} type="datetime-local" value={draft.endsAt} onChange={e=>setDraft({...draft,endsAt:e.target.value})}/></label><label>タイムゾーン<select ref={timeZoneRef} value={draft.timeZone} onChange={e=>setDraft({...draft,timeZone:e.target.value})}>{availableTimeZones(draft.timeZone).map(z=><option key={z}>{z}</option>)}</select></label></>}{error&&<p role="alert">{error}</p>}<button type="submit">修正内容を適用</button></form>;
+  if (candidate.status === 'EDITING') {
+    const formattedStart = japaneseLocalDateTime(draft.startsAt);
+    const formattedEnd = japaneseLocalDateTime(draft.endsAt);
+    return (
+      <form
+        className="capture-review calendar-capture-edit"
+        onSubmit={(event) => {
+          event.preventDefault();
+          setError(onApplyEdit(draft) ?? '');
+        }}
+      >
+        <h3>予定の内容を直す</h3>
+        <section className="calendar-capture-edit-group" aria-labelledby="calendar-edit-basic">
+          <h4 id="calendar-edit-basic">予定の基本情報</h4>
+          <label className="calendar-capture-edit-field">
+            <span>予定名</span>
+            <input ref={titleRef} required value={draft.title} onChange={(event) => setDraft({ ...draft, title: event.target.value })} />
+          </label>
+          <label className="calendar-capture-edit-field">
+            <span>メモ</span>
+            <textarea value={draft.note} onChange={(event) => setDraft({ ...draft, note: event.target.value })} />
+          </label>
+        </section>
+
+        <fieldset className="calendar-capture-edit-group calendar-capture-edit-kind">
+          <legend>予定の種類</legend>
+          <div className="calendar-capture-edit-radio-options">
+            <label>
+              <input type="radio" name="calendar-time-kind" checked={draft.timeKind === 'ALL_DAY'} onChange={() => setDraft({ ...draft, timeKind: 'ALL_DAY' })} />
+              終日
+            </label>
+            <label>
+              <input type="radio" name="calendar-time-kind" checked={draft.timeKind === 'TIMED'} onChange={() => setDraft({ ...draft, timeKind: 'TIMED' })} />
+              時刻指定
+            </label>
+          </div>
+        </fieldset>
+
+        <section className="calendar-capture-edit-group" aria-labelledby="calendar-edit-date-time">
+          <h4 id="calendar-edit-date-time">日時</h4>
+          {draft.timeKind === 'ALL_DAY' ? (
+            <>
+              <label className="calendar-capture-edit-field">
+                <span>開始日</span>
+                <input ref={startDateRef} type="date" value={draft.startDate} onChange={(event) => setDraft({ ...draft, startDate: event.target.value })} />
+              </label>
+              <label className="calendar-capture-edit-field">
+                <span>終了日</span>
+                <input ref={endDateRef} type="date" value={draft.endDate} onChange={(event) => setDraft({ ...draft, endDate: event.target.value })} />
+              </label>
+            </>
+          ) : (
+            <>
+              <label className="calendar-capture-edit-field">
+                <span>開始日時</span>
+                <input
+                  ref={startsAtRef}
+                  aria-label="開始日時"
+                  aria-describedby={formattedStart ? 'calendar-edit-start-help' : undefined}
+                  type="datetime-local"
+                  value={draft.startsAt}
+                  onChange={(event) => setDraft({ ...draft, startsAt: event.target.value })}
+                />
+                {formattedStart && <small id="calendar-edit-start-help" className="calendar-capture-edit-date-help">入力中: {formattedStart}</small>}
+              </label>
+              <label className="calendar-capture-edit-field">
+                <span>終了日時</span>
+                <input
+                  ref={endsAtRef}
+                  aria-label="終了日時"
+                  aria-describedby={formattedEnd ? 'calendar-edit-end-help' : undefined}
+                  type="datetime-local"
+                  value={draft.endsAt}
+                  onChange={(event) => setDraft({ ...draft, endsAt: event.target.value })}
+                />
+                {formattedEnd && <small id="calendar-edit-end-help" className="calendar-capture-edit-date-help">入力中: {formattedEnd}</small>}
+              </label>
+            </>
+          )}
+        </section>
+
+        {draft.timeKind === 'TIMED' && (
+          <section className="calendar-capture-edit-group" aria-labelledby="calendar-edit-time-zone">
+            <h4 id="calendar-edit-time-zone">タイムゾーン設定</h4>
+            <label className="calendar-capture-edit-field">
+              <span>タイムゾーン</span>
+              <select ref={timeZoneRef} value={draft.timeZone} onChange={(event) => setDraft({ ...draft, timeZone: event.target.value })}>
+                {availableTimeZones(draft.timeZone).map((zone) => <option key={zone}>{zone}</option>)}
+              </select>
+            </label>
+          </section>
+        )}
+        {error && <p role="alert" className="calendar-capture-edit-error">{error}</p>}
+        <div className="calendar-capture-edit-actions" aria-label="操作">
+          <button type="submit">修正内容を適用</button>
+        </div>
+      </form>
+    );
+  }
   const dateTime = calendarCandidateDateTime(candidate.draft);
   const add = candidate.status === 'PROPOSED' ? onConfirmAndCommit : onCommit;
   return <section ref={reviewRef} tabIndex={-1} className="capture-review calendar-candidate-review" aria-label="カレンダー保存候補">

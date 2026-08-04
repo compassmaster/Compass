@@ -32,7 +32,40 @@ describe('Calendar Conversation Capture DOM integration', () => {
   });
   it('does not restore flow or Candidate on reload',()=>{ const first=render(<Harness/>); expect(screen.getByText('予定名は何ですか？')).toBeTruthy(); first.unmount(); render(<Harness/>); expect(screen.getByText('予定名は何ですか？')).toBeTruthy(); expect(screen.queryByText('Calendar専用Candidate')).toBeNull(); });
   it('allows changing ALL_DAY to TIMED while editing', async () => {
-    const user=userEvent.setup(); render(<Harness/>); await user.type(screen.getByRole('textbox'),'会議'); for(let i=0;i<2;i++) await user.click(screen.getByRole('button',{name:'次へ'})); await user.selectOptions(screen.getByRole('combobox'),'ALL_DAY'); for(let i=0;i<3;i++) await user.click(screen.getByRole('button',{name:'次へ'})); await user.click(screen.getByRole('button',{name:'内容を直す'})); expect(document.activeElement).toBe(screen.getByRole('textbox',{name:'予定名'})); await user.clear(screen.getByLabelText('終了日')); await user.click(screen.getByRole('button',{name:'修正内容を適用'})); expect(document.activeElement).toBe(screen.getByLabelText('終了日')); await user.click(screen.getByRole('radio',{name:'時刻指定'})); expect(screen.getByLabelText('タイムゾーン')).toBeTruthy();
+    const user=userEvent.setup(); render(<Harness/>); await user.type(screen.getByRole('textbox'),'会議'); for(let i=0;i<2;i++) await user.click(screen.getByRole('button',{name:'次へ'})); await user.selectOptions(screen.getByRole('combobox'),'ALL_DAY'); for(let i=0;i<3;i++) await user.click(screen.getByRole('button',{name:'次へ'})); await user.click(screen.getByRole('button',{name:'内容を直す'})); expect(document.activeElement).toBe(screen.getByRole('textbox',{name:'予定名'})); await user.clear(screen.getByLabelText('終了日')); await user.click(screen.getByRole('button',{name:'修正内容を適用'})); expect(document.activeElement).toBe(screen.getByLabelText('終了日')); await user.click(screen.getByRole('radio',{name:'時刻指定'})); expect(screen.getByLabelText('開始日時')).toBeTruthy(); expect(screen.getByLabelText('終了日時')).toBeTruthy(); expect(screen.getByLabelText('タイムゾーン')).toBeTruthy(); await user.click(screen.getByRole('radio',{name:'終日'})); expect(screen.getByLabelText('開始日')).toBeTruthy();
+  });
+  it('uses a naturally ordered vertical edit form and applies changes without saving', async () => {
+    const user=userEvent.setup(), save=vi.fn(); render(<Harness save={save}/>);
+    await user.type(screen.getByRole('textbox'),'会議');
+    for(let i=0;i<2;i++) await user.click(screen.getByRole('button',{name:'次へ'}));
+    await user.selectOptions(screen.getByRole('combobox'),'ALL_DAY');
+    for(let i=0;i<3;i++) await user.click(screen.getByRole('button',{name:'次へ'}));
+    await user.click(screen.getByRole('button',{name:'内容を直す'}));
+
+    const form=screen.getByRole('heading',{name:'予定の内容を直す'}).closest('form')!;
+    expect(form.classList.contains('calendar-capture-edit')).toBe(true);
+    const title=screen.getByRole('textbox',{name:'予定名'}), note=screen.getByRole('textbox',{name:'メモ'});
+    expect(document.activeElement).toBe(title);
+    await user.tab(); expect(document.activeElement).toBe(note);
+    await user.tab(); expect(document.activeElement).toBe(screen.getByRole('radio',{name:'終日'}));
+    await user.tab(); expect(document.activeElement).toBe(screen.getByLabelText('開始日'));
+    await user.tab(); expect(document.activeElement).toBe(screen.getByLabelText('終了日'));
+    await user.tab(); expect(document.activeElement).toBe(screen.getByRole('button',{name:'修正内容を適用'}));
+
+    await user.click(screen.getByRole('button',{name:'修正内容を適用'}));
+    expect(save).not.toHaveBeenCalled();
+    expect(screen.getByRole('heading',{name:'予定をカレンダーに追加しますか？'})).toBeTruthy();
+    expect(screen.getByText('まだカレンダーには追加されていません。')).toBeTruthy();
+  });
+  it('shows valid timed edit values in Japanese and omits misleading help for empty values', async () => {
+    const user=userEvent.setup();
+    const draft={...initialCalendarCaptureDraft('2026-08-05','Asia/Tokyo'),title:'面談',timeKind:'TIMED' as const,startsAt:'2026-08-05T14:00',endsAt:'2026-08-05T15:30'};
+    const capture:CalendarCaptureState={generation:1,flow:null,rejectedFingerprints:[],candidate:{id:'timed-edit',fingerprint:'fp',sourceExcerpt:'面談',capturedAt:'2026-08-03T00:00:00Z',draft,status:'EDITING',attempt:0}};
+    render(<CalendarCaptureCard capture={capture} onAnswer={()=>undefined} onConfirmAndCommit={()=>undefined} onBeginEdit={()=>undefined} onApplyEdit={()=>undefined} onReject={()=>undefined} onCancel={()=>undefined} onCommit={()=>undefined} onNavigate={()=>undefined} onDismissReceipt={()=>undefined}/>);
+    expect(screen.getByText('入力中: 2026年8月5日(水) 14:00')).toBeTruthy();
+    expect(screen.getByText('入力中: 2026年8月5日(水) 15:30')).toBeTruthy();
+    await user.clear(screen.getByLabelText('開始日時'));
+    expect(screen.queryByText(/^入力中:.*14:00$/)).toBeNull();
   });
   it('focuses retry and hides edit for FAILED Candidate',async()=>{ const draft={...initialCalendarCaptureDraft('2026-08-03','Asia/Tokyo'),title:'失敗予定',timeKind:'ALL_DAY' as const}; const capture:CalendarCaptureState={generation:1,flow:null,rejectedFingerprints:[],candidate:{id:'failed',fingerprint:'fp',sourceExcerpt:'予定を追加したい',capturedAt:'2026-08-03T00:00:00Z',draft,status:'FAILED',attempt:1,failure:'failed'}}; render(<CalendarCaptureCard capture={capture} onAnswer={()=>undefined} onConfirmAndCommit={()=>undefined} onBeginEdit={()=>undefined} onApplyEdit={()=>undefined} onReject={()=>undefined} onCancel={()=>undefined} onCommit={()=>undefined} onNavigate={()=>undefined} onDismissReceipt={()=>undefined}/>); await waitFor(()=>expect(document.activeElement).toBe(screen.getByRole('button',{name:'もう一度追加する'}))); expect(screen.queryByRole('button',{name:'内容を直す'})).toBeNull(); });
 });
