@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { claimConversationAction, createConversationSession, createDailyLogNavigationTarget, dismissCommittedReceiptForRecordChange, presentCaptureCandidate, rejectActiveCaptureCandidate, cancelActiveCaptureCandidate, transitionConversationSession } from '../src/features/conversation/session/conversationSession.ts';
 import { createCaptureCandidate } from '../src/features/conversation/session/captureCandidateLifecycle.ts';
 import type { DateString, EntryId } from '../src/features/daily-log/types/log.ts';
+import { rejectCalendarCandidate } from '../src/features/conversation/calendar/calendarCapture.ts';
 
 const initial = createConversationSession();
 assert.equal(initial.messages.length, 1);
@@ -38,6 +39,11 @@ const invalidCalendarTime = transitionConversationSession(initial, { type: 'SUBM
 assert.equal(invalidCalendarTime.calendarCapture.flow, null);
 assert.equal(invalidCalendarTime.calendarCapture.candidate, null);
 assert.match(invalidCalendarTime.messages.at(-1)?.text ?? '', /開始できませんでした/);
+const rejectedCalendar = { ...extractedCalendar, calendarCapture: rejectCalendarCandidate(extractedCalendar.calendarCapture) };
+const suppressedCalendar = transitionConversationSession(rejectedCalendar, { type: 'SUBMIT_TEXT', text: '明日の14時から15時まで歯医者の予定を入れたい', occurredAt: '2026-08-03T15:32:00.000Z' });
+assert.equal(suppressedCalendar.calendarCapture.candidate, null);
+assert.equal(suppressedCalendar.calendarCapture.flow, null);
+assert.match(suppressedCalendar.messages.at(-1)?.text ?? '', /この会話で以前「追加しない」と選んだため再表示しませんでした/);
 const actionable = transitionConversationSession(initial, { type: 'SUBMIT_TEXT', text: '睡眠を記録したい', occurredAt: '2026-08-02T09:00:00.000Z' });
 const actionMessage = actionable.messages.at(-1)!;
 assert.equal(actionMessage.action?.intent, 'RECORD_SLEEP');

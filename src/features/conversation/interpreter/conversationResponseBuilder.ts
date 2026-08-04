@@ -8,6 +8,7 @@ export const buildDailyLogCaptureBlockedResponse = (): ConversationResponse => (
 export const buildInvalidConversationOccurredAtResponse = (): ConversationResponse => ({ text: '送信時刻を確認できなかったため、記録を開始できませんでした。もう一度送信してください。' });
 export const buildCalendarCaptureBlockedResponse = (): ConversationResponse => ({ text: '確認中の記録または予定があるため、予定追加を開始できませんでした。現在の入力を完了または取消してから、もう一度送信してください。' });
 export const buildCalendarCaptureStartFailedResponse = (): ConversationResponse => ({ text: '入力内容から予定追加を開始できませんでした。日時と予定名を確認して、もう一度送信してください。' });
+export const buildCalendarCaptureSuppressedResponse = (): ConversationResponse => ({ text: '同じ内容の予定は、この会話で以前「追加しない」と選んだため再表示しませんでした。別の内容の予定は追加できます。' });
 
 const ACTIONS: Record<Exclude<ConversationIntent, 'AMBIGUOUS_RECORD' | 'UNKNOWN'>, Omit<MessageAction, 'executed'>> = {
   RECORD_DAILY_LOG: { intent: 'RECORD_DAILY_LOG', label: '既存の記録画面を開く' },

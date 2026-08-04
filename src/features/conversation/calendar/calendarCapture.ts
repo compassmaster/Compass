@@ -14,14 +14,19 @@ export function startCalendarCapture(state: CalendarCaptureState, sourceExcerpt:
   if (state.flow || state.candidate) return state;
   return { ...state, generation: state.generation + 1, flow: { sourceExcerpt, capturedAt, step: 'TITLE', draft } };
 }
-export function startExtractedCalendarCapture(state: CalendarCaptureState, sourceExcerpt: string, capturedAt: string, draft: CalendarCaptureDraft, firstMissingStep: CalendarCaptureStep | null): CalendarCaptureState {
-  if (state.flow || state.candidate) return state;
+export type StartExtractedCalendarCaptureResult =
+  | { kind: 'STARTED_FLOW'; state: CalendarCaptureState }
+  | { kind: 'PROPOSED'; state: CalendarCaptureState }
+  | { kind: 'SUPPRESSED'; state: CalendarCaptureState }
+  | { kind: 'FAILED'; state: CalendarCaptureState };
+export function startExtractedCalendarCapture(state: CalendarCaptureState, sourceExcerpt: string, capturedAt: string, draft: CalendarCaptureDraft, firstMissingStep: CalendarCaptureStep | null): StartExtractedCalendarCaptureResult {
+  if (state.flow || state.candidate) return { kind: 'FAILED', state };
   const generation = state.generation + 1;
-  if (firstMissingStep) return { ...state, generation, flow: { sourceExcerpt, capturedAt, step: firstMissingStep, draft, skipKnown: true } };
-  if (!draft.title.trim() || !toTimeInput(draft)) return state;
+  if (firstMissingStep) return { kind: 'STARTED_FLOW', state: { ...state, generation, flow: { sourceExcerpt, capturedAt, step: firstMissingStep, draft, skipKnown: true } } };
+  if (!draft.title.trim() || !toTimeInput(draft)) return { kind: 'FAILED', state };
   const fingerprint = calendarCandidateFingerprint(draft);
-  if (state.rejectedFingerprints.includes(fingerprint)) return { ...state, generation };
-  return { ...state, generation, candidate: { id: `calendar-candidate-${generation}`, fingerprint, sourceExcerpt, capturedAt, draft, status: 'PROPOSED', attempt: 0 } };
+  if (state.rejectedFingerprints.includes(fingerprint)) return { kind: 'SUPPRESSED', state: { ...state, generation } };
+  return { kind: 'PROPOSED', state: { ...state, generation, candidate: { id: `calendar-candidate-${generation}`, fingerprint, sourceExcerpt, capturedAt, draft, status: 'PROPOSED', attempt: 0 } } };
 }
 export function answerCalendarCapture(state: CalendarCaptureState, draft: CalendarCaptureDraft): { state: CalendarCaptureState; error?: string; suppressed?: boolean } {
   const flow = state.flow; if (!flow) return { state, error: 'FLOW_NOT_ACTIVE' };

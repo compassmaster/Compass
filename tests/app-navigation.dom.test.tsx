@@ -70,4 +70,27 @@ describe('App conversation calendar capture', () => {
     expect(screen.queryByText('終日と時刻指定のどちらですか？')).toBeNull();
     expect((screen.getByLabelText('自由に書く') as HTMLTextAreaElement).disabled).toBe(false);
   });
+
+  it('explains duplicate suppression, unlocks the composer, and clears suppression on reset', async () => {
+    const user = userEvent.setup();
+    const text = '明日の14時から15時まで歯医者の予定を入れたい';
+    render(<App />);
+
+    const submit = async () => {
+      await user.type(screen.getByLabelText('自由に書く'), text);
+      await user.click(screen.getByRole('button', { name: '送信' }));
+    };
+    await submit();
+    expect(screen.getByRole('heading', { name: '予定をカレンダーに追加しますか？' })).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: '追加しない' }));
+
+    await submit();
+    expect(screen.queryByRole('heading', { name: '予定をカレンダーに追加しますか？' })).toBeNull();
+    expect(within(screen.getByRole('list', { name: 'メッセージ一覧' })).getByText(/この会話で以前「追加しない」と選んだため再表示しませんでした/)).toBeTruthy();
+    expect((screen.getByLabelText('自由に書く') as HTMLTextAreaElement).disabled).toBe(false);
+
+    await user.click(screen.getByRole('button', { name: '会話を最初から始める' }));
+    await submit();
+    expect(screen.getByRole('heading', { name: '予定をカレンダーに追加しますか？' })).toBeTruthy();
+  });
 });
