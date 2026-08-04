@@ -171,6 +171,10 @@ export function ConversationTab({
     return begun.commitRequest;
   };
 
+  const calendarCaptureInProgress = Boolean(session.calendarCapture.flow || (session.calendarCapture.candidate && session.calendarCapture.candidate.status !== 'COMMITTED'));
+  const dailyLogCaptureInProgress = Boolean(session.dailyLogCaptureFlow || (session.activeCaptureCandidate && session.activeCaptureCandidate.status !== 'COMMITTED'));
+  const captureInProgress = calendarCaptureInProgress || dailyLogCaptureInProgress;
+
   return (
     <section className="conversation" aria-labelledby="conversation-title">
       <header className="conversation-heading">
@@ -217,10 +221,10 @@ export function ConversationTab({
       </p>
       <form className="conversation-composer" onSubmit={handleSubmit}>
         <label htmlFor="conversation-input">自由に書く</label>
-        <textarea ref={inputRef} id="conversation-input" value={draft} disabled={Boolean(session.dailyLogCaptureFlow || session.calendarCapture.flow || (session.calendarCapture.candidate && session.calendarCapture.candidate.status !== 'COMMITTED'))} onChange={(event) => setDraft(event.target.value)} onKeyDown={handleKeyDown} placeholder={session.dailyLogCaptureFlow ? '現在の記録を完了または取消してください' : '今の気持ちや、考えたいことを書いてください'} rows={3} />
+        <textarea ref={inputRef} id="conversation-input" value={draft} disabled={captureInProgress} onChange={(event) => setDraft(event.target.value)} onKeyDown={handleKeyDown} placeholder={session.dailyLogCaptureFlow ? '現在の記録を完了または取消してください' : '今の気持ちや、考えたいことを書いてください'} rows={3} />
         <div className="conversation-composer-actions">
           <button type="button" className="conversation-reset" onClick={handleReset}>会話を最初から始める</button>
-          <button type="submit" disabled={draft.trim().length === 0 || Boolean(session.dailyLogCaptureFlow)} aria-disabled={draft.trim().length === 0 || Boolean(session.dailyLogCaptureFlow)}>{session.dailyLogCaptureFlow ? '記録を進行中' : draft.trim().length === 0 ? '送信（入力待ち）' : '送信'}</button>
+          <button type="submit" disabled={draft.trim().length === 0 || captureInProgress} aria-disabled={draft.trim().length === 0 || captureInProgress}>{captureInProgress ? '記録を進行中' : draft.trim().length === 0 ? '送信（入力待ち）' : '送信'}</button>
         </div>
       </form>
       <aside className="conversation-quick-actions" aria-labelledby="quick-actions-title">
