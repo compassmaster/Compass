@@ -6,18 +6,30 @@
 
 ## 実施環境
 
-2026-08-04に実ブラウザのResponsive Design Mode（zoom 100%）で360px、390px、768px、desktopを確認した。キーボードはTab / Shift+Tabで主要操作の到達順、focus表示、dialogからの復帰を確認した。600px以下では9個の上部タブが3列Gridになることを確認した。
+2026-08-04に実ブラウザのResponsive Design Mode（zoom 100%）で360px、390px、768px、desktopの**表示**を確認した。キーボードはTab / Shift+Tabによるfocus移動を確認した。600px以下では9個の上部タブが3列Gridになることを確認した。
 
 物理端末のsoft keyboardとscreen readerによる実読み上げは実施していない。DOM / ARIAや自動契約テストの結果を、これらの実機確認の代替とは扱わない。
 
+### 確認方法の区分
+
+本報告では確認根拠を次のように区分する。各機能節は実装状態と自動テストで確認した契約をまとめたものであり、そこに記載した全操作を2026-08-04に手動実行したという意味ではない。
+
+- **手動QA**: Issue #99に記録された実ブラウザでの表示確認、およびTab / Shift+Tabの確認。
+- **自動テスト**: `npm test`に含まれるDOM / domain / repository / backup / responsive契約テスト。
+- **コード・設計確認**: PR #119マージ後のコードとaccepted documentにより、永続化、Read Model、ML feature等の境界を確認。
+
 ## Calendar基本操作
+
+確認根拠: **実装状態 + 自動テスト**。手動QAの対象は後述のResponsive / keyboard節に限定して記載する。
 
 - 手入力でALL_DAY / TIMEDのCalendarEventRecordを作成できる。
 - Agendaで対象日の予定を参照し、編集、完了、予定へ戻す、取消、削除できる。
-- 複数日にまたがる予定、日付移動、日時表示、状態と入力元、削除確認とfocus復帰を確認した。
+- 複数日にまたがる予定、日付移動、日時表示、状態と入力元、削除確認とfocus復帰は自動テストで確認した。
 - 予定は専用Repository / Application Serviceを通り、DailyLogやUnderstandingへ代用保存されない。
 
 ## Conversation Calendar Capture
+
+確認根拠: **実装状態 + 自動テスト**。
 
 - 予定追加の入力から、予定名、絶対・相対日時、明示された補足を決定的に仮抽出できる。
 - 取得済みの内容はCandidateへ仮入力し、再質問しない。不足・曖昧な項目は一問ずつ確認する。
@@ -25,6 +37,8 @@
 - LLMによる自由会話理解ではなく、決定的な限定抽出である。
 
 ## Candidate確認・修正・却下・明示保存
+
+確認根拠: **実装状態 + 自動テスト**。
 
 - Candidateで保存先、予定名、日時、入力元、source excerpt、未保存状態を確認できる。
 - Candidateを修正して再確認でき、却下したCandidateは保存されない。
@@ -34,12 +48,16 @@
 
 ## 保存後 VIEW / EDIT / COMPLETE / CANCEL / DELETE
 
+確認根拠: **実装状態 + 自動テスト**。
+
 - 保存receiptから対象予定をVIEWできる。
 - EDITで予定名・日時等を訂正できる。
 - PLANNEDからCOMPLETE / CANCEL、COMPLETEDまたはCANCELLEDからPLANNEDへ戻せる。
 - DELETEは確認dialogを経て対象Recordだけを削除し、取消時はRecordを維持してfocusを戻す。
 
 ## Life Timeline
+
+確認根拠: **実装状態 + 自動テスト + コード・設計確認**。
 
 - Calendar Event、DailyLog、SleepRecord、Weather forecast / observed・historicalを、意味を混ぜず別`recordType`のまま表示できる。
 - Life Timelineは各Source of Truthをquery時に合成する読み取り専用・非永続Read Modelである。Timeline Recordや統合Repositoryを作らない。
@@ -48,11 +66,15 @@
 
 ## Backup境界
 
+確認根拠: **自動テスト + コード・設計確認**。
+
 - Calendar Eventはschema-versioned backupのexport / preview / restore対象である。title、note、Conversation由来sourceExcerptもCalendar Eventに従属して含まれる。
 - Conversation session、Candidate、commit token、却下状態、Life Timeline、ML projectionはlocalStorage・backup対象外である。
 - reload後はtransientなflow / Candidate / receiptを復元せず、保存済みCalendarEventRecordだけを復元する。
 
 ## ML-ready projection
+
+確認根拠: **自動テスト + コード・設計確認**。
 
 - `ML_READY_DATASET_V1`はLife Timelineのstrict Readerを入力とする読み取り専用・非永続projectionである。
 - `title`、`note`、`sourceExcerpt`等の本文、本文由来token / category / embeddingをML featureへ含めない。
@@ -61,19 +83,19 @@
 
 ## Responsive / keyboard
 
-| 確認対象 | 360px | 390px | 768px | desktop |
+この節だけが2026-08-04の**手動QA結果**である。「OK」は表示または記載されたkeyboard操作の確認結果であり、各幅でCalendarの全CRUDやConversationの全状態遷移を通し実行したことを意味しない。
+
+| 手動確認対象 | 360px | 390px | 768px | desktop |
 | --- | --- | --- | --- | --- |
-| Calendar入力 / Agenda / action / dialog | OK | OK | OK | OK |
-| Conversation flow / Candidate / receipt | OK | OK | OK | OK |
-| Life Timeline cards / 長文折り返し | OK | OK | OK | OK |
+| Calendar / Conversation / Life Timelineのレスポンシブ表示 | OK | OK | OK | OK |
 | 上部navigation | 9タブ・3列Grid | 9タブ・3列Grid | OK | OK |
-| Tab / Shift+Tab、focus表示・復帰 | OK | OK | OK | OK |
+| Tab / Shift+Tabによるfocus移動 | OK | OK | OK | OK |
 
 ## QA中に発見して修正したblocker #111、#118
 
-- #111: Conversationの予定入力から、取得済みの予定名・日時をCandidateへ引き継げず不要な再質問が生じるblockerを、決定的な仮抽出と不足項目だけの質問へ修正した。
-- #118: 600px以下の9タブnavigationが利用しづらいblockerを、PR #119で3列Gridへ修正した。
-- いずれも修正後のコードを対象に自動テストと上記4幅の実ブラウザ再確認を行い、Stage 3をblockしない状態になった。
+- #111: Conversationの予定入力から、取得済みの予定名・日時をCandidateへ引き継げず不要な再質問が生じるblockerを、決定的な仮抽出と不足項目だけの質問へ修正した。修正結果は自動テストで確認した。
+- #118: 600px以下の9タブnavigationが利用しづらいblockerを、PR #119で3列Gridへ修正した。修正結果は自動テストと360px / 390pxの実ブラウザ表示で確認した。
+- 確認方法を分けて記録した上で、いずれもStage 3をblockしない状態になった。
 
 ## 非blocking follow-up #115、#116
 
@@ -102,4 +124,4 @@
 
 ## 完了判定
 
-Stage 3のCalendar / Life Timelineに必要な機能実装、保存同意・backup・非永続Read Model・本文非流入の境界、自動テスト、および2026-08-04の対象ブラウザ幅とkeyboard手動QAは完了した。未実施の実機支援技術QAと#115 / #116のUX改善、#117の研究候補は明示されており、いずれもStage 3完了を妨げない。したがってStage 3を**完了**と判定する。
+Stage 3のCalendar / Life Timelineに必要な機能実装、保存同意・backup・非永続Read Model・本文非流入の境界はコード・設計確認と自動テストで確認した。これとは別に、2026-08-04の対象ブラウザ幅での表示とTab / Shift+Tabを手動確認した。未実施の実機支援技術QAと#115 / #116のUX改善、#117の研究候補は明示されており、いずれもStage 3完了を妨げない。したがってStage 3を**完了**と判定する。

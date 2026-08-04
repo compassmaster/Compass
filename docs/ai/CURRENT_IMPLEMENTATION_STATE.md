@@ -9,7 +9,7 @@ PR #119マージ後のコードがSource of Truthである。CalendarEventRecord
 
 Life TimelineはCalendar Event、DailyLog、SleepRecord、Weatherを別recordTypeで合成する読み取り専用・非永続Read Modelである。`ML_READY_DATASET_V1`も読み取り専用・非永続で、production MLの学習・推論ではない。`title`、`note`、`sourceExcerpt`等の本文をML featureへ入れない。Calendar Eventだけがこの機能群のbackup対象で、Conversation session / Candidate / commit token / Life Timeline / ML projectionはlocalStorage・backup対象外である。
 
-360px、390px、768px、desktopとTab / Shift+Tabは実ブラウザ確認済み。600px以下の上部navigationは9タブの3列Gridである。物理端末soft keyboardとscreen reader実読み上げは未実施。
+360px、390px、768px、desktopのレスポンシブ表示とTab / Shift+Tabによるfocus移動は実ブラウザ確認済みである。各幅で全機能操作を通し実行したという意味ではなく、機能・保存境界は自動テストとコード・設計確認による。600px以下の上部navigationは9タブの3列Gridである。物理端末soft keyboardとscreen reader実読み上げは未実施。
 
 未実装: LLM自由会話理解、Conversation履歴永続化、Google Calendar等との外部同期、通知・リマインダー、production ML学習・推論、ウェアラブル実連携、CalendarからFormal UserModelへの直接更新。#115 / #116は非blocking UX follow-up、#117はStage 3後の設計・研究候補である。詳細は `docs/qa/STAGE3_CALENDAR_LIFE_TIMELINE_QA_2026-08-04.md` を参照する。
 

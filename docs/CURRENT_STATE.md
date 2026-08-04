@@ -20,7 +20,7 @@ Calendar AgendaとLife Timelineは実装済みである。Life TimelineはCalend
 
 Calendar Eventはbackup対象である。一方、Conversation session、Candidate、commit token、Life Timeline、ML projectionはbackup・localStorage対象外である。
 
-2026-08-04に360px、390px、768px、desktopおよびTab / Shift+Tabを実ブラウザで確認した。600px以下の上部ナビゲーションは9タブの3列Gridである。物理端末のsoft keyboardとscreen readerによる実読み上げは未実施である。詳細は[Stage 3 Calendar / Life Timeline QA結果](qa/STAGE3_CALENDAR_LIFE_TIMELINE_QA_2026-08-04.md)を参照する。
+2026-08-04に360px、390px、768px、desktopでレスポンシブ表示を、Tab / Shift+Tabでfocus移動を実ブラウザ確認した。これは各幅で全機能操作を通し実行したという意味ではない。機能・保存境界は自動テストおよびコード・設計確認で確認した。600px以下の上部ナビゲーションは9タブの3列Gridである。物理端末のsoft keyboardとscreen readerによる実読み上げは未実施である。詳細は[Stage 3 Calendar / Life Timeline QA結果](qa/STAGE3_CALENDAR_LIFE_TIMELINE_QA_2026-08-04.md)を参照する。
 
 ### Stage 3完了後も未実装
 
