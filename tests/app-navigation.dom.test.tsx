@@ -42,3 +42,32 @@ describe('primary navigation', () => {
     }
   });
 });
+
+describe('App conversation calendar capture', () => {
+  it('propagates an extracted Candidate to ConversationTab without saving it', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.type(screen.getByLabelText('自由に書く'), '明日の14時から15時まで歯医者の予定を入れたい');
+    await user.click(screen.getByRole('button', { name: '送信' }));
+
+    expect(screen.getByRole('heading', { name: '予定をカレンダーに追加しますか？' })).toBeTruthy();
+    expect(screen.getByText('歯医者')).toBeTruthy();
+    expect(screen.getByText('14:00〜15:00')).toBeTruthy();
+    expect((screen.getByLabelText('自由に書く') as HTMLTextAreaElement).disabled).toBe(true);
+    expect((screen.getByRole('button', { name: '記録を進行中' }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('does not restore an unfinished calendar flow after a reload', async () => {
+    const user = userEvent.setup();
+    const first = render(<App />);
+    await user.type(screen.getByLabelText('自由に書く'), '8月10日に面接の予定を追加したい');
+    await user.click(screen.getByRole('button', { name: '送信' }));
+    expect(screen.getByText('終日と時刻指定のどちらですか？')).toBeTruthy();
+
+    first.unmount();
+    render(<App />);
+    expect(screen.queryByText('終日と時刻指定のどちらですか？')).toBeNull();
+    expect((screen.getByLabelText('自由に書く') as HTMLTextAreaElement).disabled).toBe(false);
+  });
+});

@@ -6,6 +6,8 @@ export type ConversationResponse = { text: string; action?: MessageAction };
 export const buildDailyLogFlowInProgressResponse = (): ConversationResponse => ({ text: '日々の状態の記録を進めています。現在の質問へ回答するか、「この記録をやめる」を選んでください。' });
 export const buildDailyLogCaptureBlockedResponse = (): ConversationResponse => ({ text: '確認中の記録があります。現在の記録を確認または取消してから、新しい記録を始めてください。' });
 export const buildInvalidConversationOccurredAtResponse = (): ConversationResponse => ({ text: '送信時刻を確認できなかったため、記録を開始できませんでした。もう一度送信してください。' });
+export const buildCalendarCaptureBlockedResponse = (): ConversationResponse => ({ text: '確認中の記録または予定があるため、予定追加を開始できませんでした。現在の入力を完了または取消してから、もう一度送信してください。' });
+export const buildCalendarCaptureStartFailedResponse = (): ConversationResponse => ({ text: '入力内容から予定追加を開始できませんでした。日時と予定名を確認して、もう一度送信してください。' });
 
 const ACTIONS: Record<Exclude<ConversationIntent, 'AMBIGUOUS_RECORD' | 'UNKNOWN'>, Omit<MessageAction, 'executed'>> = {
   RECORD_DAILY_LOG: { intent: 'RECORD_DAILY_LOG', label: '既存の記録画面を開く' },

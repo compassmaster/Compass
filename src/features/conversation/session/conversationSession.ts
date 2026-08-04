@@ -4,7 +4,7 @@ import type { DailyLogNavigationTarget } from '../../daily-log/types/navigation.
 import type { EntryId } from '../../daily-log/types/log.ts';
 import type { ActionableConversationIntent } from '../types/intent.ts';
 import { interpretConversationInput } from '../interpreter/conversationInterpreter.ts';
-import { buildConversationResponse, buildDailyLogCaptureBlockedResponse, buildDailyLogFlowInProgressResponse, buildInvalidConversationOccurredAtResponse } from '../interpreter/conversationResponseBuilder.ts';
+import { buildCalendarCaptureBlockedResponse, buildCalendarCaptureStartFailedResponse, buildConversationResponse, buildDailyLogCaptureBlockedResponse, buildDailyLogFlowInProgressResponse, buildInvalidConversationOccurredAtResponse } from '../interpreter/conversationResponseBuilder.ts';
 import type { CaptureCandidate, CaptureCommitOutcome, CaptureCommitRequest, DailyLogCapturePayload } from '../types/captureCandidate.ts';
 import { applyCaptureCandidateEdit, beginCaptureCandidateCommit, beginCaptureCandidateEdit, cancelCaptureCandidate, createCaptureCommitRequest, markCaptureCandidateCommitted, markCaptureCandidateFailed, markCaptureCandidateReady, rejectCaptureCandidate, retryCaptureCandidate, type CaptureCandidateValidationError } from './captureCandidateLifecycle.ts';
 import { answerDailyLogCaptureStep, cancelDailyLogCaptureFlow, completeDailyLogCaptureFlow, moveBackDailyLogCaptureFlow, startDailyLogCaptureFlow, type DailyLogCaptureAnswer, type DailyLogCaptureFlow } from './dailyLogCaptureFlow.ts';
@@ -42,9 +42,16 @@ export function transitionConversationSession(session: ConversationSession, even
     if (started.ok) dailyLogCaptureFlow = started.flow;
   }
   let calendarCapture = session.calendarCapture;
-  if (intent === 'RECORD_CALENDAR' && !dailyLogCaptureFlow && !session.activeCaptureCandidate && !calendarCapture.flow && !calendarCapture.candidate && validOccurredAt) {
-    const extracted = extractCalendarInput(text, event.occurredAt, Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC');
-    calendarCapture = startExtractedCalendarCapture(calendarCapture, text, event.occurredAt, extracted.draft, extracted.firstMissingStep);
+  if (intent === 'RECORD_CALENDAR') {
+    const captureBlocked = Boolean(dailyLogCaptureFlow || session.activeCaptureCandidate || calendarCapture.flow || calendarCapture.candidate);
+    if (captureBlocked) response = buildCalendarCaptureBlockedResponse();
+    else if (!validOccurredAt) response = buildInvalidConversationOccurredAtResponse();
+    else {
+      const extracted = extractCalendarInput(text, event.occurredAt, Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC');
+      const started = startExtractedCalendarCapture(calendarCapture, text, event.occurredAt, extracted.draft, extracted.firstMissingStep);
+      if (!started.flow && !started.candidate) response = buildCalendarCaptureStartFailedResponse();
+      else calendarCapture = started;
+    }
   }
   return {
     messages: [
