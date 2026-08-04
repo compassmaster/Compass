@@ -6,7 +6,7 @@
 
 ## 実施環境
 
-2026-08-04に実ブラウザのResponsive Design Mode（zoom 100%）で360px、390px、768px、desktopの**表示**を確認した。キーボードはTab / Shift+Tabによるfocus移動を確認した。600px以下では9個の上部タブが3列Gridになることを確認した。
+2026-08-04に実ブラウザのResponsive Design Mode（zoom 100%）で確認した。Calendarは360px、390px、768px、desktop、Conversation Calendar CaptureとLife Timelineはdesktopで表示を確認した。Tab / Shift+Tabによるfocus移動もdesktopで確認した。360px / 390pxでは9個の上部タブが3列Gridになることを確認した。
 
 物理端末のsoft keyboardとscreen readerによる実読み上げは実施していない。DOM / ARIAや自動契約テストの結果を、これらの実機確認の代替とは扱わない。
 
@@ -14,7 +14,7 @@
 
 本報告では確認根拠を次のように区分する。各機能節は実装状態と自動テストで確認した契約をまとめたものであり、そこに記載した全操作を2026-08-04に手動実行したという意味ではない。
 
-- **手動QA**: Issue #99に記録された実ブラウザでの表示確認、およびTab / Shift+Tabの確認。
+- **手動QA**: Issue #99に記録された幅別の実ブラウザ表示確認、およびdesktopでのTab / Shift+Tab確認。
 - **自動テスト**: `npm test`に含まれるDOM / domain / repository / backup / responsive契約テスト。
 - **コード・設計確認**: PR #119マージ後のコードとaccepted documentにより、永続化、Read Model、ML feature等の境界を確認。
 
@@ -83,17 +83,19 @@
 
 ## Responsive / keyboard
 
-この節だけが2026-08-04の**手動QA結果**である。「OK」は表示または記載されたkeyboard操作の確認結果であり、各幅でCalendarの全CRUDやConversationの全状態遷移を通し実行したことを意味しない。
+この節だけが2026-08-04の**手動QA結果**である。「OK」は表示または記載されたkeyboard操作の確認結果であり、各幅でCalendarの全CRUDやConversationの全状態遷移を通し実行したことを意味しない。「未実施」は自動テストの成否ではなく、その幅での手動確認を行っていないことを表す。
 
 | 手動確認対象 | 360px | 390px | 768px | desktop |
 | --- | --- | --- | --- | --- |
-| Calendar / Conversation / Life Timelineのレスポンシブ表示 | OK | OK | OK | OK |
-| 上部navigation | 9タブ・3列Grid | 9タブ・3列Grid | OK | OK |
-| Tab / Shift+Tabによるfocus移動 | OK | OK | OK | OK |
+| Calendarのレスポンシブ表示 | OK | OK | OK | OK |
+| Conversation Calendar Captureの表示 | 未実施 | 未実施 | 未実施 | OK |
+| Life Timelineの表示 | 未実施 | 未実施 | 未実施 | OK |
+| 上部navigationの9タブ・3列Grid | OK | OK | 対象外 | 対象外 |
+| Tab / Shift+Tabによるfocus移動 | 未実施 | 未実施 | 未実施 | OK |
 
 ## QA中に発見して修正したblocker #111、#118
 
-- #111: Conversationの予定入力から、取得済みの予定名・日時をCandidateへ引き継げず不要な再質問が生じるblockerを、決定的な仮抽出と不足項目だけの質問へ修正した。修正結果は自動テストで確認した。
+- #111: 詳細付き自然文の予定追加依頼が`UNKNOWN`となりCalendar flowが開始しなかった不具合を修正し、予定名・日時等を決定的に仮抽出してCalendar flowを開始できるようにした。修正結果は自動テストで確認した。
 - #118: 600px以下の9タブnavigationが利用しづらいblockerを、PR #119で3列Gridへ修正した。修正結果は自動テストと360px / 390pxの実ブラウザ表示で確認した。
 - 確認方法を分けて記録した上で、いずれもStage 3をblockしない状態になった。
 
@@ -124,4 +126,4 @@
 
 ## 完了判定
 
-Stage 3のCalendar / Life Timelineに必要な機能実装、保存同意・backup・非永続Read Model・本文非流入の境界はコード・設計確認と自動テストで確認した。これとは別に、2026-08-04の対象ブラウザ幅での表示とTab / Shift+Tabを手動確認した。未実施の実機支援技術QAと#115 / #116のUX改善、#117の研究候補は明示されており、いずれもStage 3完了を妨げない。したがってStage 3を**完了**と判定する。
+Stage 3のCalendar / Life Timelineに必要な機能実装、保存同意・backup・非永続Read Model・本文非流入の境界はコード・設計確認と自動テストで確認した。これとは別に、2026-08-04にCalendarは4幅、Conversation Calendar CaptureとLife Timelineはdesktopで表示を手動確認し、Tab / Shift+Tabもdesktopで確認した。未実施の実機支援技術QAと#115 / #116のUX改善、#117の研究候補は明示されており、いずれもStage 3完了を妨げない。したがってStage 3を**完了**と判定する。

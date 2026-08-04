@@ -3,13 +3,15 @@
 <!-- STAGE3_COMPLETION_2026_08_04 -->
 ## 2026-08-04 Stage 3 Calendar / Life Timeline 最終手動QA
 
-PR #119マージ後のコードを対象に、実ブラウザ（Responsive Design Mode、zoom 100%）でレスポンシブ表示とTab / Shift+Tabによるfocus移動を確認した。下に残るIssue別の「コード確認」「自動契約確認」「手動未実施」は各実装時点の履歴であり、この最終結果と区別する。この表のOKは表示・keyboard確認の結果であり、各幅で全機能操作を通し実行したという意味ではない。
+PR #119マージ後のコードを対象に、実ブラウザ（Responsive Design Mode、zoom 100%）で確認した。Calendarは4幅、Conversation Calendar CaptureとLife Timelineはdesktopで表示を確認し、Tab / Shift+Tabもdesktopで確認した。下に残るIssue別の「コード確認」「自動契約確認」「手動未実施」は各実装時点の履歴であり、この最終結果と区別する。この表のOKは表示・keyboard確認の結果であり、各幅で全機能操作を通し実行したという意味ではない。
 
 | 手動確認対象 | 360px | 390px | 768px | desktop |
 | --- | --- | --- | --- | --- |
-| Calendar / Conversation / Life Timelineのレスポンシブ表示 | OK | OK | OK | OK |
-| 上部navigation | 9タブ・3列Grid | 9タブ・3列Grid | OK | OK |
-| Tab / Shift+Tabによるfocus移動 | OK | OK | OK | OK |
+| Calendarのレスポンシブ表示 | OK | OK | OK | OK |
+| Conversation Calendar Captureの表示 | 未実施 | 未実施 | 未実施 | OK |
+| Life Timelineの表示 | 未実施 | 未実施 | 未実施 | OK |
+| 上部navigationの9タブ・3列Grid | OK | OK | 対象外 | 対象外 |
+| Tab / Shift+Tabによるfocus移動 | 未実施 | 未実施 | 未実施 | OK |
 
 物理端末のsoft keyboardとscreen readerによる実読み上げは未実施である。#115と#116はStage 3を妨げない非blocking UX follow-upとして残す。詳細な操作・保存・backup・ML境界と未実施項目は[Stage 3 QA結果](STAGE3_CALENDAR_LIFE_TIMELINE_QA_2026-08-04.md)を参照する。
 
