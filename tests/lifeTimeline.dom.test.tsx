@@ -74,6 +74,7 @@ describe('LifeTimeline strict read/query contract', () => {
     const original = structuredClone(source), result = new LifeTimelineQueryService({ calendar: ok([source, event('all-day')]), dailyLog: ok([daily]), sleep: ok([]), forecast: ok([]), observation: ok([]) }).query({ fromDate: '2026-11-01', toDate: '2026-11-02', timeZone: 'UTC' });
     expect(result.ok).toBe(true); if (!result.ok) return; expect(source).toEqual(original);
     expect(JSON.stringify(result.items)).not.toContain('conversationProvenance'); expect(JSON.stringify(result.items)).not.toContain('sourceExcerpt'); expect(result.items.every((item) => !('record' in item))).toBe(true);
+    expect(JSON.stringify(result.items)).not.toContain('forecastValues'); expect(JSON.stringify(result.items)).not.toContain('observedValues'); expect(JSON.stringify(result.items)).not.toContain('requestId');
     expect(result.items.filter((item) => item.sourceRecordId === 'timed').map((item) => item.sortKey)).toEqual(['2026-11-01T23:00:00', '2026-11-02T00:00:00']);
     expect(result.items.filter((item) => item.displayDate === '2026-11-01').map((item) => item.sortBucket)).toEqual(['ALL_DAY', 'TIMED_OR_HOURLY', 'DAY_LEVEL']);
     const projectedDaily = result.items.find((item) => item.recordType === 'DAILY_LOG'); if (projectedDaily?.recordType === 'DAILY_LOG') projectedDaily.projection.events[0] = 'mutated'; expect(daily.events[0]).toBe('walk');
@@ -113,15 +114,27 @@ describe('LifeTimeline strict read/query contract', () => {
 });
 
 describe('LifeTimeline DOM', () => {
-  it('renders every record type, Calendar statuses, forecast/observed distinction and missing reasons', () => {
-    render(<LifeTimelineSection date="2026-11-01" service={query()} />); const timeline = screen.getByRole('region', { name: /Life Timeline/ });
-    for (const label of ['予定・出来事', '本人の日次記録', '本人の睡眠記録', '天気予報', '観測・履歴天気']) expect(within(timeline).getAllByText(`種類: ${label}`).length).toBeGreaterThan(0);
-    for (const status of ['予定', '完了', '取消']) expect(within(timeline).getByText(new RegExp(`状態: ${status}`))).toBeTruthy();
-    expect(within(timeline).getByText(/保存済み予報.*LOCATION_NOT_CONFIGURED/)).toBeTruthy(); expect(within(timeline).getByText(/観測天気.*PROVIDER_VALUE_MISSING/)).toBeTruthy();
+  it('renders readable record types, statuses, notes, events, duration and localized weather states', () => {
+    render(<LifeTimelineSection date="2026-11-01" service={query()} />); const timeline = screen.getByRole('region', { name: /この日の記録/ });
+    for (const label of ['予定・出来事', '今日の記録', '睡眠の記録', '天気予報', '観測された天気']) expect(within(timeline).getAllByText(label).length).toBeGreaterThan(0);
+    for (const status of ['予定', '完了', '取消']) expect(within(timeline).getByText(status)).toBeTruthy();
+    for (const text of ['8時間', '手入力', 'walk', '利用不可', '一部欠損', '場所が設定されていません', '提供元で一部の値を取得できませんでした']) expect(within(timeline).getByText(text)).toBeTruthy();
+    expect(timeline.textContent).not.toContain('本人の日次記録'); expect(timeline.textContent).not.toContain('LOCATION_NOT_CONFIGURED'); expect(timeline.textContent).not.toContain('PROVIDER_VALUE_MISSING');
+  });
+  it('keeps duplicate-period forecasts, marks only the newest fetch, and reveals IDs only through each details control', async () => {
+    const older = { ...forecast, id: 'forecast-older', source: { ...forecast.source, fetchedAt: '2026-11-01T01:00:00Z' }, createdAt: '2026-11-01T01:01:00Z' } as WeatherForecastSnapshot;
+    const newer = { ...forecast, id: 'forecast-newer', source: { ...forecast.source, fetchedAt: '2026-11-01T09:00:00Z' }, createdAt: '2026-11-01T09:01:00Z' } as WeatherForecastSnapshot;
+    const service = new LifeTimelineQueryService({ calendar: ok([]), dailyLog: ok([]), sleep: ok([]), forecast: ok([older, newer]), observation: ok([]) });
+    const result = service.query({ fromDate: '2026-11-01', toDate: '2026-11-01', timeZone: 'UTC' }); expect(result.ok).toBe(true); if (!result.ok) return;
+    const projected = result.items.filter((item) => item.recordType === 'WEATHER_FORECAST'); expect(projected).toHaveLength(2);
+    expect(projected.find((item) => item.sourceRecordId === 'forecast-older')?.projection).toMatchObject({ period: { localDate: '2026-11-01', timezone: 'UTC', granularity: 'DAILY' }, source: { provider: 'test', fetchedAt: '2026-11-01T01:00:00Z' }, createdAt: '2026-11-01T01:01:00Z', sourceType: 'FORECAST' });
+    render(<LifeTimelineSection date="2026-11-01" service={service} />); const cards = screen.getAllByRole('article'); expect(cards).toHaveLength(2); expect(screen.getAllByText('最新取得')).toHaveLength(1);
+    expect(screen.getByText('2026/11/1 01:00')).toBeTruthy(); expect(screen.getByText('2026/11/1 09:00')).toBeTruthy();
+    for (const id of ['forecast-older', 'forecast-newer']) { const card = cards.find((candidate) => candidate.textContent?.includes(id))!; const details = card.querySelector('details'); expect(details?.open).toBe(false); await userEvent.click(within(card).getByText('技術情報')); expect(details?.open).toBe(true); expect(details?.textContent).toContain(id); }
   });
   it('distinguishes no records and failures, and a Timeline failure does not remove Calendar Agenda', () => {
     const empty = new LifeTimelineQueryService({ calendar: ok([]), dailyLog: ok([]), sleep: ok([]), forecast: ok([]), observation: ok([]) }); const view = render(<LifeTimelineSection date="2026-11-01" service={empty} />); expect(screen.getByText('この日の記録はありません。')).toBeTruthy(); view.unmount();
-    render(<CalendarTab timelineService={query({ daily: failed() })} />); expect(screen.getByRole('heading', { name: /のAgenda/ })).toBeTruthy(); expect(screen.getByText(/一部を読み込めませんでした/)).toBeTruthy(); expect(screen.queryByText('この日の記録はありません。')).toBeNull();
+    render(<CalendarTab timelineService={query({ daily: failed() })} />); expect(screen.getByRole('heading', { name: /のAgenda/ })).toBeTruthy(); expect(screen.getByText(/今日の記録を読み込めませんでした/)).toBeTruthy(); expect(screen.queryByText('この日の記録はありません。')).toBeNull();
   });
   it('requeries the selected date after previous, next and date input without taking navigation focus', async () => {
     const service = query(), spy = vi.spyOn(service, 'query'), user = userEvent.setup(); render(<CalendarTab timelineService={service} />); const previous = screen.getByRole('button', { name: '前の日' }), next = screen.getByRole('button', { name: '次の日' }), input = screen.getByLabelText('表示する日');
