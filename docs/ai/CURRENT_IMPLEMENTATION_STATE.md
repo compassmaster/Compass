@@ -1,5 +1,23 @@
 # Compass Agent Instructions
 
+<!-- STAGE3_COMPLETION_2026_08_04 -->
+## Current implementation — Stage 3 completed（Issue #120）
+
+**Version: v0.1.0-alpha / Conversation-First Roadmap Stage 3: Calendar / Life Timeline completed**
+
+PR #119マージ後のコードがSource of Truthである。CalendarEventRecordの手入力・Conversation Capture作成、Agendaでの参照 / 編集 / 完了 / 予定へ戻す / 取消 / 削除、Calendar Agenda、Life Timelineまで実装済みで、2026-08-04の実ブラウザ手動QAも完了した。Conversationの予定名・日時抽出は決定的な仮抽出であり、取得値をCandidateへ仮入力し、不足・曖昧項目だけを一問ずつ確認する。Candidate確認後に本人が「カレンダーに追加」を押すまで保存せず、自動抽出後の即保存を禁止する。
+
+Life TimelineはCalendar Event、DailyLog、SleepRecord、Weatherを別recordTypeで合成する読み取り専用・非永続Read Modelである。`ML_READY_DATASET_V1`も読み取り専用・非永続で、production MLの学習・推論ではない。`title`、`note`、`sourceExcerpt`等の本文をML featureへ入れない。Calendar Eventだけがこの機能群のbackup対象で、Conversation session / Candidate / commit token / Life Timeline / ML projectionはlocalStorage・backup対象外である。
+
+360px、390px、768px、desktopとTab / Shift+Tabは実ブラウザ確認済み。600px以下の上部navigationは9タブの3列Gridである。物理端末soft keyboardとscreen reader実読み上げは未実施。
+
+未実装: LLM自由会話理解、Conversation履歴永続化、Google Calendar等との外部同期、通知・リマインダー、production ML学習・推論、ウェアラブル実連携、CalendarからFormal UserModelへの直接更新。#115 / #116は非blocking UX follow-up、#117はStage 3後の設計・研究候補である。詳細は `docs/qa/STAGE3_CALENDAR_LIFE_TIMELINE_QA_2026-08-04.md` を参照する。
+
+## 過去の実装履歴
+
+以下の日付別記録の「未実装」はその時点の履歴であり、このCurrent implementation節を上書きしない。
+
+
 ## 2026-08-03 CalendarEventRecord repository / backup（Issue #93）
 
 `compass_calendar_event_records_v1`のschema-versioned RepositoryとCalendar backup resourceを実装済み。破損・不正Record・重複IDは除外せずstorage全体を拒否し、破損中のmutationは上書きしない。Repositoryは防御的copyとpure comparatorの決定的順序を返す。旧backupでCalendar resourceだけがない場合は空集合を使い、preview / restore共通validationと全体rollbackを維持する。transient Conversation / Candidate / reject state、Life Timeline、ML projectionは永続化していない。

@@ -1,5 +1,22 @@
 # レスポンシブ QA チェックリスト
 
+<!-- STAGE3_COMPLETION_2026_08_04 -->
+## 2026-08-04 Stage 3 Calendar / Life Timeline 最終手動QA
+
+PR #119マージ後のコードを対象に、実ブラウザ（Responsive Design Mode、zoom 100%）で確認した。下に残るIssue別の「コード確認」「自動契約確認」「手動未実施」は各実装時点の履歴であり、この最終結果と区別する。
+
+| 対象 | 360px | 390px | 768px | desktop |
+| --- | --- | --- | --- | --- |
+| Calendar入力 / Agenda / VIEW・EDIT・COMPLETE・REOPEN・CANCEL・DELETE | OK | OK | OK | OK |
+| Conversation Calendar Capture / Candidate / 明示保存 / receipt | OK | OK | OK | OK |
+| Life Timelineの全recordType / 長文 / source失敗表示 | OK | OK | OK | OK |
+| 上部navigation | 9タブ・3列Grid | 9タブ・3列Grid | OK | OK |
+| Tab / Shift+Tab、focus-visible、dialog取消後のfocus復帰 | OK | OK | OK | OK |
+
+物理端末のsoft keyboardとscreen readerによる実読み上げは未実施である。#115と#116はStage 3を妨げない非blocking UX follow-upとして残す。詳細な操作・保存・backup・ML境界と未実施項目は[Stage 3 QA結果](STAGE3_CALENDAR_LIFE_TIMELINE_QA_2026-08-04.md)を参照する。
+
+## 過去のIssue別QA履歴
+
 ## Issue #96 Life Timeline Read Model
 
 Life TimelineはCalendar内で次の4幅を確認する。自動契約は全幅の1列projection card、768pxの幅境界、360px / 390pxのshrink境界、長い元Record IDの折り返しを検証する。実ブラウザ確認前の項目をOKとはしない。

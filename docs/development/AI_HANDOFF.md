@@ -1,5 +1,24 @@
 # AI Handoff Document
 
+<!-- STAGE3_COMPLETION_2026_08_04 -->
+## Current handoff — Stage 3 completed（Issue #120）
+
+現在のVersionは **v0.1.0-alpha / Conversation-First Roadmap Stage 3: Calendar / Life Timeline completed**。PR #119マージ後のコードをSource of Truthとする。
+
+- CalendarEventRecordは手入力とConversation Captureから作成でき、AgendaでVIEW / EDIT / COMPLETE / REOPEN / CANCEL / DELETEできる。
+- Conversation入力から予定名・日時を決定的に仮抽出する。取得値はCandidateへ仮入力し、不足・曖昧項目だけを一問ずつ尋ねる。本人が確認後に「カレンダーに追加」を押した場合だけApplication Service経由で保存し、抽出直後には保存しない。
+- Calendar AgendaとLife Timelineは実装済み。Life TimelineはCalendar Event / DailyLog / SleepRecord / Weatherを別recordTypeのまま合成するread-only・non-persistent Read Modelで、Repositoryや統合Recordではない。
+- `ML_READY_DATASET_V1`はread-only・non-persistent projection。production MLの学習・推論は未実装で、title / note / sourceExcerpt等の本文はML featureへ含めない。
+- Calendar Eventはbackup対象。Conversation session / Candidate / commit token / Life Timeline / ML projectionはlocalStorage・backup対象外。
+- 2026-08-04に360px / 390px / 768px / desktopとTab / Shift+Tabを実ブラウザ確認済み。600px以下の上部navigationは9タブの3列Grid。物理端末soft keyboardとscreen reader実読み上げは未実施。
+- 未実装はLLM自由会話理解、Conversation履歴永続化、外部Calendar同期、通知・リマインダー、production ML、ウェアラブル実連携、CalendarからFormal UserModelへの直接更新。
+- #115と#116はStage 3非blocking UX改善、#117はStage 3後の設計・研究候補。QAの正式記録は `docs/qa/STAGE3_CALENDAR_LIFE_TIMELINE_QA_2026-08-04.md`。
+
+## 過去のhandoff履歴
+
+以下は各日時点の履歴であり、当時の「未実装」は上記の現在状態と区別して読む。
+
+
 ## 2026-08-04 Calendar Agenda日時表示（Issue #110）
 
 Calendar Agendaカードは保存済みのALL_DAY local dateまたはTIMED instant + IANA timezoneを変更せず、表示専用formatterで日本語の日付・曜日・時刻へ変換する。同日TIMEDは日付と時刻範囲、複数日TIMEDは両端の日時、ALL_DAYは「終日」と必要な日付範囲を表示する。生のIANA timezoneは主表示から外し、TIMEDカードの折りたたみ詳細に保持する。
