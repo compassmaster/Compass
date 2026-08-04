@@ -1,0 +1,44 @@
+import React from 'react';
+import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { describe, expect, it } from 'vitest';
+import App from '../src/app/App.tsx';
+
+const navigationLabels = [
+  '💬 会話',
+  '🏠 ホーム',
+  '📝 記録',
+  '📅 カレンダー',
+  '📊 ふりかえり',
+  '🔎 関係',
+  '☂️ 明日の見通し',
+  '🧭 Compass Map',
+  '💾 バックアップ',
+];
+
+describe('primary navigation', () => {
+  it('keeps every destination in DOM order and exposes the selected page', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    const navigation = screen.getByRole('navigation', { name: '主要画面' });
+    const buttons = within(navigation).getAllByRole('button');
+
+    expect(buttons.map((button) => button.textContent?.trim())).toEqual(navigationLabels);
+    expect(buttons[0].getAttribute('aria-current')).toBe('page');
+
+    await user.click(buttons[7]);
+    expect(buttons[7].getAttribute('aria-current')).toBe('page');
+    expect(buttons[0].hasAttribute('aria-current')).toBe(false);
+  });
+
+  it('preserves sequential keyboard navigation through every destination', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    const buttons = within(screen.getByRole('navigation', { name: '主要画面' })).getAllByRole('button');
+
+    for (const button of buttons) {
+      await user.tab();
+      expect(document.activeElement).toBe(button);
+    }
+  });
+});

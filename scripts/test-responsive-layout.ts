@@ -14,10 +14,16 @@ for (const label of ['会話', 'ホーム', '記録', 'カレンダー', 'ふり
 assert.equal((app.match(/aria-current=/g) ?? []).length, 9, 'every tab exposes its current-page state');
 assert.match(app, /aria-label="主要画面"/);
 assert.match(appCss, /@media \(max-width: 600px\)/);
-assert.match(appCss, /\.app-nav\s*{[\s\S]*?flex-wrap:\s*nowrap/);
-assert.match(appCss, /overflow-x:\s*auto/);
+const narrowNavigation = appCss.match(/@media \(max-width: 600px\)\s*{([\s\S]*)$/)?.[1] ?? '';
+assert.match(narrowNavigation, /\.app-nav\s*{[\s\S]*?display:\s*grid/);
+assert.match(narrowNavigation, /grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\)/, '360px and 390px navigation uses three equal columns');
+assert.match(narrowNavigation, /\.app-nav\s*{[\s\S]*?overflow-x:\s*visible/, 'narrow navigation must not scroll horizontally');
+assert.match(narrowNavigation, /\.tab-button\s*{[\s\S]*?width:\s*100%/);
+assert.match(narrowNavigation, /\.tab-button\s*{[\s\S]*?white-space:\s*normal/, 'long labels remain fully visible by wrapping');
 assert.match(appCss, /\.tab-button\s*{[\s\S]*?min-height:\s*44px/);
 assert.match(appCss, /white-space:\s*nowrap/);
+assert.match(appCss, /\.active-tab\s*{[\s\S]*?background-color:[\s\S]*?font-weight:\s*bold/, 'selected tab remains visually distinct');
+assert.match(appCss, /\.tab-button:focus-visible\s*{[\s\S]*?outline:\s*3px/, 'keyboard focus remains visually distinct');
 assert.match(globalCss, /\*,\s*\n\*::before,\s*\n\*::after[\s\S]*?box-sizing:\s*border-box/);
 assert.match(globalCss, /color-scheme:\s*light/);
 assert.match(globalCss, /button,[\s\S]*?min-height:\s*44px/);
