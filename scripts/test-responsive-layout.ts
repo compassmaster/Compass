@@ -33,7 +33,10 @@ assert.match(calendarCss, /@media \(max-width: 600px\)/, 'Calendar needs a narro
 assert.match(calendarCss, /@media \(max-width: 400px\)/, 'Calendar needs 360px and 390px contracts');
 assert.match(calendarCss, /\.calendar-date-navigation[\s\S]*?grid-template-columns/, 'Calendar date navigation must reflow');
 assert.match(calendarCss, /\.life-timeline-items\s*{[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\)/, 'Life Timeline must stay one-column at desktop, 768px, 390px and 360px');
-assert.match(calendarCss, /\.life-timeline-item small\s*{[\s\S]*?overflow-wrap:\s*anywhere/, 'long source Record IDs must wrap');
+assert.match(calendarCss, /\.life-timeline-item-header\s*{[\s\S]*?flex-wrap:\s*wrap/, 'Life Timeline badges and metadata must reflow without overlap');
+assert.match(calendarCss, /\.life-timeline-record-id\s*{[\s\S]*?overflow-wrap:\s*anywhere/, 'only long technical Record IDs may break anywhere');
+assert.match(calendarCss, /\.life-timeline-technical summary\s*{[\s\S]*?min-height:\s*44px/, 'technical details need a sufficient touch target');
+assert.match(calendarCss, /\.life-timeline-technical summary:focus-visible\s*{[\s\S]*?outline:/, 'technical details retain visible keyboard focus');
 assert.match(calendarCss, /@media \(max-width: 768px\)[\s\S]*?\.life-timeline\s*{\s*max-width:\s*100%/, 'Life Timeline needs a 768px width boundary');
 assert.match(calendarCss, /@media \(max-width: 400px\)[\s\S]*?\.life-timeline-item\s*{\s*min-width:\s*0/, 'Life Timeline needs explicit 360px and 390px shrink behavior');
 

@@ -1,11 +1,25 @@
 import type { CalendarEventStatus } from '../../calendar/types/calendarEvent.ts';
-import type { WeatherDataAvailability, WeatherMissingReason, WeatherSourceType } from '../../external-context/weather/types/weather.ts';
+import type { WeatherDataAvailability, WeatherMissingReason, WeatherRecordGranularity, WeatherSourceType } from '../../external-context/weather/types/weather.ts';
 
 export type LifeTimelineRecordType = 'CALENDAR_EVENT' | 'DAILY_LOG' | 'SLEEP_RECORD' | 'WEATHER_FORECAST' | 'WEATHER_OBSERVATION';
 export type LifeTimelineSource = 'CALENDAR' | 'DAILY_LOG' | 'SLEEP' | 'WEATHER_FORECAST' | 'WEATHER_OBSERVATION';
 export type LifeTimelineDateBasis = 'EVENT_LOCAL_DATE' | 'DAILY_LOG_DATE' | 'WAKE_DATE' | 'WEATHER_PERIOD_DATE';
 export type LifeTimelineSortBucket = 'ALL_DAY' | 'TIMED_OR_HOURLY' | 'DAY_LEVEL';
 export type LifeTimelineSourceFailureCode = 'STORAGE_READ_FAILED' | 'MALFORMED_JSON' | 'INVALID_SCHEMA' | 'INVALID_RECORD';
+
+export interface LifeTimelineWeatherPeriodMetadata {
+  readonly localDate: string;
+  readonly timezone: string;
+  readonly granularity: WeatherRecordGranularity;
+  readonly startsAt?: string;
+  readonly endsAt?: string;
+}
+
+export interface LifeTimelineWeatherProjectionMetadata {
+  readonly period: LifeTimelineWeatherPeriodMetadata;
+  readonly source: { readonly fetchedAt: string; readonly provider: string };
+  readonly createdAt: string;
+}
 
 interface ItemBase {
   readonly stableItemKey: string;
@@ -24,8 +38,8 @@ export type LifeTimelineItem =
   | (ItemBase & { readonly recordType: 'CALENDAR_EVENT'; readonly source: 'CALENDAR'; readonly projection: { readonly title: string; readonly note?: string; readonly timeKind: 'ALL_DAY' | 'TIMED'; readonly status: CalendarEventStatus; readonly startsAt?: string; readonly endsAt?: string } })
   | (ItemBase & { readonly recordType: 'DAILY_LOG'; readonly source: 'DAILY_LOG'; readonly projection: { readonly mood: number; readonly fatigue: number; readonly note: string; readonly events: readonly string[] } })
   | (ItemBase & { readonly recordType: 'SLEEP_RECORD'; readonly source: 'SLEEP'; readonly projection: { readonly bedtime: string; readonly wakeTime: string; readonly durationMinutes: number; readonly source: 'MANUAL' | 'SMARTWATCH' } })
-  | (ItemBase & { readonly recordType: 'WEATHER_FORECAST'; readonly source: 'WEATHER_FORECAST'; readonly projection: { readonly sourceType: 'FORECAST'; readonly availability: WeatherDataAvailability; readonly missingReasons: readonly WeatherMissingReason[] } })
-  | (ItemBase & { readonly recordType: 'WEATHER_OBSERVATION'; readonly source: 'WEATHER_OBSERVATION'; readonly projection: { readonly sourceType: Extract<WeatherSourceType, 'OBSERVED' | 'HISTORICAL'>; readonly availability: WeatherDataAvailability; readonly missingReasons: readonly WeatherMissingReason[] } });
+  | (ItemBase & { readonly recordType: 'WEATHER_FORECAST'; readonly source: 'WEATHER_FORECAST'; readonly projection: LifeTimelineWeatherProjectionMetadata & { readonly sourceType: 'FORECAST'; readonly availability: WeatherDataAvailability; readonly missingReasons: readonly WeatherMissingReason[] } })
+  | (ItemBase & { readonly recordType: 'WEATHER_OBSERVATION'; readonly source: 'WEATHER_OBSERVATION'; readonly projection: LifeTimelineWeatherProjectionMetadata & { readonly sourceType: Extract<WeatherSourceType, 'OBSERVED' | 'HISTORICAL'>; readonly availability: WeatherDataAvailability; readonly missingReasons: readonly WeatherMissingReason[] } });
 
 export interface LifeTimelineSourceTrace {
   readonly source: LifeTimelineSource;
