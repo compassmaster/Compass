@@ -1,5 +1,47 @@
 import type { CalendarEventRecord } from '../types/calendarEvent.ts';
 
+export type CalendarEventDateTimeDisplay = {
+  primaryLines: string[];
+  timeZone?: string;
+};
+
+const japaneseDateFormatter = new Intl.DateTimeFormat('ja-JP', {
+  year: 'numeric', month: 'long', day: 'numeric', weekday: 'short', timeZone: 'UTC',
+});
+
+function japaneseLocalDate(localDate: string): string {
+  const [year, month, day] = localDate.split('-').map(Number);
+  return japaneseDateFormatter.format(new Date(Date.UTC(year, month - 1, day)))
+    .replace(/\(([^)]+)\)$/, '（$1）');
+}
+
+function localDateAndTime(instant: string, timeZone: string): { date: string; time: string } {
+  const local = instantToLocalDateTime(instant, timeZone);
+  return { date: japaneseLocalDate(local.slice(0, 10)), time: local.slice(11, 16) };
+}
+
+/** Builds presentation-only Japanese labels without changing the stored event. */
+export function formatCalendarEventDateTime(record: CalendarEventRecord): CalendarEventDateTimeDisplay {
+  if (record.timeKind === 'ALL_DAY') {
+    const startDate = japaneseLocalDate(record.startDate);
+    const endDate = japaneseLocalDate(record.endDate);
+    return {
+      primaryLines: record.startDate === record.endDate
+        ? [startDate, '終日']
+        : [startDate, '〜', endDate, '終日'],
+    };
+  }
+
+  const start = localDateAndTime(record.startsAt, record.timeZone);
+  const end = localDateAndTime(record.endsAt, record.timeZone);
+  return {
+    primaryLines: start.date === end.date
+      ? [start.date, `${start.time}〜${end.time}`]
+      : [`${start.date}${start.time}`, '〜', `${end.date}${end.time}`],
+    timeZone: record.timeZone,
+  };
+}
+
 export function localToday(now = new Date()): string {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 }

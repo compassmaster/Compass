@@ -3,7 +3,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CalendarTab } from '../src/features/calendar/components/CalendarTab.tsx';
-import { calendarEventOccursOnDate, localToday, moveLocalDate } from '../src/features/calendar/components/calendarDateTime.ts';
+import { calendarEventOccursOnDate, formatCalendarEventDateTime, localToday, moveLocalDate } from '../src/features/calendar/components/calendarDateTime.ts';
 import { CalendarEventApplicationService } from '../src/features/calendar/services/calendarEventApplicationService.ts';
 import { LocalStorageCalendarEventRepository } from '../src/features/calendar/services/localStorageCalendarEventRepository.ts';
 import type { CalendarEventId, CalendarEventRecord } from '../src/features/calendar/types/calendarEvent.ts';
@@ -77,5 +77,38 @@ describe('calendarEventOccursOnDate', () => {
     const allDay = { ...base, timeKind: 'ALL_DAY', startDate: '2026-08-03', endDate: '2026-08-05' } as CalendarEventRecord;
     const timed = { ...base, timeKind: 'TIMED', startsAt: '2026-08-03T23:00:00+09:00', endsAt: '2026-08-05T00:00:00+09:00', timeZone: 'Asia/Tokyo' } as CalendarEventRecord;
     expect(calendarEventOccursOnDate(allDay, '2026-08-04')).toBe(true); expect(calendarEventOccursOnDate(timed, '2026-08-04')).toBe(true); expect(calendarEventOccursOnDate(timed, '2026-08-05')).toBe(false);
+  });
+});
+
+describe('Calendar Agenda date/time presentation', () => {
+  const base = { id: 'display-id' as CalendarEventId, title: '表示確認', status: 'PLANNED', source: 'MANUAL', revision: 1, createdAt: '2026-08-01T00:00:00Z', updatedAt: '2026-08-01T00:00:00Z' } as const;
+
+  it('formats same-day and multi-day TIMED events in their saved timezone', () => {
+    const sameDay = { ...base, timeKind: 'TIMED', startsAt: '2026-08-04T10:00:00+09:00', endsAt: '2026-08-04T11:30:00+09:00', timeZone: 'Asia/Tokyo' } as CalendarEventRecord;
+    const multiDay = { ...sameDay, endsAt: '2026-08-05T11:30:00+09:00' } as CalendarEventRecord;
+    expect(formatCalendarEventDateTime(sameDay)).toEqual({ primaryLines: ['2026年8月4日（火）', '10:00〜11:30'], timeZone: 'Asia/Tokyo' });
+    expect(formatCalendarEventDateTime(multiDay)).toEqual({ primaryLines: ['2026年8月4日（火）10:00', '〜', '2026年8月5日（水）11:30'], timeZone: 'Asia/Tokyo' });
+  });
+
+  it('formats one-day and multi-day ALL_DAY events without repeating a one-day date', () => {
+    const oneDay = { ...base, timeKind: 'ALL_DAY', startDate: '2026-08-04', endDate: '2026-08-04' } as CalendarEventRecord;
+    const multiDay = { ...oneDay, endDate: '2026-08-05' } as CalendarEventRecord;
+    expect(formatCalendarEventDateTime(oneDay).primaryLines).toEqual(['2026年8月4日（火）', '終日']);
+    expect(formatCalendarEventDateTime(multiDay).primaryLines).toEqual(['2026年8月4日（火）', '〜', '2026年8月5日（水）', '終日']);
+  });
+
+  it('uses the event timezone across DST while leaving repository values unchanged', () => {
+    const record = { ...base, timeKind: 'TIMED', startsAt: '2026-03-08T01:30:00-05:00', endsAt: '2026-03-08T03:30:00-04:00', timeZone: 'America/New_York' } as CalendarEventRecord;
+    const storedBefore = structuredClone(record);
+    expect(formatCalendarEventDateTime(record).primaryLines).toEqual(['2026年3月8日（日）', '01:30〜03:30']);
+    expect(record).toEqual(storedBefore);
+  });
+
+  it('keeps ISO text and the raw IANA timezone out of the primary Agenda display', () => {
+    const record = { ...base, timeKind: 'TIMED', startsAt: '2026-08-04T10:00:00+09:00', endsAt: '2026-08-04T11:30:00+09:00', timeZone: 'Asia/Tokyo' } as CalendarEventRecord;
+    const display = formatCalendarEventDateTime(record);
+    expect(display.primaryLines.join('\n')).not.toContain('T');
+    expect(display.primaryLines.join('\n')).not.toContain('Asia/Tokyo');
+    expect(display.timeZone).toBe('Asia/Tokyo');
   });
 });

@@ -2,8 +2,12 @@
 status: Active
 dependsOn: []
 usedBy: []
-lastUpdated: "2026-08-03"
+lastUpdated: "2026-08-04"
 ---
+
+## 2026-08-04 Calendar Agenda日時表示（Issue #110）
+
+Calendar Agendaカードの日時を、保存形式を変更しない表示専用formatterによる日本語の日付・曜日・時刻へ変更した。同日・複数日TIMED、1日・複数日ALL_DAYを区別し、IANA timezoneは主表示ではなく折りたたみ詳細に表示する。
 
 ## 2026-08-03 Calendar intent structured extraction（Issue #111）
 
