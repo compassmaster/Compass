@@ -1,5 +1,9 @@
 # AI Handoff Document
 
+## 2026-08-04 Calendar Agenda日時表示（Issue #110）
+
+Calendar Agendaカードは保存済みのALL_DAY local dateまたはTIMED instant + IANA timezoneを変更せず、表示専用formatterで日本語の日付・曜日・時刻へ変換する。同日TIMEDは日付と時刻範囲、複数日TIMEDは両端の日時、ALL_DAYは「終日」と必要な日付範囲を表示する。生のIANA timezoneは主表示から外し、TIMEDカードの折りたたみ詳細に保持する。
+
 ## 2026-08-03 Calendar intent structured extraction（Issue #111）
 
 予定追加の明示的な依頼文から予定名、絶対・相対日付、開始・終了時刻、明示された補足を決定的に抽出し、in-memory Calendar Candidateへ仮入力する。相対日はConversationのoccurredAtを端末timezoneへ変換した日を基準に解決する。取得済み項目は質問せず、不足項目（例: 開始時刻だけなら終了時刻）だけを確認する。日付だけならALL_DAYへ推測せず予定種別を確認し、ALL_DAY選択時は抽出日を開始・終了日に、TIMED選択時は同じ日を時刻入力へ引き継ぐ。曖昧な時間帯は具体時刻へ補完しない。抽出完了後もPROPOSEDのままで、既存の確認カード、編集、拒否、Application Service経由commit、commit tokenによる二重保存防止境界を維持する。
