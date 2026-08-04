@@ -13,6 +13,14 @@ export const formatTime = (instant: string, timeZone: string): string => new Int
   timeZone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
 }).format(new Date(instant));
 
+const WALL_DATE_TIME = /^\d{4}-\d{2}-\d{2}T(\d{2}):(\d{2})(?::\d{2}(?:\.\d+)?)?$/;
+
+/** Wall datetimes retain their clock time; offset/Z datetimes are instants. */
+export const formatSleepTime = (dateTime: string, timeZone: string): string => {
+  const wallTime = WALL_DATE_TIME.exec(dateTime);
+  return wallTime === null ? formatTime(dateTime, timeZone) : `${wallTime[1]}:${wallTime[2]}`;
+};
+
 export const formatDuration = (minutes: number): string => {
   const hours = Math.floor(minutes / 60), remainder = minutes % 60;
   return `${hours > 0 ? `${hours}時間` : ''}${remainder > 0 ? `${remainder}分` : ''}` || '0分';

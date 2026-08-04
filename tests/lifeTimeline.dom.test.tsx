@@ -3,6 +3,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { LifeTimelineSection } from '../src/features/life-timeline/components/LifeTimelineSection.tsx';
+import { formatSleepTime } from '../src/features/life-timeline/components/lifeTimelinePresentation.ts';
 import { CalendarTab } from '../src/features/calendar/components/CalendarTab.tsx';
 import { LifeTimelineQueryService, compareLifeTimelineItems } from '../src/features/life-timeline/services/lifeTimelineQueryService.ts';
 import { CalendarTimelineSourceReader, DailyLogTimelineSourceReader, ForecastTimelineSourceReader, ObservationTimelineSourceReader, SleepTimelineSourceReader, sleepDateTimeToInstant, type LifeTimelineSourceReader } from '../src/features/life-timeline/services/lifeTimelineSourceReader.ts';
@@ -113,6 +114,19 @@ describe('LifeTimeline strict read/query contract', () => {
   it('uses a pure code-point comparator and stable keys', () => { const a = { displayDate: '2026-01-01', sortBucket: 'DAY_LEVEL', sortKey: '', recordType: 'DAILY_LOG', sourceRecordId: 'a' } as LifeTimelineItem, b = { ...a, sourceRecordId: 'B' } as LifeTimelineItem; const input = [a, b]; expect([...input].sort(compareLifeTimelineItems).map((item) => item.sourceRecordId)).toEqual(['B', 'a']); expect(input).toEqual([a, b]); });
 });
 
+describe('LifeTimeline presentation formatters', () => {
+  it('formats Sleep wall datetimes independently of runtime TZ and converts offset instants in the specified timezone', () => {
+    const original = process.env.TZ;
+    for (const runtimeTimeZone of ['UTC', 'Pacific/Honolulu']) {
+      process.env.TZ = runtimeTimeZone;
+      expect(formatSleepTime('2026-01-02T07:00', 'Asia/Tokyo')).toBe('07:00');
+      expect(formatSleepTime('2026-01-01T22:00:00Z', 'Asia/Tokyo')).toBe('07:00');
+      expect(formatSleepTime('2026-01-02T07:00:00+09:00', 'America/New_York')).toBe('17:00');
+    }
+    process.env.TZ = original;
+  });
+});
+
 describe('LifeTimeline DOM', () => {
   it('renders readable record types, statuses, notes, events, duration and localized weather states', () => {
     render(<LifeTimelineSection date="2026-11-01" service={query()} />); const timeline = screen.getByRole('region', { name: /この日の記録/ });
@@ -122,15 +136,23 @@ describe('LifeTimeline DOM', () => {
     expect(timeline.textContent).not.toContain('本人の日次記録'); expect(timeline.textContent).not.toContain('LOCATION_NOT_CONFIGURED'); expect(timeline.textContent).not.toContain('PROVIDER_VALUE_MISSING');
   });
   it('keeps duplicate-period forecasts, marks only the newest fetch, and reveals IDs only through each details control', async () => {
-    const older = { ...forecast, id: 'forecast-older', source: { ...forecast.source, fetchedAt: '2026-11-01T01:00:00Z' }, createdAt: '2026-11-01T01:01:00Z' } as WeatherForecastSnapshot;
-    const newer = { ...forecast, id: 'forecast-newer', source: { ...forecast.source, fetchedAt: '2026-11-01T09:00:00Z' }, createdAt: '2026-11-01T09:01:00Z' } as WeatherForecastSnapshot;
+    const older = { ...forecast, id: 'forecast-older', source: { ...forecast.source, fetchedAt: '2026-11-01T01:00:00-10:00' }, createdAt: '2026-11-01T11:01:00Z' } as WeatherForecastSnapshot;
+    const newer = { ...forecast, id: 'forecast-newer', source: { ...forecast.source, fetchedAt: '2026-11-01T09:00:00+09:00' }, createdAt: '2026-11-01T00:01:00Z' } as WeatherForecastSnapshot;
     const service = new LifeTimelineQueryService({ calendar: ok([]), dailyLog: ok([]), sleep: ok([]), forecast: ok([older, newer]), observation: ok([]) });
     const result = service.query({ fromDate: '2026-11-01', toDate: '2026-11-01', timeZone: 'UTC' }); expect(result.ok).toBe(true); if (!result.ok) return;
     const projected = result.items.filter((item) => item.recordType === 'WEATHER_FORECAST'); expect(projected).toHaveLength(2);
-    expect(projected.find((item) => item.sourceRecordId === 'forecast-older')?.projection).toMatchObject({ period: { localDate: '2026-11-01', timezone: 'UTC', granularity: 'DAILY' }, source: { provider: 'test', fetchedAt: '2026-11-01T01:00:00Z' }, createdAt: '2026-11-01T01:01:00Z', sourceType: 'FORECAST' });
+    expect(projected.find((item) => item.sourceRecordId === 'forecast-older')?.projection).toMatchObject({ period: { localDate: '2026-11-01', timezone: 'UTC', granularity: 'DAILY' }, source: { provider: 'test', fetchedAt: '2026-11-01T01:00:00-10:00' }, createdAt: '2026-11-01T11:01:00Z', sourceType: 'FORECAST' });
     render(<LifeTimelineSection date="2026-11-01" service={service} />); const cards = screen.getAllByRole('article'); expect(cards).toHaveLength(2); expect(screen.getAllByText('最新取得')).toHaveLength(1);
-    expect(screen.getByText('2026/11/1 01:00')).toBeTruthy(); expect(screen.getByText('2026/11/1 09:00')).toBeTruthy();
+    expect(screen.getByText('2026/11/1 11:00')).toBeTruthy(); expect(screen.getByText('2026/11/1 00:00')).toBeTruthy();
+    const newestCard = cards.find((candidate) => candidate.textContent?.includes('forecast-older'))!; expect(within(newestCard).getByText('最新取得')).toBeTruthy();
     for (const id of ['forecast-older', 'forecast-newer']) { const card = cards.find((candidate) => candidate.textContent?.includes(id))!; const details = card.querySelector('details'); expect(details?.open).toBe(false); await userEvent.click(within(card).getByText('技術情報')); expect(details?.open).toBe(true); expect(details?.textContent).toContain(id); }
+  });
+  it('renders AVAILABLE historical weather with human labels and no public enum strings', () => {
+    const historical = { ...observation, id: 'historical', observedValues: { temperature: { value: 18, unit: 'C' } }, source: { ...observation.source, sourceType: 'HISTORICAL' }, availability: { status: 'AVAILABLE' } } as ObservedWeatherRecord;
+    const service = new LifeTimelineQueryService({ calendar: ok([]), dailyLog: ok([]), sleep: ok([]), forecast: ok([]), observation: ok([historical]) });
+    render(<LifeTimelineSection date="2026-11-01" service={service} />); const card = screen.getByRole('article');
+    expect(within(card).getByText('過去の天気')).toBeTruthy(); expect(within(card).getByText('データあり')).toBeTruthy();
+    expect(card.textContent).not.toContain('HISTORICAL'); expect(card.textContent).not.toContain('AVAILABLE');
   });
   it('distinguishes no records and failures, and a Timeline failure does not remove Calendar Agenda', () => {
     const empty = new LifeTimelineQueryService({ calendar: ok([]), dailyLog: ok([]), sleep: ok([]), forecast: ok([]), observation: ok([]) }); const view = render(<LifeTimelineSection date="2026-11-01" service={empty} />); expect(screen.getByText('この日の記録はありません。')).toBeTruthy(); view.unmount();

@@ -1,7 +1,7 @@
 import type { LifeTimelineItem, LifeTimelineSource } from '../types/lifeTimeline.ts';
 import type { LifeTimelineQueryService } from '../services/lifeTimelineQueryService.ts';
 import { lifeTimelineQueryService as defaultService } from '../services/compositionRoot.ts';
-import { availabilityLabel, formatDate, formatDuration, formatInstant, formatTime, missingReasonLabel } from './lifeTimelinePresentation.ts';
+import { availabilityLabel, formatDate, formatDuration, formatInstant, formatSleepTime, formatTime, missingReasonLabel } from './lifeTimelinePresentation.ts';
 
 const sourceLabels: Record<LifeTimelineSource, string> = { CALENDAR: '予定・出来事', DAILY_LOG: '今日の記録', SLEEP: '睡眠', WEATHER_FORECAST: '天気予報', WEATHER_OBSERVATION: '観測天気' };
 const technical = (item: LifeTimelineItem) => <details className="life-timeline-technical"><summary>技術情報</summary><dl>
@@ -27,7 +27,7 @@ const TimelineCard = ({ item, latest }: { item: LifeTimelineItem; latest: boolea
   if (item.recordType === 'WEATHER_FORECAST' || item.recordType === 'WEATHER_OBSERVATION') return <WeatherCard item={item} latest={latest} />;
   if (item.recordType === 'CALENDAR_EVENT') return <><header className="life-timeline-item-header"><strong className="life-timeline-type">予定・出来事</strong><span className={`life-timeline-status status-${item.projection.status.toLowerCase()}`}>{{ PLANNED: '予定', COMPLETED: '完了', CANCELLED: '取消' }[item.projection.status]}</span></header><p className="life-timeline-primary"><span>予定名: </span><span aria-label={item.projection.title}>{[...item.projection.title].map((character, index) => <span key={index}>{character}</span>)}</span></p><div className="life-timeline-metadata">{item.projection.timeKind === 'ALL_DAY' ? <p>終日</p> : <p>{formatTime(item.projection.startsAt!, item.sourceTimeZone!)}〜{formatTime(item.projection.endsAt!, item.sourceTimeZone!)}</p>}{item.projection.note?.trim() && <p>メモ: {item.projection.note}</p>}</div>{technical(item)}</>;
   if (item.recordType === 'DAILY_LOG') return <><header className="life-timeline-item-header"><strong className="life-timeline-type">今日の記録</strong></header><dl className="life-timeline-metadata"><dt>気分</dt><dd>{item.projection.mood} / 5</dd><dt>疲労</dt><dd>{item.projection.fatigue} / 5（高いほど疲れています）</dd></dl>{item.projection.note.trim() && <p>メモ: {item.projection.note}</p>}{item.projection.events.length > 0 && <div><p>出来事</p><ul>{item.projection.events.map((event, index) => <li key={`${index}:${event}`}>{event}</li>)}</ul></div>}{technical(item)}</>;
-  return <><header className="life-timeline-item-header"><strong className="life-timeline-type">睡眠の記録</strong></header><p className="life-timeline-primary">{formatTime(item.projection.bedtime, item.sourceTimeZone!)}〜{formatTime(item.projection.wakeTime, item.sourceTimeZone!)}</p><dl className="life-timeline-metadata"><dt>睡眠時間</dt><dd>{formatDuration(item.projection.durationMinutes)}</dd><dt>記録方法</dt><dd>{item.projection.source === 'MANUAL' ? '手入力' : 'スマートウォッチ'}</dd></dl>{technical(item)}</>;
+  return <><header className="life-timeline-item-header"><strong className="life-timeline-type">睡眠の記録</strong></header><p className="life-timeline-primary">{formatSleepTime(item.projection.bedtime, item.sourceTimeZone!)}〜{formatSleepTime(item.projection.wakeTime, item.sourceTimeZone!)}</p><dl className="life-timeline-metadata"><dt>睡眠時間</dt><dd>{formatDuration(item.projection.durationMinutes)}</dd><dt>記録方法</dt><dd>{item.projection.source === 'MANUAL' ? '手入力' : 'スマートウォッチ'}</dd></dl>{technical(item)}</>;
 };
 
 const latestWeatherKeys = (items: readonly LifeTimelineItem[]): ReadonlySet<string> => {
@@ -36,7 +36,7 @@ const latestWeatherKeys = (items: readonly LifeTimelineItem[]): ReadonlySet<stri
     const period = item.projection.period, key = [item.recordType, item.projection.sourceType, period.localDate, period.granularity, period.startsAt ?? '', period.endsAt ?? '', period.timezone].join('|');
     groups.set(key, [...(groups.get(key) ?? []), item]);
   }
-  return new Set([...groups.values()].map((group) => [...group].sort((a, b) => b.projection.source.fetchedAt.localeCompare(a.projection.source.fetchedAt) || a.sourceRecordId.localeCompare(b.sourceRecordId))[0].stableItemKey));
+  return new Set([...groups.values()].map((group) => [...group].sort((a, b) => Date.parse(b.projection.source.fetchedAt) - Date.parse(a.projection.source.fetchedAt) || a.sourceRecordId.localeCompare(b.sourceRecordId))[0].stableItemKey));
 };
 
 export function LifeTimelineSection({ date, service = defaultService }: { date: string; service?: Pick<LifeTimelineQueryService, 'query'> }) {
