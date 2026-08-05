@@ -79,6 +79,23 @@ FatigueDimensionState
 - Candidateは次元、値、値の由来、確認対象、保存先を表示し、修正・明示保存・却下を選べるようにする。曖昧な発言から値や次元を補完しない。
 - 本人が確認した最小excerptと時刻だけを既存Conversation Capture原則に従って保存し、会話全文、非表示文脈、却下本文を保存しない。
 
+##### 確認質問を最小限にする会話UX
+
+- 信頼性を毎回の明示確認だけで作らない。発言と推定が自然に対応する場合は、「身体の疲れが強そうだね」のような断定しない軽い理解表現を返し、「身体より、頭の疲れが強い感じ？」のように明らかな内容を質問として繰り返さない。
+- 軽い理解表現が合っている場合、会話を続けるための肯定操作を要求しない。本人は違う場合だけ自然に否定・訂正できる。ただし、訂正がないことや無応答を本人確認、保存同意、正式な自己申告として扱わない。
+- 確認質問は、内部の推定confidenceが低い場合、または解釈の違いが応答・保存候補へ実質的に影響する場合だけ、答えやすい一つの短い質問にする。「疲れた」のような曖昧表現は無理に二軸へ分類せず、種類未分離のまま扱うか、この条件を満たす場合だけ追加確認する。
+- 推定は単発発言だけに依存せず、同一会話内の複数発言、利用可能な直近予定、睡眠、活動量、心拍、HRV等を、それぞれのSourceとas-of時点が分かる補助Evidenceとして扱う。センサー値だけで精神的疲労を断定せず、診断にも用いない。
+- 内部の推定confidenceは抽出・分類の不確かさであり、`FatigueDimensionState.confidence`が表す本人の分類確信度や構造化入力の由来とは別概念である。内部値を本人のconfidenceとして永続化せず、確認要否のthresholdとrule versionを評価可能にする。
+- 明示的な否定・訂正を他の文脈や補助Evidenceより優先する。個人語彙を学習する場合も、本人が制御・削除できる最小限の構造化訂正signalに限定し、会話全文、却下本文、非表示文脈を学習目的で黙って永続化しない。十分な反復がない語は未分離または低confidenceとする。
+
+| 状態 | 役割 | confirmation gate |
+| --- | --- | --- |
+| 会話上の理解 | 非永続の軽い応答。訂正がなければ会話を先へ進める | 肯定操作は不要。ただし無応答を保存同意にしない |
+| transient Candidate | 推定した次元・値・根拠・内部confidenceを確認可能にする未保存状態 | 低confidence時の短い質問、または本人による修正・却下・記録しない選択を受け付ける |
+| 永続Record | 本人が正式に残すと決めた自己申告 | 既存の明示保存または同等のconfirmationを必須とし、自動確定しない |
+
+高confidenceでも、永続Recordの作成、Calendarの作成・変更、Formal UserModel等の長期理解の更新は、それぞれ既存または将来Decisionで定めるconfirmation gateを迂回しない。
+
 #### センサー入力
 
 - 睡眠、心拍、HRV、活動量等は別のSource Recordまたは将来のfeature候補であり、`physicalFatigue`の自己申告値そのものではない。
@@ -163,6 +180,7 @@ social energyはD-0019の永続疲労次元に追加しない。対人活動を�
 5. **推定値の表示**: 将来推定を導入する場合、自己申告と推定をどう視覚・文言で分離し、confidence、Source、as-of時点、修正・非表示をどう提示するか。推定を自己申告controlへ既定値として入れるかも未決定である。
 6. **入力頻度**: 基本1日1回だけにするか、任意の追加記録、予定・活動後のevent-linked入力を許可するか。同日複数値の表示・target選択・重複扱いも未決定である。
 7. **missingの永続粒度**: `NOT_ASKED`等を各DailyLogへ明示保存するか、field不存在と必要な本人選択reasonだけで表現するか。
+8. **確認thresholdの校正**: どの内部confidence、訂正率、Evidence coverageなら確認を省略または要求するか。個人ごとの校正、rule version、誤分類時の回復、説明可能性をどう評価するか。
 
 ## Follow-up implementation issues
 
@@ -173,14 +191,14 @@ D-0019のAccepted後に、Acceptance Criteriaを一度に実装せず、少な�
 | DailyLog次期Domain schema | optional二軸、state、confidence、時刻、runtime validation、legacy read | UI、Repository、backup、Analysis、ML |
 | Repository / backup・restore migration | schema-versioned codec、旧backup互換、preview、round-trip、invalid data拒否 | 入力UI、Conversation、Analysis、既存値のbackfill |
 | 手動入力UI | 総合入力を残したoptional二軸、候補語、scale説明、360px・keyboard | Conversation抽出、sensor、Analysis、予定提案 |
-| Conversation Capture | 軸別origin、曖昧確認、Candidate、明示保存・却下、最小provenance | 会話全文永続化、sensor推定、自動保存 |
+| Conversation Capture | 確認質問の最小化、軽い理解表現、内部推定confidence、訂正override、軸別origin、Candidate、明示保存・却下、最小provenance | 会話全文・却下本文の永続化、sensorだけの断定、自動保存、Calendar / UserModel自動更新 |
 | Life Timeline表示 | 元DailyLogを参照するread-only projection、総合／身体／精神／missingの人間向け表示、技術情報 | 統合Record、Repository write、Calendarへのcopy、Analysis実行 |
 | 軸別Analysis / Relationship | target別rule、期間、件数、source ID、missing、非因果表示 | ML model、診断、Formal UserModel直接更新、予定変更 |
 | `ML_READY_DATASET_V2` | 軸別target / lag / missing / source audit / cutoff / version | V1変更、学習・推論、本文feature、imputation |
 | 軸別ML評価計画 | baseline、minimum sample、walk-forward、coverage、採用gate | production model、cloud学習、自動再学習 |
 | 予定提案Read Model | 疲労次元・既存予定・本人制約を読む複数候補、根拠、欠損 | Calendar mutation、通知、予定自動確定、UserModel更新 |
 | social energy研究 | 独立軸の必要性、本人内効果、privacy、入力負担、判断gate | 永続field、実名feature、対人予定の自動提案 |
-| manual QA | 総合／任意二軸、skip / unsure、Life Timeline、backup / restoreを360px・390px・768px・desktopとkeyboardで確認 | schema・UIの追加変更、screen reader実機確認を未実施のまま合格扱いすること |
+| manual QA | 総合／任意二軸、skip / unsure、不要な再確認の不在、低confidence時の短い確認、訂正だけで回復できる会話、Life Timeline、backup / restoreを360px・390px・768px・desktopとkeyboardで確認 | schema・UIの追加変更、screen reader実機確認を未実施のまま合格扱いすること |
 
 ## Non-goals
 
