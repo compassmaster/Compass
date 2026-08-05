@@ -23,6 +23,12 @@ D-0019は既存`DailyLog.fatigue`を総合／未分離の値として維持し�
 
 `ML_READY_DATASET_V1`と既存評価計画の意味は変更しない。二軸は将来のV2でtarget / missing / source audit / evaluationを軸別に定義する。予定提案はread-onlyな複数候補で、Calendarを自動作成・変更せず、Formal UserModelを直接更新しない。本PRはdocs-onlyであり実装状態は変わらない。
 
+## 2026-08-05 D-0020 LLM provider / secret / deployment設計（Issue #129）
+
+D-0020は初期OpenAI adapterをserver-side `LlmGateway`の後ろへ隔離し、同一repositoryのsame-origin serverless APIを初期deploymentとする。localは同じHTTP contractのlocal proxy、preview / productionは別secret・provider project・quotaを使う。secretを`VITE_*`、client bundle、browser storage、backup、logへ入れず、browserからproviderを直接呼ばない。
+
+初期は非streaming、provider自動retryなしで、serverがauthorization、contract validation、timeout、cancel、rate / size / token / concurrency limitを担当する。preview / productionはplatform access control必須のprivate single-user deploymentとし、検証済みidentityがないrequestをprovider呼び出し前に拒否する。CORS / Origin / IP / client sessionは本人性の根拠にせず、rate limitはaccess identityへ結び付ける。会話本文を通常ログへ残さず、Calendar / DailyLog / UserModelを自動送信しない。LLM接続、endpoint、secret、deployment、認証、UI、会話永続化は未実装のままである。
+
 
 ## 2026-08-03 CalendarEventRecord repository / backup（Issue #93）
 
