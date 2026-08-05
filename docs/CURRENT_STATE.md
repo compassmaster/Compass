@@ -2,7 +2,7 @@
 status: Active
 dependsOn: []
 usedBy: []
-lastUpdated: "2026-08-04"
+lastUpdated: "2026-08-05"
 ---
 
 <!-- STAGE3_COMPLETION_2026_08_04 -->
@@ -20,7 +20,7 @@ Calendar AgendaとLife Timelineは実装済みである。Life TimelineはCalend
 
 Calendar Eventはbackup対象である。一方、Conversation session、Candidate、commit token、Life Timeline、ML projectionはbackup・localStorage対象外である。
 
-2026-08-04にCalendarは360px、390px、768px、desktop、Conversation Calendar CaptureとLife Timelineはdesktopで表示を実ブラウザ確認した。Tab / Shift+Tabによるfocus移動もdesktopで確認した。これは各幅で全機能操作を通し実行したという意味ではない。機能・保存境界は自動テストおよびコード・設計確認で確認した。360px / 390pxの上部ナビゲーションは9タブの3列Gridである。物理端末のsoft keyboardとscreen readerによる実読み上げは未実施である。詳細は[Stage 3 Calendar / Life Timeline QA結果](qa/STAGE3_CALENDAR_LIFE_TIMELINE_QA_2026-08-04.md)を参照する。
+Calendarは360px、390px、768px、desktop、Conversation Calendar Captureはdesktopで表示を実ブラウザ確認した。#116完了時にLife Timelineの主表示と折りたたみ技術情報を360px、390px、768px、desktopで手動確認済みである。Tab / Shift+Tabによるfocus移動もdesktopで確認した。これは各幅で全機能操作を通し実行したという意味ではない。機能・保存境界は自動テストおよびコード・設計確認で確認した。360px / 390pxの上部ナビゲーションは9タブの3列Gridである。物理端末のsoft keyboardとscreen readerによる実読み上げは未実施である。詳細は[Stage 3 Calendar / Life Timeline QA結果](qa/STAGE3_CALENDAR_LIFE_TIMELINE_QA_2026-08-04.md)を参照する。
 
 ### Stage 3完了後も未実装
 
@@ -32,7 +32,15 @@ Calendar Eventはbackup対象である。一方、Conversation session、Candida
 - ウェアラブル実連携
 - CalendarからFormal UserModelへの直接更新
 
-#115（Calendar Candidate編集フォームの視認性）と#116（Life Timelineの人間向け表示）はStage 3完了を妨げない非blocking UX改善である。#117（身体的疲労と精神的疲労の分離）はStage 3後の設計・研究候補であり、Stage 3の完了条件には含めない。
+#115（Calendar Candidate編集フォームの視認性）と#116（Life Timelineの人間向け表示）は完了済みである。#117（身体的疲労と精神的疲労の分離）は[D-0019](architecture/D-0019-fatigue-dimensions-and-scheduling-boundary.md)として設計中であり、Stage 3の完了条件には含めない。
+
+## 2026-08-05 身体的疲労・精神的疲労と予定提案の設計（Issue #117）
+
+D-0019をProposedとして追加した。現在の`DailyLog.fatigue`、schema v1、既存backup、Analysis、`ML_READY_DATASET_V1`は総合／未分離疲労として維持し、既存値を身体・精神へcopy、分配、推測しない。将来の`physicalFatigue`と`mentalFatigue`はoptionalな独立軸とし、合算、相互fallback、欠損の低疲労扱いを禁止する。
+
+手動入力は本人の直接自己申告、Conversationは本人確認前のtransient Candidate、センサーは別Sourceの補助信号として分離する。未確認Candidateは永続化せず、センサーから精神的疲労を断定しない。social energyは第三軸として今すぐ追加せず、対人活動を一律に回復／負担と扱わない。
+
+予定提案は本人確認済みの値、既存予定、本人の制約を読む非永続候補とし、複数案・根拠・欠損を示すだけでCalendarを自動変更しない。ML拡張はV1の意味を凍結し、身体・精神を別target definitionとする将来の`ML_READY_DATASET_V2`と別評価計画で扱う。本変更はdocs-onlyで、DailyLog schema、UI、Repository、backup、Analysis、ML、予定提案実装を変更していない。
 
 ## 過去の実装履歴
 

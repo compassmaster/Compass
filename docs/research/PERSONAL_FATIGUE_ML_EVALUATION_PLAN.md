@@ -1,8 +1,8 @@
 ---
 status: Proposed
 dependsOn: ["Issue #97 ML-ready Dataset Projection"]
-usedBy: []
-lastUpdated: "2026-08-03"
+usedBy: ["D-0019"]
+lastUpdated: "2026-08-05"
 ---
 # 最初の個人向け疲労度ML実験 — 評価計画（Issue #98）
 
@@ -13,6 +13,12 @@ lastUpdated: "2026-08-03"
 入力のSource of AuthorityはIssue #97の非永続・読み取り専用`ML_READY_DATASET_V1`だけとする。実験側でraw Repositoryを再joinせず、`schemaVersion`、`featureDefinition`、timezone、rule version、source failure、missing reason、source ID、leakage traceをrun manifestへ記録する。
 
 本Issueではproductionモデル、学習・推論処理、UI、外部API、クラウド学習、ニューラルネットワーク、新しい永続化を実装しない。Analysis / Evidence / Understanding / Formal UserModelへ接続せず、**UserModelを自動更新しない**。結果は診断、治療、受診要否その他の**医療判断に使用しない**。
+
+### D-0019との境界
+
+[D-0019](../architecture/D-0019-fatigue-dimensions-and-scheduling-boundary.md)は将来の`physicalFatigue` / `mentalFatigue`を独立軸として定義するが、本評価計画のtargetは既存`DailyLog.fatigue`による総合／未分離疲労だけである。D-0019を理由に既存rowを二軸へ変換せず、`ML_READY_DATASET_V1`へtargetやfeatureを追加しない。
+
+身体・精神を評価する場合は、将来の`ML_READY_DATASET_V2`、軸別target definition、missing / source audit、最低サンプル数、baseline、walk-forward、採用gateを定めた別計画を作る。V1とV2、または身体と精神のtargetを同じrunへ暗黙に連結しない。
 
 ## target、予測時点、feature availability cutoff
 

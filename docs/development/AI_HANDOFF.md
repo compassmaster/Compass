@@ -10,13 +10,23 @@
 - Calendar AgendaとLife Timelineは実装済み。Life TimelineはCalendar Event / DailyLog / SleepRecord / Weatherを別recordTypeのまま合成するread-only・non-persistent Read Modelで、Repositoryや統合Recordではない。
 - `ML_READY_DATASET_V1`はread-only・non-persistent projection。production MLの学習・推論は未実装で、title / note / sourceExcerpt等の本文はML featureへ含めない。
 - Calendar Eventはbackup対象。Conversation session / Candidate / commit token / Life Timeline / ML projectionはlocalStorage・backup対象外。
-- 2026-08-04にCalendarは360px / 390px / 768px / desktop、Conversation Calendar CaptureとLife Timelineはdesktopで表示を実ブラウザ確認済み。Tab / Shift+Tabによるfocus移動もdesktopで確認した。各幅で全機能操作を通し実行したという意味ではなく、機能・保存境界は自動テストとコード・設計確認による。360px / 390pxの上部navigationは9タブの3列Grid。物理端末soft keyboardとscreen reader実読み上げは未実施。
+- Calendarは360px / 390px / 768px / desktop、Conversation Calendar Captureはdesktopで表示を実ブラウザ確認済み。#116完了時にLife Timelineの主表示と折りたたみ技術情報を360px / 390px / 768px / desktopで手動確認済み。Tab / Shift+Tabによるfocus移動もdesktopで確認した。各幅で全機能操作を通し実行したという意味ではなく、機能・保存境界は自動テストとコード・設計確認による。360px / 390pxの上部navigationは9タブの3列Grid。物理端末soft keyboardとscreen reader実読み上げは未実施。
 - 未実装はLLM自由会話理解、Conversation履歴永続化、外部Calendar同期、通知・リマインダー、production ML、ウェアラブル実連携、CalendarからFormal UserModelへの直接更新。
-- #115と#116はStage 3非blocking UX改善、#117はStage 3後の設計・研究候補。QAの正式記録は `docs/qa/STAGE3_CALENDAR_LIFE_TIMELINE_QA_2026-08-04.md`。
+- #115と#116は完了済み。#117はD-0019として設計中だが、二軸入力・保存・Analysis・ML・予定提案は未実装。QAの正式記録は `docs/qa/STAGE3_CALENDAR_LIFE_TIMELINE_QA_2026-08-04.md`。
 
 ## 過去のhandoff履歴
 
 以下は各日時点の履歴であり、当時の「未実装」は上記の現在状態と区別して読む。
+
+## 2026-08-05 D-0019疲労次元設計（Issue #117）
+
+- 既存`DailyLog.fatigue`、schema v1、backup、Analysis、`ML_READY_DATASET_V1`を総合／未分離疲労として維持し、既存値を身体・精神へ変換しない。
+- 将来の`physicalFatigue` / `mentalFatigue`はoptionalな独立軸。合算、相互fallback、欠損の0・低疲労化は禁止する。
+- 手動は直接自己申告、Conversationは本人確認前のtransient Candidate、sensorは別Sourceの補助信号。未確認値を保存せず、sensorからmental fatigueを断定しない。
+- social energyは独立軸化を保留し、対人活動を一律に回復／負担としない。
+- 予定提案はread-onlyな複数候補と根拠表示に限定し、Calendarを自動作成・変更しない。外せない予定では実行負担を下げる案を優先する。
+- MLはV1を凍結し、将来のV2でphysical / mental target、missing、source audit、evaluationを別定義にする。既存ML評価計画を二軸へ読み替えない。
+- D-0019のAccepted後にschema / backup、入力UI、Conversation Capture、Analysis、V2 projection / 評価計画、予定提案、social energy研究を独立Issueへ分割する。本PRでは実装しない。
 
 
 ## 2026-08-04 Calendar Agenda日時表示（Issue #110）

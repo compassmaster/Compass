@@ -20,6 +20,12 @@ Hypothesis（仮説）の生成は別の役割が担当する。
 - Fatigue
 - Sleep
 
+### Fatigue semantics
+
+現在の`Fatigue`は`DailyLog.fatigue`の総合／未分離疲労である。[D-0019](../../architecture/D-0019-fatigue-dimensions-and-scheduling-boundary.md)で定義する将来の`physicalFatigue`と`mentalFatigue`へ変換またはcopyしない。
+
+二軸を扱うAnalyzerは、target、missing、Source Record、rule versionを軸ごとに明示し、一方、既存`fatigue`、センサー値で他方を補完しない。結果は本人内の観察であり、因果、能力、性格、医療・心理診断を断定しない。
+
 ---
 
 ## Output
