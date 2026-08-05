@@ -9,9 +9,9 @@ PR #119マージ後のコードがSource of Truthである。CalendarEventRecord
 
 Life TimelineはCalendar Event、DailyLog、SleepRecord、Weatherを別recordTypeで合成する読み取り専用・非永続Read Modelである。`ML_READY_DATASET_V1`も読み取り専用・非永続で、production MLの学習・推論ではない。`title`、`note`、`sourceExcerpt`等の本文をML featureへ入れない。Calendar Eventだけがこの機能群のbackup対象で、Conversation session / Candidate / commit token / Life Timeline / ML projectionはlocalStorage・backup対象外である。
 
-Calendarは360px、390px、768px、desktop、Conversation Calendar CaptureとLife Timelineはdesktopで表示を実ブラウザ確認済みである。Tab / Shift+Tabによるfocus移動もdesktopで確認した。各幅で全機能操作を通し実行したという意味ではなく、機能・保存境界は自動テストとコード・設計確認による。360px / 390pxの上部navigationは9タブの3列Gridである。物理端末soft keyboardとscreen reader実読み上げは未実施。
+Calendarは360px、390px、768px、desktop、Conversation Calendar Captureはdesktopで表示を実ブラウザ確認済みである。#116完了時にLife Timelineの主表示と折りたたみ技術情報を360px、390px、768px、desktopで手動確認済みである。Tab / Shift+Tabによるfocus移動もdesktopで確認した。各幅で全機能操作を通し実行したという意味ではなく、機能・保存境界は自動テストとコード・設計確認による。360px / 390pxの上部navigationは9タブの3列Gridである。物理端末soft keyboardとscreen reader実読み上げは未実施。
 
-未実装: LLM自由会話理解、Conversation履歴永続化、Google Calendar等との外部同期、通知・リマインダー、production ML学習・推論、ウェアラブル実連携、CalendarからFormal UserModelへの直接更新。#115 / #116は非blocking UX follow-up。#117はD-0019として設計中だが、二軸入力・保存・Analysis・ML・予定提案は未実装である。詳細は `docs/qa/STAGE3_CALENDAR_LIFE_TIMELINE_QA_2026-08-04.md` を参照する。
+未実装: LLM自由会話理解、Conversation履歴永続化、Google Calendar等との外部同期、通知・リマインダー、production ML学習・推論、ウェアラブル実連携、CalendarからFormal UserModelへの直接更新。#115 / #116は完了済み。#117はD-0019として設計中だが、二軸入力・保存・Analysis・ML・予定提案は未実装である。詳細は `docs/qa/STAGE3_CALENDAR_LIFE_TIMELINE_QA_2026-08-04.md` を参照する。
 
 ## 過去の実装履歴
 

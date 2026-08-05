@@ -20,7 +20,7 @@ Calendar AgendaとLife Timelineは実装済みである。Life TimelineはCalend
 
 Calendar Eventはbackup対象である。一方、Conversation session、Candidate、commit token、Life Timeline、ML projectionはbackup・localStorage対象外である。
 
-2026-08-04にCalendarは360px、390px、768px、desktop、Conversation Calendar CaptureとLife Timelineはdesktopで表示を実ブラウザ確認した。Tab / Shift+Tabによるfocus移動もdesktopで確認した。これは各幅で全機能操作を通し実行したという意味ではない。機能・保存境界は自動テストおよびコード・設計確認で確認した。360px / 390pxの上部ナビゲーションは9タブの3列Gridである。物理端末のsoft keyboardとscreen readerによる実読み上げは未実施である。詳細は[Stage 3 Calendar / Life Timeline QA結果](qa/STAGE3_CALENDAR_LIFE_TIMELINE_QA_2026-08-04.md)を参照する。
+Calendarは360px、390px、768px、desktop、Conversation Calendar Captureはdesktopで表示を実ブラウザ確認した。#116完了時にLife Timelineの主表示と折りたたみ技術情報を360px、390px、768px、desktopで手動確認済みである。Tab / Shift+Tabによるfocus移動もdesktopで確認した。これは各幅で全機能操作を通し実行したという意味ではない。機能・保存境界は自動テストおよびコード・設計確認で確認した。360px / 390pxの上部ナビゲーションは9タブの3列Gridである。物理端末のsoft keyboardとscreen readerによる実読み上げは未実施である。詳細は[Stage 3 Calendar / Life Timeline QA結果](qa/STAGE3_CALENDAR_LIFE_TIMELINE_QA_2026-08-04.md)を参照する。
 
 ### Stage 3完了後も未実装
 
@@ -32,7 +32,7 @@ Calendar Eventはbackup対象である。一方、Conversation session、Candida
 - ウェアラブル実連携
 - CalendarからFormal UserModelへの直接更新
 
-#115（Calendar Candidate編集フォームの視認性）と#116（Life Timelineの人間向け表示）はStage 3完了を妨げない非blocking UX改善である。#117（身体的疲労と精神的疲労の分離）は[D-0019](architecture/D-0019-fatigue-dimensions-and-scheduling-boundary.md)として設計中であり、Stage 3の完了条件には含めない。
+#115（Calendar Candidate編集フォームの視認性）と#116（Life Timelineの人間向け表示）は完了済みである。#117（身体的疲労と精神的疲労の分離）は[D-0019](architecture/D-0019-fatigue-dimensions-and-scheduling-boundary.md)として設計中であり、Stage 3の完了条件には含めない。
 
 ## 2026-08-05 身体的疲労・精神的疲労と予定提案の設計（Issue #117）
 

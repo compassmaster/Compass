@@ -65,6 +65,14 @@ FatigueDimensionState
 - 二軸の入力を毎回強制しない。「総合だけ」「身体だけ」「精神だけ」「今は分からない」「入力しない」を選べる設計にする。
 - 一つの操作で両軸を選べても、別field・別label・別missing stateとして扱う。
 
+#### UIの段階移行
+
+1. 最初の実装段階では既存の総合`fatigue`入力と「疲労は高いほど疲れている」という説明を残す。身体・精神は総合入力を置き換えず、任意に詳細を追加するprogressive disclosureとする。
+2. 利用者向け候補語は`physicalFatigue`を「身体の疲れ」、`mentalFatigue`を「頭・こころの疲れ」等とし、Domain名や英語を通常UIへ露出しない。正式な語はuser researchとmanual QA後に決定する。
+3. 各scaleの近くに方向を明記し、1が疲労の低い側、5が高い側であることを総合・身体・精神で一貫させる。色だけで値や軸を区別しない。
+4. 360pxでは総合・身体・精神のcontrolを横3列に並べず、1列、折りたたみ、または段階表示にする。任意二軸のために保存までの必須stepを増やさず、44px以上の操作領域、keyboard順、横scrollなしを維持する。
+5. optional入力の利用率、skip / unsure、所要時間、誤解、accessibilityを確認するまで、総合`fatigue`を削除・任意化しない。総合値をいつまで残すかはOpen Questionとして別レビューする。
+
 #### Conversation入力
 
 - 「身体が重い」「頭が疲れた」等から抽出できるのは未保存Candidateだけである。
@@ -144,17 +152,35 @@ social energyはD-0019の永続疲労次元に追加しない。対人活動を�
 5. **social energyを第三軸として同時導入する案**: 個人差、privacy、入力負担、検証方法が未確定であり、対人活動を単純化する危険があるため保留する。
 6. **既存ML V1へoptional targetを追加する案**: 同じversionの意味が変わり、過去runとの比較と再現性を壊すため却下する。
 
+## Open Questions
+
+次はD-0019のProposed段階では未決定であり、実装Issueを開始する前または各Issue内の設計レビューで決める。
+
+1. **scale**: 身体・精神も既存と同じ1〜5を正式採用するか、言語label中心、段階数変更、軸ごとに異なるscaleを比較するか。
+2. **利用者向け用語**: 通常UIで「精神的疲労」「認知的疲労」「頭の疲れ」「頭・こころの疲れ」のどれを使い、気分・ストレス・疾患との誤解を最も減らせるか。
+3. **overall fatigueの保持期間**: optional二軸導入後も総合`fatigue`を恒久的に残すか、何件・何期間・どのQA結果をもって任意化または廃止を検討するか。
+4. **social energyの独立判断基準**: 本人内の反復傾向、coverage、追加説明力、privacy、入力負担がどの水準なら第三軸または別contextとして設計するか。
+5. **推定値の表示**: 将来推定を導入する場合、自己申告と推定をどう視覚・文言で分離し、confidence、Source、as-of時点、修正・非表示をどう提示するか。推定を自己申告controlへ既定値として入れるかも未決定である。
+6. **入力頻度**: 基本1日1回だけにするか、任意の追加記録、予定・活動後のevent-linked入力を許可するか。同日複数値の表示・target選択・重複扱いも未決定である。
+7. **missingの永続粒度**: `NOT_ASKED`等を各DailyLogへ明示保存するか、field不存在と必要な本人選択reasonだけで表現するか。
+
 ## Follow-up implementation issues
 
-D-0019のAccepted後に、少なくとも次を独立Issueとして分割する。
+D-0019のAccepted後に、Acceptance Criteriaを一度に実装せず、少なくとも次を独立Issueとして分割する。
 
-1. DailyLog次期schema、runtime validation、Repository / backup migration。
-2. optionalな手動二軸入力と欠損・confidence表示。
-3. Conversation Candidate抽出・確認・保存境界。
-4. 軸別Analysis / Relationshipのread-only評価。
-5. `ML_READY_DATASET_V2`と軸別ML評価計画。
-6. 疲労次元と既存Calendar制約を読む非永続予定提案Read Model。
-7. social energyを独立軸化する必要性とprivacyの研究。
+| Issue候補 | 変更範囲 | 非変更範囲 |
+| --- | --- | --- |
+| DailyLog次期Domain schema | optional二軸、state、confidence、時刻、runtime validation、legacy read | UI、Repository、backup、Analysis、ML |
+| Repository / backup・restore migration | schema-versioned codec、旧backup互換、preview、round-trip、invalid data拒否 | 入力UI、Conversation、Analysis、既存値のbackfill |
+| 手動入力UI | 総合入力を残したoptional二軸、候補語、scale説明、360px・keyboard | Conversation抽出、sensor、Analysis、予定提案 |
+| Conversation Capture | 軸別origin、曖昧確認、Candidate、明示保存・却下、最小provenance | 会話全文永続化、sensor推定、自動保存 |
+| Life Timeline表示 | 元DailyLogを参照するread-only projection、総合／身体／精神／missingの人間向け表示、技術情報 | 統合Record、Repository write、Calendarへのcopy、Analysis実行 |
+| 軸別Analysis / Relationship | target別rule、期間、件数、source ID、missing、非因果表示 | ML model、診断、Formal UserModel直接更新、予定変更 |
+| `ML_READY_DATASET_V2` | 軸別target / lag / missing / source audit / cutoff / version | V1変更、学習・推論、本文feature、imputation |
+| 軸別ML評価計画 | baseline、minimum sample、walk-forward、coverage、採用gate | production model、cloud学習、自動再学習 |
+| 予定提案Read Model | 疲労次元・既存予定・本人制約を読む複数候補、根拠、欠損 | Calendar mutation、通知、予定自動確定、UserModel更新 |
+| social energy研究 | 独立軸の必要性、本人内効果、privacy、入力負担、判断gate | 永続field、実名feature、対人予定の自動提案 |
+| manual QA | 総合／任意二軸、skip / unsure、Life Timeline、backup / restoreを360px・390px・768px・desktopとkeyboardで確認 | schema・UIの追加変更、screen reader実機確認を未実施のまま合格扱いすること |
 
 ## Non-goals
 
