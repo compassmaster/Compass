@@ -42,6 +42,12 @@ D-0019をProposedとして追加した。現在の`DailyLog.fatigue`、schema v1
 
 予定提案は本人確認済みの値、既存予定、本人の制約を読む非永続候補とし、複数案・根拠・欠損を示すだけでCalendarを自動変更しない。ML拡張はV1の意味を凍結し、身体・精神を別target definitionとする将来の`ML_READY_DATASET_V2`と別評価計画で扱う。本変更はdocs-onlyで、DailyLog schema、UI、Repository、backup、Analysis、ML、予定提案実装を変更していない。
 
+## 2026-08-05 自由会話LLM provider・secret・deployment設計（Issue #129）
+
+[D-0020](architecture/D-0020-llm-provider-secret-and-deployment-boundary.md)をProposedとして追加した。初期provider adapterはOpenAI、deploymentは同一repositoryで管理するsame-origin serverless APIとし、localだけは同じcontractを実装するlocal proxyを使う。UI / Domainはprovider SDKを呼ばず、browserからproviderへ直接接続しない。secretはserver runtimeだけに置き、client bundle、browser storage、backup、logへ含めない。
+
+client requestは有限の自由会話windowだけとし、Calendar、DailyLog、健康情報、UserModelを自動添付しない。初期responseは非streaming、provider自動retryなしとし、serverがtimeout、cancel propagation、rate / size / token / concurrency limitを強制する。LLM障害時も既存のDailyLog / Calendar等を利用可能に保つ。本変更はdocs-onlyで、LLM接続、API endpoint、secret、deployment、UI、会話永続化、Domain更新を実装していない。
+
 ## 過去の実装履歴
 
 以下の日付別セクションは各時点の記録である。当時「未実装」と記載された項目が、上記の現在状態では実装済みの場合がある。
