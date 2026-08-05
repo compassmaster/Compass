@@ -46,7 +46,7 @@ D-0019をProposedとして追加した。現在の`DailyLog.fatigue`、schema v1
 
 [D-0020](architecture/D-0020-llm-provider-secret-and-deployment-boundary.md)をProposedとして追加した。初期provider adapterはOpenAI、deploymentは同一repositoryで管理するsame-origin serverless APIとし、localだけは同じcontractを実装するlocal proxyを使う。UI / Domainはprovider SDKを呼ばず、browserからproviderへ直接接続しない。secretはserver runtimeだけに置き、client bundle、browser storage、backup、logへ含めない。
 
-client requestは有限の自由会話windowだけとし、Calendar、DailyLog、健康情報、UserModelを自動添付しない。初期responseは非streaming、provider自動retryなしとし、serverがtimeout、cancel propagation、rate / size / token / concurrency limitを強制する。LLM障害時も既存のDailyLog / Calendar等を利用可能に保つ。本変更はdocs-onlyで、LLM接続、API endpoint、secret、deployment、UI、会話永続化、Domain更新を実装していない。
+client requestは有限の自由会話windowだけとし、Calendar、DailyLog、健康情報、UserModelを自動添付しない。初期responseは非streaming、provider自動retryなしとし、serverがtimeout、cancel propagation、rate / size / token / concurrency limitを強制する。preview / productionはplatform access controlで保護したprivate single-user deploymentに限定し、検証済みidentityがないrequestはprovider呼び出し前に拒否する。CORS、Origin、IP、client sessionは本人性の根拠にせず、rate limitをaccess identityへ結び付ける。LLM障害時も既存のDailyLog / Calendar等を利用可能に保つ。本変更はdocs-onlyで、LLM接続、API endpoint、secret、deployment、認証、UI、会話永続化、Domain更新を実装していない。
 
 ## 過去の実装履歴
 

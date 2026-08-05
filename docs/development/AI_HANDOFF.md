@@ -35,8 +35,10 @@
 - secretはserver runtimeだけに置き、`VITE_*`、bundle、browser storage、backup、request / response、logへ入れない。browserからproviderを直接呼ばない。
 - requestは有限の自由会話windowだけで、Calendar / DailyLog / 健康情報 / UserModelを自動添付しない。本文は通常ログへ残さない。
 - 初期responseは非streaming、provider自動retryなし。serverがvalidation、timeout、cancel propagation、rate / size / token / concurrency limitを強制する。
+- preview / productionはplatform access controlで保護するprivate single-user deploymentに限定する。serverは検証済みaccess identityからprincipalを作り、未認証・権限不足requestをprovider呼び出し前に拒否する。CORS / Origin / Referer、IP、client sessionは本人性の根拠にせず、rate limitをprincipal / access identityへ結び付ける。
+- preview URLだけではauthorizationを通過できず、preview key / project / quotaからproductionへ到達させない。複数利用者、user別data / quota / audit、永続Conversation、user-scoped tool、個別課金の前にapplication-level認証へ移行し、暫定platform access controlを廃止する。
 - provider障害時も既存記録機能を利用可能に保ち、LLM responseからRecord、Calendar、Formal UserModelを自動更新しない。
-- 本変更はdocs-only。LLM接続、API route、型、secret、deployment、Conversation UI、会話履歴永続化、Candidate生成は未実装。
+- 本変更はdocs-only。LLM接続、API route、型、secret、deployment、認証、Conversation UI、会話履歴永続化、Candidate生成は未実装。
 
 
 ## 2026-08-04 Calendar Agenda日時表示（Issue #110）

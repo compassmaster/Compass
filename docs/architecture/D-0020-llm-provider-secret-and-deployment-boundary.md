@@ -42,16 +42,18 @@ Conversation UI / Application
 
 ### 3. local / preview / productionを分離する
 
-| environment | clientから見えるendpoint | server runtime / secret | 制御 |
+| environment | clientから見えるendpoint | server runtime / secret | authorization / 制御 |
 | --- | --- | --- | --- |
-| local | 同じ`/api/v1/conversation/respond` | local proxy。OS環境変数またはgit管理外のserver専用設定 | mock / fakeを既定にできる。live provider利用は明示opt-in、短いquota |
-| preview | preview origin配下のsame-origin function | preview専用secret manager、preview専用provider project / key | 許可preview origin、productionより厳しいrate / token limit、production data非接続 |
-| production | production origin配下のsame-origin function | production secret manager、production専用provider project / key | production origin allowlist、独立quota、監視、rotation手順 |
+| local | 同じ`/api/v1/conversation/respond` | local proxy。OS環境変数またはgit管理外のserver専用設定 | loopback限定。mock / fakeを既定にできる。live provider利用は明示opt-in、短いquota |
+| preview | preview origin配下のsame-origin function | preview専用secret manager、preview専用provider project / key | deployment platform access control必須。検証済みaccess identity、厳しいrate / token limit、production data非接続 |
+| production | production origin配下のsame-origin function | production secret manager、production専用provider project / key | 初期はprivate single-user deployment。platform access control必須、検証済みaccess identity、独立quota、監視、rotation手順 |
 
 - local proxyは開発専用であり、production deploymentとして採用しない。
 - previewとproductionで同じAPI keyを共有しない。previewからproduction Repository、backup、telemetryへ接続しない。
 - 通常の自動テストはin-memory fake `LlmGateway`を使い、live providerやsecretを要求しない。live smoke testは明示実行・低quota・本文非記録の別checkとする。
-- CORSは`*`にせず、same-originまたは明示allowlistだけを許可する。将来cookie認証を導入する前にCSRF境界を追加する。
+- preview / production endpointを匿名公開しない。初期はdeployment platform access controlで保護されたprivate single-user deploymentだけを許可し、platformが暗号学的に保護または信頼できる経路で渡すaccess identityをserver middlewareが検証する。検証可能なidentityを提供できないplatformではlive provider deploymentを開始せず、application-levelの認証済みsessionを先に設計する。
+- `Origin` / `Referer`検証とCORSはbrowser向けの補助防御であり、本人性、利用権限、課金保護の根拠にしない。CORSは`*`にせずsame-originまたは明示allowlistだけを許可し、将来cookie認証を導入する前にCSRF境界を追加する。
+- preview URLが漏れてもURLだけではauthorization gateを通過できず、previewのidentity、key、provider project、quotaからproduction key / quotaへ到達できない構成を維持する。
 
 ### 4. Secretはserver runtimeだけに置く
 
@@ -79,6 +81,7 @@ ConversationLlmRequestV1
 
 - `SYSTEM`、`DEVELOPER`、`TOOL` role、system instruction、provider / model / sampling設定をclient入力として許可しない。system instructionはserver-sideでversion管理する。
 - `requestId`は相関と重複抑止に使うが、provider課金の厳密なidempotencyを保証するものではない。`clientSessionId`はreloadで失われ得るrate / concurrency補助値であり、認証済みuser IDではない。
+- 本人性と利用権限はclient request fieldではなく、server middlewareがdeployment platformの検証済みidentityまたは認証済みsessionから作る`AccessPrincipal`相当のauthorization contextで扱う。このcontextをproviderへ送信せず、client指定のheader、user ID、`clientSessionId`から構成しない。
 - 初期windowは現在の自由会話からserver policyが許す有限件数・有限文字数だけを送る。上限超過時はclient任せで黙って切らず、serverが決定的に拒否またはversion付きruleで縮約する。
 - Calendar、DailyLog、SleepRecord、Weather、Evidence、Understanding、Formal UserModel、backup、非表示画面状態を自動添付しない。別データを利用する場合は用途、選択rule、本人への説明、Source / as-of、削除を別Decisionで定める。
 - endpointとproviderへ送る本文は同じとは限らない。serverは最小system instructionを追加できるが、通常ログへ本文を残さない。
@@ -108,6 +111,8 @@ provider raw response、hidden reasoning、provider system field、provider erro
 | code | 意味 | retryable |
 | --- | --- | --- |
 | `INVALID_REQUEST` | client contract、size、role、文字列が不正 | false |
+| `UNAUTHORIZED` | 検証済みaccess identityまたは認証済みsessionがない | false |
+| `FORBIDDEN` | principalにLLM endpoint利用権限がない | false |
 | `CANCELLED` | client切断または明示cancel | false |
 | `TIMEOUT` | server-side deadline超過 | true |
 | `RATE_LIMITED` | Compassまたはprovider limit | policyで決定 |
@@ -116,7 +121,7 @@ provider raw response、hidden reasoning、provider system field、provider erro
 | `INVALID_RESPONSE` | provider responseを共通contractへ変換不能 | false |
 | `INTERNAL` | その他のserver failure | false |
 
-HTTP statusはcontract validationを4xx、rate limitを429、timeoutを504、upstream failureを502 / 503、予期しないfailureを500へ対応させる。client表示はprovider名や内部errorを露出せず、既存機能が利用可能であることと、必要な場合だけ手動retryを案内する。
+HTTP statusはcontract validationを400、未認証を401、権限不足を403、rate limitを429、timeoutを504、upstream failureを502 / 503、予期しないfailureを500へ対応させる。client表示はprovider名や内部errorを露出せず、既存機能が利用可能であることと、必要な場合だけ手動retryを案内する。
 
 ### 7. Timeout、cancel、retry、rate limitはserverが最終責任を持つ
 
@@ -124,7 +129,8 @@ HTTP statusはcontract validationを4xx、rate limitを429、timeoutを504、ups
 - client cancel / 切断はserverからproviderへ可能な限り伝播する。cancel後に到着したresponseをConversationへ追加せず、永続Recordにも使わない。
 - 初期versionはproviderへの自動retryを行わない。課金済みか不明なrequestの再送、retry storm、response重複を避け、retryable error後の本人による明示retryを新しいrequestIdで扱う。
 - request文字数、message件数、最大response token、server timeout、同時実行数、環境別rate limitをserver policyで必須設定にする。clientの制限はUX補助であり、security / cost境界にはしない。
-- 初期の未認証状態では、serverが検証したorigin、短命な`clientSessionId`、必要最小限のnetwork bucketを組み合わせる。IP等を本文ログやDomainへ保存せず、rate-limit storeの短いTTLを越えて保持しない。
+- serverはrequest validationより前または同時にauthorization gateを実行し、検証済み`AccessPrincipal`とLLM利用権限がないrequestをprovider呼び出し、token計算、本文処理の前に拒否する。production endpointを匿名・無制限では起動しない。
+- rate limitの主keyは検証済みprincipalまたはdeployment access identityに結び付ける。`clientSessionId`、network bucket、IPは補助signalに限り、単独では本人性・利用権限・主rate keyにしない。IP等は本文ログやDomainへ保存せず、rate-limit storeの短いTTLを越えて保持しない。
 - 同一sessionの同時provider requestは一つに制限する。新規送信時に既存requestをcancelするか拒否するかはConversation UI実装Issueで一つに決める。
 
 具体的な数値上限はprovider / platform検証後にdeployment configとして決めるが、未設定なら無制限で起動せずfail closedにする。
@@ -137,12 +143,14 @@ HTTP statusはcontract validationを4xx、rate limitを429、timeoutを504、ups
 - provider側の保持、学習利用、data residency、削除、subprocessor条件を実装開始前に確認し、利用者へ送信対象、目的、provider処理、保持、停止方法を説明できない設定ではproductionを開始しない。
 - Conversation本文のprovider送信同意と、DailyLog / Calendar等の永続保存同意を同一視しない。LLM responseからCandidateを作る将来実装も既存の本人確認境界を迂回しない。
 
-### 9. Provider障害と将来認証を既存機能から隔離する
+### 9. Authorization gate、provider障害、将来認証を既存機能から隔離する
 
+- 初期preview / productionはprivate single-user deploymentに限定し、deployment platform access controlを暫定authorization方式として採用する。serverはplatformの検証済みidentityを`AccessPrincipal`へ変換し、endpoint利用権限を確認してからだけproviderを呼ぶ。
+- clientが送るidentity header、`clientSessionId`、`Origin` / `Referer`、CORS成功だけをauthorizationに使わない。platform identity headerを採用する場合は、platform ingressを迂回した直アクセスを拒否し、clientが同名headerを偽装できないことをdeployment testで確認する。
 - LLM endpoint、provider、secret、quotaが失敗しても、既存の手動DailyLog、Calendar、Life Timeline、backup / restore、決定的なConversation Captureを利用可能に保つ。
 - LLM failureを理由に既存Recordを変更・削除せず、未完成responseやCandidateを保存しない。
 - 初期serverless endpointはDomain Repositoryへwrite authorityを持たない。将来tool / actionを導入する場合も、読み取りとmutationを別port・別scope・本人confirmationで設計する。
-- 将来認証を導入した後のprincipalはserverがsession / tokenから確定し、client requestの`clientSessionId`や自己申告user IDを信用しない。user / tenant別quota、監査、data isolationを追加してもv1のprovider非依存contractを維持できるようにする。
+- 暫定platform access controlは、複数利用者への公開、利用者別data isolation / quota / audit、永続Conversation、user-scoped tool、個別課金のいずれかを開始する前に廃止する。その前にapplication-level認証済みsessionとserver-derived user / tenant principalへ移行し、user / tenant別authorization、quota、監査、data isolationを追加する。移行後もidentityをproviderへ送らず、v1のprovider非依存contractを維持する。
 
 ## 比較したdeployment案
 
@@ -160,6 +168,7 @@ HTTP statusはcontract validationを4xx、rate limitを429、timeoutを504、ups
 - clientはlocal / preview / productionで同じcontractを使い、provider交換や独立backend移行をadapter / deployment変更へ限定できる。
 - 非streaming、no automatic retry、単一providerにより初期UX機能は限定されるが、cancel、重複課金、privacy、監査の曖昧さを減らせる。
 - serverless runtime、secret manager、環境別quota、provider契約、監視の運用が新たに必要になる。
+- private single-user段階でもplatform access control、server-side authorization gate、identity別rate limitが必要になり、URL非公開やCORSだけではdeployできない。
 - LLMが利用不能でも既存のlocal-first記録機能を維持できる。
 
 ## 必須の不変条件
@@ -176,14 +185,17 @@ HTTP statusはcontract validationを4xx、rate limitを429、timeoutを504、ups
 10. LLM障害時も既存記録機能を利用可能に保つ。
 11. LLM responseや高confidenceを理由にRecord、Calendar、Formal UserModelを自動更新しない。
 12. local、preview、productionのsecret、quota、provider projectを共有しない。
+13. preview / production endpointを匿名公開せず、未認証・権限不足requestをprovider呼び出し前に拒否する。
+14. `Origin` / `Referer`、CORS、IP、`clientSessionId`を本人性または利用権限の根拠にしない。
+15. rate limitの主keyを検証済みprincipalまたはdeployment access identityへ結び付け、preview URLからproduction key / quotaへ到達させない。
 
 ## Open Questions
 
 1. **provider条件**: OpenAIの対象契約・projectで、保持、学習利用、data residency、削除、subprocessor、abuse monitoringをどの設定と説明で採用するか。
 2. **model alias**: 初期`modelAlias`へ対応させるmodel、品質 / latency / cost評価、変更gate、rollback期間をどう定めるか。
 3. **数値limit**: message件数、文字数、output token、timeout、環境別rate、audit retentionの初期値を何にするか。
-4. **未認証rate limit**: privacyを保ちながらnetwork bucketとephemeral sessionをどう実装し、共有networkの誤制限をどう回復するか。
-5. **認証導入時期**: preview / production公開前に認証を必須とするか、どのprincipal / tenant境界を採用するか。
+4. **暫定access control**: 採用platformのどのaccess identityと署名・headerを信頼し、ingress迂回をどう拒否するか。platform非対応時のapplication session方式、失効、復旧、break-glassをどうするか。
+5. **複数ユーザー移行**: private single-userからapplication-level認証へ移る具体時点、principal / tenant model、既存rate / audit keyの移行、暫定platform access controlの廃止手順をどう定めるか。
 6. **streaming移行条件**: 応答時間、離脱、読み上げ、cancel、provider portabilityがどの水準ならSSE contractを追加するか。
 7. **安全性**: prompt injection、危険な助言、医療・心理診断、content moderation、incident responseをどの別Decision / policyで扱うか。
 8. **個人文脈**: 将来、どのSourceを、どの本人同意・選択・as-of・削除境界でLLMへ追加できるか。
@@ -195,15 +207,16 @@ D-0020のAccepted後に、少なくとも次を独立Issueとして実装する�
 | Issue候補 | 変更範囲 | 非変更範囲 |
 | --- | --- | --- |
 | 共通HTTP contract | v1 schema、runtime validation、size / role拒否、共通response / error | provider SDK、UI、Domain write |
-| serverless handler基盤 | same-origin route、application service、abort / deadline、fake gateway | OpenAI接続、Conversation UI、認証 |
+| serverless handler基盤 | same-origin route、application service、authorization hook、abort / deadline、fake gateway | OpenAI接続、Conversation UI、複数ユーザー認証 |
+| private deployment authorization | platform access identity検証、`AccessPrincipal`、未認証 / 権限不足の事前拒否、ingress迂回拒否、環境分離 | public anonymous access、user / tenant data model、providerへのidentity送信 |
 | OpenAI adapter | `LlmGateway` adapter、server config、response / error正規化 | client SDK、multi-provider fallback、Domain write |
-| secret / environment deployment | local proxy、preview / production secret、origin、rotation、quota | provider契約、Conversation機能拡張 |
+| secret / environment deployment | local proxy、preview / production secret、platform access control、origin、rotation、quota | provider契約、Conversation機能拡張 |
 | prompt / privacy policy | server system instruction、prompt version、window選択、本文非logging | Calendar / DailyLog自動添付、会話履歴永続化 |
-| cost / abuse control | size、token、timeout、concurrency、rate limit、manual retry | 自動retry、課金dashboard UI、複数ユーザー課金 |
+| cost / abuse control | principal / access identity別のsize、token、timeout、concurrency、rate limit、manual retry | IP単独key、自動retry、課金dashboard UI、複数ユーザー課金 |
 | observability | 本文なしmetric / audit、redaction test、retention、alert | transcript analytics、Domain / backup保存 |
 | Conversation client接続 | loading、cancel、共通error、manual retry、非streaming assistant message | Candidate / Record自動保存、Calendar / UserModel mutation |
 | provider評価 | quality / latency / cost、privacy条件、model alias gate、rollback | production自動切替、オンライン学習 |
-| security / manual QA | secret leak scan、CORS、環境分離、provider停止、responsive / keyboard / cancel | 実機screen readerを未実施のまま合格扱いすること |
+| security / manual QA | secret leak scan、未認証curl拒否、identity header偽装・ingress迂回拒否、CORSは補助であること、preview URL漏洩時のproduction分離、provider停止、responsive / keyboard / cancel | 実機screen readerを未実施のまま合格扱いすること |
 
 ## Non-goals
 
