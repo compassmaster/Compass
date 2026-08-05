@@ -11,11 +11,17 @@ Life TimelineはCalendar Event、DailyLog、SleepRecord、Weatherを別recordTyp
 
 Calendarは360px、390px、768px、desktop、Conversation Calendar CaptureとLife Timelineはdesktopで表示を実ブラウザ確認済みである。Tab / Shift+Tabによるfocus移動もdesktopで確認した。各幅で全機能操作を通し実行したという意味ではなく、機能・保存境界は自動テストとコード・設計確認による。360px / 390pxの上部navigationは9タブの3列Gridである。物理端末soft keyboardとscreen reader実読み上げは未実施。
 
-未実装: LLM自由会話理解、Conversation履歴永続化、Google Calendar等との外部同期、通知・リマインダー、production ML学習・推論、ウェアラブル実連携、CalendarからFormal UserModelへの直接更新。#115 / #116は非blocking UX follow-up、#117はStage 3後の設計・研究候補である。詳細は `docs/qa/STAGE3_CALENDAR_LIFE_TIMELINE_QA_2026-08-04.md` を参照する。
+未実装: LLM自由会話理解、Conversation履歴永続化、Google Calendar等との外部同期、通知・リマインダー、production ML学習・推論、ウェアラブル実連携、CalendarからFormal UserModelへの直接更新。#115 / #116は非blocking UX follow-up。#117はD-0019として設計中だが、二軸入力・保存・Analysis・ML・予定提案は未実装である。詳細は `docs/qa/STAGE3_CALENDAR_LIFE_TIMELINE_QA_2026-08-04.md` を参照する。
 
 ## 過去の実装履歴
 
 以下の日付別記録の「未実装」はその時点の履歴であり、このCurrent implementation節を上書きしない。
+
+## 2026-08-05 D-0019疲労次元設計（Issue #117）
+
+D-0019は既存`DailyLog.fatigue`を総合／未分離の値として維持し、将来の`physicalFatigue` / `mentalFatigue`をoptional・独立・非合算とする。既存Recordを二軸へbackfillせず、会話の未確認Candidateを保存せず、センサーを自己申告疲労値として扱わない。social energyは独立軸化を保留する。
+
+`ML_READY_DATASET_V1`と既存評価計画の意味は変更しない。二軸は将来のV2でtarget / missing / source audit / evaluationを軸別に定義する。予定提案はread-onlyな複数候補で、Calendarを自動作成・変更せず、Formal UserModelを直接更新しない。本PRはdocs-onlyであり実装状態は変わらない。
 
 
 ## 2026-08-03 CalendarEventRecord repository / backup（Issue #93）
