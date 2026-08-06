@@ -1,5 +1,11 @@
 # Compass Agent Instructions
 
+## 2026-08-06 provider-independent Conversation foundation（Issue #133）
+
+D-0020 / D-0021に従い、provider非依存の`ConversationSessionV1`、USER / ASSISTANT message、message外のrequest / notice、単一active request、request lifecycle / adoption guard、`CONVERSATION_CONTEXT_V1` selector、request coordinatorを実装した。manual retryは同じUSER messageと新request IDを使い、conversation generation、session / request / trigger message ID、attempt、phaseが一致しないoutcomeを破棄する。
+
+active Capture、決定論的intent、`UNKNOWN` free-form fallbackのrouting priorityとCapture中lockを維持し、success / deferred / cancel / timeout等を制御できるin-memory fake gatewayを最小UIへ接続した。contextはeligibleなcompleted自由会話の最新12件・12,000 Unicode code points以内だけで、Candidate / Domain dataを含めない。OpenAI adapter、API endpoint、secret、deployment、会話履歴永続化、疲労推定、LLM Candidate生成・Domain更新は未実装である。
+
 <!-- STAGE3_COMPLETION_2026_08_04 -->
 ## Current implementation — Stage 3 completed（Issue #120）
 

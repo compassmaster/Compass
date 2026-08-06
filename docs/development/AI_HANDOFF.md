@@ -1,5 +1,14 @@
 # AI Handoff Document
 
+## 2026-08-06 Issue #133 implementation handoff
+
+- `ConversationSessionV1`、USER / ASSISTANT message、request / notice、単一active request、cancel / retry / reset lifecycleをprovider非依存・in-memoryで実装した。
+- adoption guardはconversation generation、session / request / trigger message ID、attempt、phaseを照合し、stale / cancel-late / reset-late / retry前 / duplicate / out-of-order outcomeを破棄する。retryはUSER messageを複製しない。
+- `CONVERSATION_CONTEXT_V1`はeligibleなcompleted自由会話の最新12件・12,000 Unicode code points以内だけを選ぶ。context traceは本文を持たず、CandidateやDomain dataを含めない。
+- active Capture、決定論的intent、`UNKNOWN` free-form fallbackのrouting priorityとCapture中lockを維持した。fake gatewayはsuccess / deferred / cancel / timeout等を決定的に再現し、networkや実providerへ接続しない。
+- `conversation reset`は自由会話stateだけをclearしてgenerationを増やし、DailyLog / Calendar Capture state、Candidate、receipt、却下抑制を維持する。
+- OpenAI adapter、API route / endpoint、secret、deployment、認証、会話履歴永続化、疲労推定、LLM Candidate生成・Domain更新は未実装である。
+
 <!-- STAGE3_COMPLETION_2026_08_04 -->
 ## Current handoff — Stage 3 completed（Issue #120）
 

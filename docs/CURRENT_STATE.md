@@ -5,6 +5,12 @@ usedBy: []
 lastUpdated: "2026-08-06"
 ---
 
+## 2026-08-06 provider非依存Conversation session基盤（Issue #133）
+
+D-0020 / D-0021に従い、provider非依存の`ConversationSessionV1`、request lifecycle / adoption guard、`CONVERSATION_CONTEXT_V1` selector、request coordinator、制御可能なin-memory fake gatewayを実装した。単一active request、cancel / retry / reset、stale / duplicate / out-of-order outcome破棄、Capture優先routing、Capture中のcomposer lockを含む。`conversation reset`は自由会話stateだけをclearし、DailyLog / Calendar Capture state、Candidate、receipt、却下抑制を維持する。
+
+fake gatewayはsuccess / deferred / cancel / timeout等を決定的に再現するが実providerへ通信しない。OpenAI adapter、API endpoint、secret、deployment、会話履歴永続化、疲労推定、LLM Candidate生成・Domain更新は未実装である。
+
 <!-- STAGE3_COMPLETION_2026_08_04 -->
 # Current State (現在のプロジェクト状況)
 

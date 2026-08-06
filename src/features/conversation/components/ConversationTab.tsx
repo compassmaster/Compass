@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import type { CaptureCommitOutcome, CaptureCommitRequest, DailyLogCapturePayload } from '../types/captureCandidate.ts';
 import type { ConversationSession } from '../session/conversationSession.ts';
-import { answerActiveDailyLogCaptureFlow, applyActiveCaptureCandidateEdit, backActiveDailyLogCaptureFlow, beginActiveCaptureCandidateEdit, cancelActiveCaptureCandidate, cancelActiveDailyLogCaptureFlow, completeActiveDailyLogCaptureFlow, confirmActiveProposedCaptureCandidate, markActiveCaptureCandidateReady, rejectActiveCaptureCandidate, requestActiveCaptureCandidateCommit, retryActiveCaptureCandidate, transitionConversationSession } from '../session/conversationSession.ts';
+import { answerActiveDailyLogCaptureFlow, appendDeterministicAssistantMessage, applyActiveCaptureCandidateEdit, backActiveDailyLogCaptureFlow, beginActiveCaptureCandidateEdit, cancelActiveCaptureCandidate, cancelActiveDailyLogCaptureFlow, completeActiveDailyLogCaptureFlow, confirmActiveProposedCaptureCandidate, markActiveCaptureCandidateReady, rejectActiveCaptureCandidate, requestActiveCaptureCandidateCommit, retryActiveCaptureCandidate, transitionConversationSession } from '../session/conversationSession.ts';
 import { CaptureCandidateReviewCard } from './CaptureCandidateReviewCard.tsx';
 import { emptyCaptureCommitRequestGuard, recordCaptureCommitRequest, synchronizeCaptureCommitRequestGuard } from './captureCommitRequestGuard.ts';
 import { executeConversationAction, type ConversationActionCallbacks } from '../actions/conversationActionDispatcher.ts';
@@ -15,6 +15,11 @@ import { executeCaptureCommit } from '../application/captureCommitExecutor.ts';
 import type { DailyLogNavigationTarget } from '../../daily-log/types/navigation.ts';
 import { CalendarCaptureCard } from './CalendarCaptureCard.tsx';
 import { answerCalendarCapture, applyCalendarCandidateEdit, beginCalendarCandidateEdit, beginCalendarCommit, closeCommittedCalendarReceipt, confirmCalendarCandidate, rejectCalendarCandidate, type CalendarCommitRequest } from '../calendar/calendarCapture.ts';
+import type { ConversationGateway, ConversationGatewayRequestV1 } from '../application/conversationGateway.ts';
+import { executeConversationGateway, resolveConversationSubmitRoute } from '../application/freeConversationCoordinator.ts';
+import { applyConversationGatewayOutcome, beginFreeConversation, cancelFreeConversation, retryFreeConversation } from '../session/freeConversationSession.ts';
+
+const createRequestId = (): string => globalThis.crypto?.randomUUID?.() ?? `request-${Date.now()}`;
 
 type ConversationTabProps = {
   session: ConversationSession;
@@ -32,6 +37,7 @@ type ConversationTabProps = {
   onCaptureCommitRequest: (request: CaptureCommitRequest) => CaptureCommitOutcome | Promise<CaptureCommitOutcome>;
   onCalendarCommit: (request: CalendarCommitRequest) => void;
   onNavigateToCalendarRecord: (receipt: { recordId: string; targetDate: string }) => void;
+  gateway: ConversationGateway;
 };
 
 export function ConversationTab({
@@ -50,6 +56,7 @@ export function ConversationTab({
   onCaptureCommitRequest,
   onCalendarCommit,
   onNavigateToCalendarRecord,
+  gateway,
 }: ConversationTabProps) {
   const [draft, setDraft] = useState('');
   const [announcement, setAnnouncement] = useState<ConversationAnnouncement | null>(null);
@@ -62,6 +69,7 @@ export function ConversationTab({
   const captureCommitGuardRef = useRef(emptyCaptureCommitRequestGuard());
   const reviewRef = useRef<HTMLElement>(null);
   const sessionRef = useRef(session);
+  const gatewayAbortRef = useRef<{ requestId: string; controller: AbortController } | null>(null);
 
   useLayoutEffect(() => {
     sessionRef.current = session;
@@ -99,12 +107,39 @@ export function ConversationTab({
     setAnnouncement(toConversationAnnouncement(nextSession.messages.at(-1)));
   };
 
+  const executeGatewayRequest = (nextSession: ConversationSession, request: ConversationGatewayRequestV1) => {
+    const controller = new AbortController();
+    gatewayAbortRef.current = { requestId: request.requestId, controller };
+    applySession(nextSession);
+    void executeConversationGateway(gateway, request, controller.signal).then((outcome) => {
+      if (gatewayAbortRef.current?.requestId === request.requestId) gatewayAbortRef.current = null;
+      const current = sessionRef.current;
+      const applied = applyConversationGatewayOutcome(current, outcome, new Date().toISOString());
+      if (applied !== current) applySession(applied);
+    });
+  };
+
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (draft.trim().length === 0 || submittingRef.current) return;
     submittingRef.current = true;
     const occurredAt = new Date().toISOString();
-    applySession(transitionConversationSession(session, { type: 'SUBMIT_TEXT', text: draft, occurredAt }));
+    const current = sessionRef.current;
+    const route = resolveConversationSubmitRoute(current, draft);
+    if (route.kind === 'ACTIVE_CAPTURE') {
+      submittingRef.current = false;
+      return;
+    }
+    if (route.kind === 'FREE_FORM') {
+      const begun = beginFreeConversation(current, { text: draft, occurredAt, requestId: createRequestId() });
+      if (!begun.ok) {
+        submittingRef.current = false;
+        return;
+      }
+      executeGatewayRequest(begun.session, begun.request);
+    } else {
+      applySession(transitionConversationSession(current, { type: 'SUBMIT_TEXT', text: draft, occurredAt }));
+    }
     setDraft('');
     focusInput();
   };
@@ -119,9 +154,27 @@ export function ConversationTab({
     submittingRef.current = false;
     setDraft('');
     claimedActionIdsRef.current.clear();
-    applySession(transitionConversationSession(session, { type: 'RESET' }));
+    const current = sessionRef.current;
+    const cancelled = cancelFreeConversation(current, new Date().toISOString());
+    gatewayAbortRef.current?.controller.abort();
+    gatewayAbortRef.current = null;
+    applySession(transitionConversationSession(cancelled, { type: 'RESET' }));
     shouldFollowMessagesRef.current = true;
     requestAnimationFrame(focusInput);
+  };
+
+  const handleCancelFreeConversation = () => {
+    const current = sessionRef.current;
+    const cancelled = cancelFreeConversation(current, new Date().toISOString());
+    applySession(cancelled);
+    gatewayAbortRef.current?.controller.abort();
+    gatewayAbortRef.current = null;
+    requestAnimationFrame(focusInput);
+  };
+
+  const handleRetryFreeConversation = () => {
+    const retried = retryFreeConversation(sessionRef.current, { occurredAt: new Date().toISOString(), requestId: createRequestId() });
+    if (retried.ok) executeGatewayRequest(retried.session, retried.request);
   };
 
   const actionCallbacks: ConversationActionCallbacks = {
@@ -174,18 +227,20 @@ export function ConversationTab({
   const calendarCaptureInProgress = Boolean(session.calendarCapture.flow || (session.calendarCapture.candidate && session.calendarCapture.candidate.status !== 'COMMITTED'));
   const dailyLogCaptureInProgress = Boolean(session.dailyLogCaptureFlow || (session.activeCaptureCandidate && session.activeCaptureCandidate.status !== 'COMMITTED'));
   const captureInProgress = calendarCaptureInProgress || dailyLogCaptureInProgress;
+  const freeConversationSending = session.request.phase === 'SENDING';
+  const composerLocked = captureInProgress || freeConversationSending;
 
   return (
     <section className="conversation" aria-labelledby="conversation-title">
       <header className="conversation-heading">
         <p className="conversation-eyebrow">CONVERSATION</p>
         <h2 id="conversation-title">いま、何を一緒に考えましょうか</h2>
-        <p>この会話は同じページを開いている間だけ保持され、再読み込みすると消えます。現在は自由文の理解・分析・保存には対応していません。</p>
+        <p>この会話は同じページを開いている間だけ保持され、再読み込みすると消えます。自由会話はprovider未接続のfake gatewayで動作し、内容の保存やDomain更新は行いません。</p>
       </header>
       <div ref={messagesRef} className="conversation-messages" role="list" aria-label="メッセージ一覧" tabIndex={0} onScroll={(event) => onScrollPositionChange(event.currentTarget.scrollTop)}>
         {session.messages.map((message) => (
-          <article key={message.id} role="listitem" className={`conversation-message conversation-message-${message.role}`} aria-label={`${message.role === 'assistant' ? 'Compass' : 'あなた'}のメッセージ`}>
-            <span className="conversation-speaker">{message.role === 'assistant' ? 'Compass' : 'あなた'}</span>
+          <article key={message.id} role="listitem" className={`conversation-message conversation-message-${message.role.toLowerCase()}`} aria-label={`${message.role === 'ASSISTANT' ? 'Compass' : 'あなた'}のメッセージ`}>
+            <span className="conversation-speaker">{message.role === 'ASSISTANT' ? 'Compass' : 'あなた'}</span>
             <p>{message.text}</p>
             {message.action && (
               <button
@@ -204,7 +259,7 @@ export function ConversationTab({
         onBack={() => onSessionChange(backActiveDailyLogCaptureFlow(session).session)}
         onCancel={() => { onSessionChange(cancelActiveDailyLogCaptureFlow(session).session); requestAnimationFrame(focusInput); }} />}
       {(session.calendarCapture.flow || session.calendarCapture.candidate) && <CalendarCaptureCard key={`${session.calendarCapture.generation}-${session.calendarCapture.flow?.step ?? session.calendarCapture.candidate?.status}`} capture={session.calendarCapture}
-        onAnswer={(value) => { const result = answerCalendarCapture(session.calendarCapture, value); const notice = result.suppressed ? { id: `message-${session.nextMessageNumber}`, role: 'assistant' as const, text: '同じ内容の候補は、この会話で以前「保存しない」と選ばれたため再表示しませんでした。内容が異なる予定は追加できます。' } : null; onSessionChange({ ...session, calendarCapture: result.state, messages: notice ? [...session.messages, notice] : session.messages, nextMessageNumber: notice ? session.nextMessageNumber + 1 : session.nextMessageNumber }); return result.error; }} onConfirmAndCommit={() => { const current = sessionRef.current; const confirmed = confirmCalendarCandidate(current.calendarCapture); const begun = beginCalendarCommit(confirmed); if (!begun.request) return; applySession({ ...current, calendarCapture: begun.state }); onCalendarCommit(begun.request); }} onBeginEdit={() => onSessionChange({ ...session, calendarCapture: beginCalendarCandidateEdit(session.calendarCapture) })} onApplyEdit={(value) => { const result = applyCalendarCandidateEdit(session.calendarCapture, value); onSessionChange({ ...session, calendarCapture: result.state }); return result.error; }} onReject={() => onSessionChange({ ...session, calendarCapture: rejectCalendarCandidate(session.calendarCapture) })} onCancel={() => onSessionChange({ ...session, calendarCapture: { ...session.calendarCapture, flow: null } })}
+        onAnswer={(value) => { const result = answerCalendarCapture(session.calendarCapture, value); const updated = { ...session, calendarCapture: result.state }; onSessionChange(result.suppressed ? appendDeterministicAssistantMessage(updated, '同じ内容の候補は、この会話で以前「保存しない」と選ばれたため再表示しませんでした。内容が異なる予定は追加できます。', new Date().toISOString()) : updated); return result.error; }} onConfirmAndCommit={() => { const current = sessionRef.current; const confirmed = confirmCalendarCandidate(current.calendarCapture); const begun = beginCalendarCommit(confirmed); if (!begun.request) return; applySession({ ...current, calendarCapture: begun.state }); onCalendarCommit(begun.request); }} onBeginEdit={() => onSessionChange({ ...session, calendarCapture: beginCalendarCandidateEdit(session.calendarCapture) })} onApplyEdit={(value) => { const result = applyCalendarCandidateEdit(session.calendarCapture, value); onSessionChange({ ...session, calendarCapture: result.state }); return result.error; }} onReject={() => onSessionChange({ ...session, calendarCapture: rejectCalendarCandidate(session.calendarCapture) })} onCancel={() => onSessionChange({ ...session, calendarCapture: { ...session.calendarCapture, flow: null } })}
         onCommit={() => { const begun = beginCalendarCommit(sessionRef.current.calendarCapture); if (!begun.request) return; applySession({ ...sessionRef.current, calendarCapture: begun.state }); onCalendarCommit(begun.request); }} onNavigate={onNavigateToCalendarRecord} onDismissReceipt={() => { onSessionChange({ ...session, calendarCapture: closeCommittedCalendarReceipt(session.calendarCapture) }); requestAnimationFrame(focusInput); }} />}
       {session.activeCaptureCandidate && <CaptureCandidateReviewCard ref={reviewRef} candidate={session.activeCaptureCandidate}
         onBeginEdit={() => onSessionChange(beginActiveCaptureCandidateEdit(session, new Date().toISOString()).session)}
@@ -219,12 +274,15 @@ export function ConversationTab({
       <p className="conversation-live-region" aria-live="polite" aria-atomic="true">
         {announcement && <span key={announcement.messageId}>{announcement.text}</span>}
       </p>
+      {session.notice && <p className="conversation-request-notice" role={session.notice.kind === 'ERROR' ? 'alert' : 'status'}>{session.notice.message}</p>}
       <form className="conversation-composer" onSubmit={handleSubmit}>
         <label htmlFor="conversation-input">自由に書く</label>
-        <textarea ref={inputRef} id="conversation-input" value={draft} disabled={captureInProgress} onChange={(event) => setDraft(event.target.value)} onKeyDown={handleKeyDown} placeholder={session.dailyLogCaptureFlow ? '現在の記録を完了または取消してください' : '今の気持ちや、考えたいことを書いてください'} rows={3} />
+        <textarea ref={inputRef} id="conversation-input" value={draft} disabled={composerLocked} onChange={(event) => setDraft(event.target.value)} onKeyDown={handleKeyDown} placeholder={captureInProgress ? '現在の記録を完了または取消してください' : freeConversationSending ? '応答を待っています' : '今の気持ちや、考えたいことを書いてください'} rows={3} />
         <div className="conversation-composer-actions">
-          <button type="button" className="conversation-reset" onClick={handleReset}>会話を最初から始める</button>
-          <button type="submit" disabled={draft.trim().length === 0 || captureInProgress} aria-disabled={draft.trim().length === 0 || captureInProgress}>{captureInProgress ? '記録を進行中' : draft.trim().length === 0 ? '送信（入力待ち）' : '送信'}</button>
+          <button type="button" className="conversation-reset" onClick={handleReset}>自由会話をリセット</button>
+          {freeConversationSending && <button type="button" onClick={handleCancelFreeConversation}>応答をキャンセル</button>}
+          {session.request.phase === 'FAILED' && session.request.error?.retryable && <button type="button" onClick={handleRetryFreeConversation}>応答を再試行</button>}
+          <button type="submit" disabled={draft.trim().length === 0 || composerLocked} aria-disabled={draft.trim().length === 0 || composerLocked}>{captureInProgress ? '記録を進行中' : freeConversationSending ? '応答待ち' : draft.trim().length === 0 ? '送信（入力待ち）' : '送信'}</button>
         </div>
       </form>
       <aside className="conversation-quick-actions" aria-labelledby="quick-actions-title">

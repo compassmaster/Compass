@@ -1,4 +1,5 @@
-import type { Message } from '../types/message.ts';
+import type { ConversationMessageV1, Message } from '../types/message.ts';
+import { createIdleConversationRequest, type ConversationSessionV1 } from '../types/conversationSession.ts';
 import type { DailyLogRecordChange } from '../../daily-log/types/navigation.ts';
 import type { DailyLogNavigationTarget } from '../../daily-log/types/navigation.ts';
 import type { EntryId } from '../../daily-log/types/log.ts';
@@ -10,25 +11,77 @@ import { applyCaptureCandidateEdit, beginCaptureCandidateCommit, beginCaptureCan
 import { answerDailyLogCaptureStep, cancelDailyLogCaptureFlow, completeDailyLogCaptureFlow, moveBackDailyLogCaptureFlow, startDailyLogCaptureFlow, type DailyLogCaptureAnswer, type DailyLogCaptureFlow } from './dailyLogCaptureFlow.ts';
 import { emptyCalendarCaptureState, startExtractedCalendarCapture, type CalendarCaptureState } from '../calendar/calendarCapture.ts';
 import { extractCalendarInput } from '../calendar/calendarInputExtractor.ts';
+import { resetFreeConversation } from './freeConversationSession.ts';
 
-export type ConversationSession = { messages: Message[]; nextMessageNumber: number; activeCaptureCandidate: CaptureCandidate | null; dailyLogCaptureFlow: DailyLogCaptureFlow | null; calendarCapture: CalendarCaptureState; rejectedDeduplicationKeys: string[] };
+export type ConversationSession = ConversationSessionV1 & {
+  messages: Message[];
+  activeCaptureCandidate: CaptureCandidate | null;
+  dailyLogCaptureFlow: DailyLogCaptureFlow | null;
+  calendarCapture: CalendarCaptureState;
+  rejectedDeduplicationKeys: string[];
+};
 export type ConversationSessionEvent =
   | { type: 'SUBMIT_TEXT'; text: string; occurredAt: string }
   | { type: 'RESET' };
 
 const WELCOME_MESSAGE = 'こんにちは。今の気持ちや考えていることを、まとまっていなくても自由に書けます。';
 const CAPTURE_SUPPRESSED_MESSAGE = '以前この候補は保存しないと選択されたため、再表示しませんでした。新しい内容を記録する場合は、もう一度「記録したい」と送ってください。';
-export function createConversationSession(): ConversationSession {
-  return { messages: [{ id: 'message-0', role: 'assistant', text: WELCOME_MESSAGE }], nextMessageNumber: 1, activeCaptureCandidate: null, dailyLogCaptureFlow: null, calendarCapture: emptyCalendarCaptureState(), rejectedDeduplicationKeys: [] };
+const createSessionId = (): string => globalThis.crypto?.randomUUID?.() ?? `conversation-${Date.now()}`;
+
+export function createConversationSession(options: { sessionId?: string; createdAt?: string } = {}): ConversationSession {
+  const id = options.sessionId ?? createSessionId();
+  const createdAt = options.createdAt ?? new Date().toISOString();
+  return {
+    id,
+    conversationGeneration: 0,
+    createdAt,
+    messages: [{ id: 'message-0', sessionId: id, sequence: 0, role: 'ASSISTANT', text: WELCOME_MESSAGE, createdAt, source: 'DETERMINISTIC', contextEligible: false, status: 'COMPLETED' }],
+    nextSequence: 1,
+    request: createIdleConversationRequest(),
+    notice: null,
+    contextTrace: null,
+    activeCaptureCandidate: null,
+    dailyLogCaptureFlow: null,
+    calendarCapture: emptyCalendarCaptureState(),
+    rejectedDeduplicationKeys: [],
+  };
+}
+
+const deterministicMessage = (session: ConversationSession, input: {
+  sequence: number;
+  role: ConversationMessageV1['role'];
+  text: string;
+  createdAt: string;
+  action?: ConversationMessageV1['action'];
+}): ConversationMessageV1 => ({
+  id: `message-${input.sequence}`,
+  sessionId: session.id,
+  sequence: input.sequence,
+  role: input.role,
+  text: input.text,
+  createdAt: input.createdAt,
+  source: 'DETERMINISTIC',
+  contextEligible: false,
+  status: 'COMPLETED',
+  ...(input.action ? { action: input.action } : {}),
+});
+
+export function appendDeterministicAssistantMessage(session: ConversationSession, text: string, createdAt: string): ConversationSession {
+  return {
+    ...session,
+    messages: [...session.messages, deterministicMessage(session, { sequence: session.nextSequence, role: 'ASSISTANT', text, createdAt })],
+    nextSequence: session.nextSequence + 1,
+  };
 }
 
 export function transitionConversationSession(session: ConversationSession, event: ConversationSessionEvent): ConversationSession {
-  if (event.type === 'RESET') return createConversationSession();
+  if (event.type === 'RESET') return resetFreeConversation(session);
 
   const text = event.text.trim();
   if (text.length === 0) return session;
-  const userMessageNumber = session.nextMessageNumber;
+  const userMessageNumber = session.nextSequence;
   const assistantMessageNumber = userMessageNumber + 1;
+  const userMessage = deterministicMessage(session, { sequence: userMessageNumber, role: 'USER', text, createdAt: event.occurredAt });
   const intent = interpretConversationInput(text);
   const validOccurredAt = event.occurredAt.trim() !== '' && !Number.isNaN(Date.parse(event.occurredAt));
   let response = session.dailyLogCaptureFlow
@@ -38,7 +91,7 @@ export function transitionConversationSession(session: ConversationSession, even
   if (intent === 'RECORD_DAILY_LOG' && !dailyLogCaptureFlow && session.activeCaptureCandidate) response = buildDailyLogCaptureBlockedResponse();
   else if (intent === 'RECORD_DAILY_LOG' && !dailyLogCaptureFlow && !validOccurredAt) response = buildInvalidConversationOccurredAtResponse();
   else if (intent === 'RECORD_DAILY_LOG' && !session.activeCaptureCandidate && !dailyLogCaptureFlow) {
-    const started = startDailyLogCaptureFlow(null, { sourceMessageId: `message-${userMessageNumber}`, sourceExcerpt: text, startedAt: event.occurredAt, deduplicationKey: `daily-log-flow-${userMessageNumber}` });
+    const started = startDailyLogCaptureFlow(null, { sourceMessageId: userMessage.id, sourceExcerpt: text, startedAt: event.occurredAt, deduplicationKey: `daily-log-flow-${userMessageNumber}` });
     if (started.ok) dailyLogCaptureFlow = started.flow;
   }
   let calendarCapture = session.calendarCapture;
@@ -55,12 +108,13 @@ export function transitionConversationSession(session: ConversationSession, even
     }
   }
   return {
+    ...session,
     messages: [
       ...session.messages,
-      { id: `message-${userMessageNumber}`, role: 'user', text },
-      { id: `message-${assistantMessageNumber}`, role: 'assistant', ...response },
+      userMessage,
+      deterministicMessage(session, { sequence: assistantMessageNumber, role: 'ASSISTANT', text: response.text, createdAt: event.occurredAt, action: response.action }),
     ],
-    nextMessageNumber: assistantMessageNumber + 1,
+    nextSequence: assistantMessageNumber + 1,
     activeCaptureCandidate: session.activeCaptureCandidate,
     dailyLogCaptureFlow,
     calendarCapture,
@@ -83,15 +137,15 @@ export function cancelActiveDailyLogCaptureFlow(session: ConversationSession): D
 }
 export function completeActiveDailyLogCaptureFlow(session: ConversationSession, now: string): DailyLogFlowSessionResult {
   if (session.activeCaptureCandidate) return { session, error: 'ACTIVE_CANDIDATE_EXISTS' };
-  const result = completeDailyLogCaptureFlow(session.dailyLogCaptureFlow, { id: `capture-${session.nextMessageNumber}`, createdAt: now });
+  const result = completeDailyLogCaptureFlow(session.dailyLogCaptureFlow, { id: `capture-${session.nextSequence}`, createdAt: now });
   if (!result.ok) return { session, error: result.reason };
   const presented = presentCaptureCandidate({ ...session, dailyLogCaptureFlow: null }, result.candidate);
   if (presented.error === 'CAPTURE_SUPPRESSED') {
     return {
       session: {
         ...presented.session,
-        messages: [...presented.session.messages, { id: `message-${session.nextMessageNumber}`, role: 'assistant', text: CAPTURE_SUPPRESSED_MESSAGE }],
-        nextMessageNumber: session.nextMessageNumber + 1,
+        messages: [...presented.session.messages, deterministicMessage(session, { sequence: session.nextSequence, role: 'ASSISTANT', text: CAPTURE_SUPPRESSED_MESSAGE, createdAt: now })],
+        nextSequence: session.nextSequence + 1,
       },
       error: presented.error,
     };
