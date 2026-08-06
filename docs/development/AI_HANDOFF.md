@@ -37,6 +37,16 @@
 - 初期responseは非streaming、provider自動retryなし。serverがvalidation、timeout、cancel propagation、rate / size / token / concurrency limitを強制する。
 - preview / productionはplatform access controlで保護するprivate single-user deploymentに限定する。serverは検証済みaccess identityからprincipalを作り、未認証・権限不足requestをprovider呼び出し前に拒否する。CORS / Origin / Referer、IP、client sessionは本人性の根拠にせず、rate limitをprincipal / access identityへ結び付ける。
 - preview URLだけではauthorizationを通過できず、preview key / project / quotaからproductionへ到達させない。複数利用者、user別data / quota / audit、永続Conversation、user-scoped tool、個別課金の前にapplication-level認証へ移行し、暫定platform access controlを廃止する。
+
+## 2026-08-06 D-0021 Conversation session / transient context設計（Issue #131）
+
+- 初期sessionは一runtime一つのin-memory stateで、reload / tab close / reset後に復元しない。browser storage、Repository、backupへsession / transcript / request / context traceを追加しない。
+- messageはcompletedなUSER / ASSISTANTだけとし、SYSTEMはserver-side、error / status / loading / Candidateはmessage外の一時stateに置く。
+- 一session一active LLM requestとし、`SENDING`中の二重submitを拒否する。session ID / generation、request ID、trigger message ID、phaseが一致するresponseだけを採用し、cancel / reset / retry後の遅着を捨てる。
+- retryはretryableな`FAILED`に対する本人操作だけで、同じUSER message、新しいrequest ID、増加したattemptを使う。自動retryとUSER message再追加は禁止する。
+- `CONVERSATION_CONTEXT_V1`はLLM自由会話のeligibleなcompleted messageだけを最新12件・12,000 Unicode code points以内で送る。Calendar / DailyLog / 健康情報 / UserModel / Candidateを自動添付せず、本文を通常logへ残さない。
+- route priorityはactive Capture、既存の決定論的intent、Captureなしの`UNKNOWN` LLM fallbackの順。Capture中は自由会話composerをlockし、LLM responseへCandidate / Record mutation authorityを与えない。
+- D-0021はdocs-onlyである。実装開始時はsession domain、request coordinator、context selector、D-0020 HTTP metadata alignment、Capture lock、error UI、privacy / lifecycle testを別Issueへ分ける。
 - provider障害時も既存記録機能を利用可能に保ち、LLM responseからRecord、Calendar、Formal UserModelを自動更新しない。
 - 本変更はdocs-only。LLM接続、API route、型、secret、deployment、認証、Conversation UI、会話履歴永続化、Candidate生成は未実装。
 

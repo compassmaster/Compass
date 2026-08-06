@@ -4,7 +4,7 @@ dependsOn:
   - docs/03_要件定義.md
 usedBy:
   - src/
-lastUpdated: "2026-08-05"
+lastUpdated: "2026-08-06"
 ---
 # Architecture Directory
 
@@ -18,3 +18,4 @@ Compassのシステムアーキテクチャやデータフロー設計に関す�
 - [D-0018 Calendar / Life Timeline の Domain・保存境界](D-0018-calendar-life-timeline-boundary.md): CalendarEventRecord、時間・timezone、Conversation provenance、privacy・ML・revision、読み取り専用Timelineの境界。
 - [D-0019 身体的疲労・精神的疲労と予定提案の境界](D-0019-fatigue-dimensions-and-scheduling-boundary.md): 既存fatigueの後方互換、二軸の定義、入力・欠損・social energy・予定提案・ML versioningの境界。
 - [D-0020 自由会話のLLM provider・secret・deployment境界](D-0020-llm-provider-secret-and-deployment-boundary.md): provider abstraction、server-side secret、環境別serverless構成、共通contract、privacy・cost controlの境界。
+- [D-0021 自由会話のConversation sessionと一時文脈](D-0021-conversation-session-and-transient-context.md): 非永続session / message、request lifecycle、順序・cancel・retry、有限context、決定論的Captureとの優先順位。

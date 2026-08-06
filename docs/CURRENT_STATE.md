@@ -2,7 +2,7 @@
 status: Active
 dependsOn: []
 usedBy: []
-lastUpdated: "2026-08-05"
+lastUpdated: "2026-08-06"
 ---
 
 <!-- STAGE3_COMPLETION_2026_08_04 -->
@@ -47,6 +47,12 @@ D-0019をProposedとして追加した。現在の`DailyLog.fatigue`、schema v1
 [D-0020](architecture/D-0020-llm-provider-secret-and-deployment-boundary.md)をProposedとして追加した。初期provider adapterはOpenAI、deploymentは同一repositoryで管理するsame-origin serverless APIとし、localだけは同じcontractを実装するlocal proxyを使う。UI / Domainはprovider SDKを呼ばず、browserからproviderへ直接接続しない。secretはserver runtimeだけに置き、client bundle、browser storage、backup、logへ含めない。
 
 client requestは有限の自由会話windowだけとし、Calendar、DailyLog、健康情報、UserModelを自動添付しない。初期responseは非streaming、provider自動retryなしとし、serverがtimeout、cancel propagation、rate / size / token / concurrency limitを強制する。preview / productionはplatform access controlで保護したprivate single-user deploymentに限定し、検証済みidentityがないrequestはprovider呼び出し前に拒否する。CORS、Origin、IP、client sessionは本人性の根拠にせず、rate limitをaccess identityへ結び付ける。LLM障害時も既存のDailyLog / Calendar等を利用可能に保つ。本変更はdocs-onlyで、LLM接続、API endpoint、secret、deployment、認証、UI、会話永続化、Domain更新を実装していない。
+
+## 2026-08-06 自由会話Conversation session・一時文脈設計（Issue #131）
+
+[D-0021](architecture/D-0021-conversation-session-and-transient-context.md)をProposedとして追加した。一つのruntimeに一つのin-memory sessionを置き、USER / ASSISTANT messageとrequest / error / status / Candidateを分離する。単一active request、session generation・request ID・trigger message IDによるadoption guard、明示cancel、USER messageを複製しないmanual retryを定義した。
+
+自由会話contextは`CONVERSATION_CONTEXT_V1`のeligibleなcompleted messageの最新suffixだけとし、最大12 messages / 12,000 Unicode code pointsに制限する。Calendar、DailyLog、健康情報、Formal UserModel、Candidateを自動添付せず、本文を通常logへ残さない。active Capture、決定論的intent、`UNKNOWN` LLM fallbackの順に処理し、Capture中は自由会話をlockする。session / transcriptはreloadで失われ、browser storage、Repository、backupへ保存しない。本変更はdocs-onlyで、session型、state machine、endpoint、OpenAI adapter、UI、履歴永続化、Candidate / Domain更新を実装していない。
 
 ## 過去の実装履歴
 
