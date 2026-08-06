@@ -20,7 +20,7 @@ CompassのConversationは、in-memory session、決定論的intent、DailyLog / 
 ```text
 ConversationSessionV1
 ├── id: opaque UUID
-├── generation: non-negative integer
+├── conversationGeneration: non-negative integer
 ├── createdAt: ISO 8601 instant
 ├── nextSequence: positive integer
 ├── messages: ConversationMessageV1[]
@@ -50,10 +50,11 @@ ConversationMessageV1
 sessionはConversation stateの初期化時に開始する。Conversation以外のapp tabへ移動して戻る場合と、同じruntime内のbackup preview / restoreでは同じsessionを維持する。次の場合に終了する。
 
 1. browser reload、tab close、app runtime終了でmemoryが失われた場合。
-2. 本人が明示的に会話をresetした場合。
-3. 将来のlogoutでruntimeを破棄する場合。logout自体は別認証Decisionのscopeである。
+2. 将来のlogoutでruntimeを破棄する場合。logout自体は別認証Decisionのscopeである。
 
-resetは実行中requestを先に`CANCELLED`へ遷移させ、可能ならabortし、旧sessionのmessage、notice、request、Captureの一時状態、却下抑制を破棄する。その後、新しいsession IDと初期generationで開始する。旧responseは後述のadoption guardにより無視する。初期versionに「保存して終了」は設けない。
+`conversation reset`はruntime session全体の終了ではなく、自由会話だけの新しいepochを開始する操作とする。実行中LLM requestを先に`CANCELLED`へ遷移させ、可能ならabortし、`contextEligible: true`の自由会話USER / ASSISTANT message、request、notice、context traceだけを破棄する。session IDは維持し、`conversationGeneration`を増加させることで旧responseを後述のadoption guardから外す。
+
+`conversation reset`はDailyLog / Calendarのflow、Candidate、commit / receipt、却下抑制key / fingerprint、決定論的Capture messageを破棄・変更しない。Captureも破棄する単一のglobal resetは初期versionに設けない。未保存Captureを破棄する場合は、DailyLog / Calendarそれぞれのcancel / reject等の別操作を本人が明示し、入力済みflowまたはCandidateを失う操作には専用の確認を要求する。Captureをclearした後、必要なら本人が別途`conversation reset`を実行する。
 
 ### 2. messageとrequest lifecycleを分離する
 
@@ -81,7 +82,9 @@ SENDING -- MATCHED_SUCCESS --> SUCCEEDED(ASSISTANT messageを一度追加)
 SENDING -- MATCHED_ERROR   --> FAILED(error noticeだけを設定)
 SENDING -- CANCEL          --> CANCELLED(messageを追加せず、abortを要求)
 FAILED  -- RETRY           --> SENDING(attempt+1, new requestId, USER message再利用)
-ANY     -- RESET           --> old requestをcancelし、新sessionを開始
+ANY     -- RESET_FREE_CONVERSATION --> old requestをcancelし、
+                                     conversationGenerationを増加、
+                                     自由会話stateだけをclear
 ```
 
 - 初回submitではUSER messageを一度だけ追加してからrequestを開始する。
@@ -93,12 +96,12 @@ ANY     -- RESET           --> old requestをcancelし、新sessionを開始
 success / errorを採用するには、受信時点で次をすべて満たさなければならない。
 
 1. request callbackが捕捉した`clientSessionId`が現在のsession IDと一致する。
-2. request開始時に捕捉したsession `generation`が現在値と一致する。
+2. request開始時に捕捉した`conversationGeneration`が現在値と一致する。
 3. `requestId`が現在のactive requestと一致する。
 4. `triggerMessageId`が現在のactive requestと一致する。
 5. 現在phaseが`SENDING`である。
 
-一つでも一致しないresponse / errorはstaleまたはout-of-orderとして本文を読まずに捨て、message、Candidate、notice、Domain Recordを変更しない。重複successも最初の一件だけを採用する。session ID、generation、request ID、trigger message IDの組をordering / cancel guardとする。
+一つでも一致しないresponse / errorはstaleまたはout-of-orderとして本文を読まずに捨て、message、Candidate、notice、Domain Recordを変更しない。重複successも最初の一件だけを採用する。session ID、conversation generation、request ID、trigger message IDの組をordering / cancel guardとする。
 
 ### 4. 自由会話contextはversion付きの有限suffixだけを送る
 
@@ -119,7 +122,7 @@ server-side system instructionは`CONVERSATION_CONTEXT_V1`の外で追加する�
 
 何を送ったかを本文なしで検証できるよう、clientの一時request traceとserver auditの候補を次に限定する。
 
-- `requestId`、ephemeral `clientSessionId`、session generation、`triggerMessageId`、attempt
+- `requestId`、ephemeral `clientSessionId`、conversation generation、`triggerMessageId`、attempt
 - `contextPolicyVersion`、採用したmessage IDの順序付きlist、message count、合計文字数、除外した古いmessage count
 - prompt / policy / model alias、開始・終了時刻、latency、result / error code、cancel、stale responseの件数
 - D-0020で許可したprovider usageとrestricted provider request ID
@@ -128,7 +131,7 @@ request / response本文、system instruction、Candidate、Domain Record、secr
 
 ### 6. Conversation sessionと履歴は永続化しない
 
-初期sessionのmessage、request、notice、context trace、Captureの一時状態はmemoryだけに置く。localStorage、sessionStorage、IndexedDB、URL、cookie、service worker cache、Repository、backup exportへ追加しない。reload / tab close後は復元せず、新しいsession IDで開始する。
+初期sessionのmessage、request、notice、context trace、Captureの一時状態はmemoryだけに置く。localStorage、sessionStorage、IndexedDB、URL、cookie、service worker cache、Repository、backup exportへ追加しない。reload / tab close後は自由会話とCaptureの両方を復元せず、新しいsession IDで開始する。これは本人が同じruntime内で実行する`conversation reset`とは異なるlifecycle境界である。
 
 永続Conversation履歴、複数端末同期、検索、削除・retention UI、server transcript、要約memoryは別Decisionとする。将来履歴を永続化しても、既存backup schemaへ暗黙追加せず、明示的なresource、version、本人説明、削除、restore validationを設計する。
 
@@ -181,17 +184,18 @@ retryable errorでも自動retryしない。本人の明示retryは新しいrequ
 - 12 messages / 12,000 code pointsの有限contextと本文なしauditにより、初期のprivacy・cost・再現性境界が明確になる。
 - reloadで会話が失われるため継続性は限定されるが、履歴の保持・削除・backupを未設計のまま開始しない。
 - Capture中の自由会話をlockするため同時利用性は限定されるが、構造化回答の誤送信とCandidate競合を避けられる。
+- `conversation reset`からCapture stateを隔離するため、自由会話の消去が未保存Candidateの誤破棄にならない。Capture破棄にはDomain別の明示操作・確認が必要になる。
 - D-0020のHTTP schema実装時にmessage ID、trigger message ID、attempt、context policy versionの相関metadataを含める必要がある。
 
 ## 必須の不変条件
 
-1. 一つのruntimeに一つのcurrent sessionを持ち、reload / reset後の旧responseを採用しない。
+1. 一つのruntimeに一つのcurrent sessionを持ち、reload / conversation reset後の旧responseを採用しない。
 2. message IDは一意、sequenceはsession内で単調増加し、network到着時刻で並べ替えない。
 3. client message roleは`USER` / `ASSISTANT`だけで、`SYSTEM`はserver-sideに限定する。
 4. error、status、loading、Candidate、inferenceをmessageとして保存・送信しない。
 5. 一つのsessionでactive LLM requestは一件だけとし、二重submitを拒否する。
-6. success / errorはsession ID、generation、request ID、trigger message ID、`SENDING`をすべて照合してから採用する。
-7. cancel後、reset後、旧attemptのresponseをmessageまたはCandidateへ反映しない。
+6. success / errorはsession ID、conversation generation、request ID、trigger message ID、`SENDING`をすべて照合してから採用する。
+7. cancel後、conversation reset後、旧attemptのresponseをmessage、notice、Candidateへ反映しない。
 8. retryはretryableな`FAILED`だけに許可し、新しいrequest IDと同じUSER messageを使う。
 9. contextは`CONVERSATION_CONTEXT_V1`の最大12 messages / 12,000 code pointsを超えない。
 10. contextはeligibleなcompleted USER / ASSISTANTだけで、system、error、status、決定論的案内、Candidateを含めない。
@@ -201,6 +205,7 @@ retryable errorでも自動retryしない。本人の明示retryは新しいrequ
 14. LLM responseはCandidate / Recordの生成・変更・保存authorityを持たない。
 15. LLM障害時も既存の決定論的Conversation、Capture、手動記録・参照を利用可能に保つ。
 16. 通常logへ会話本文、system instruction、Candidate、secretを残さず、message ID・件数・policy version等だけを監査する。
+17. `conversation reset`は自由会話stateだけをclearし、DailyLog / Calendar Capture stateと却下抑制を維持する。Capture破棄は別の明示操作・確認に限定する。
 
 ## 比較した案
 
@@ -214,6 +219,7 @@ retryable errorでも自動retryしない。本人の明示retryは新しいrequ
 | retry時にUSER messageを追加し直す | transcriptと将来の副作用が重複する |
 | session全文を毎回送る | privacy、cost、上限、再現性を制御できない |
 | 最後に到着したresponseを採用する | cancel / reset / retry後のstale responseが混入する |
+| 一つのglobal resetで自由会話とCaptureを破棄する | 自由会話だけを消す意図で未保存flow / Candidateまで失う危険がある |
 
 ## Open Questions
 
@@ -232,7 +238,7 @@ D-0020 / D-0021のAccepted後に、少なくとも次を独立Issueとして実�
 
 | Issue候補 | 変更範囲 | 非変更範囲 |
 | --- | --- | --- |
-| Conversation session domain | session / message / request / notice型、ID / clock port、reset | provider接続、永続履歴、Domain write |
+| Conversation session domain | session / message / request / notice型、ID / clock port、自由会話resetとCapture state隔離 | provider接続、永続履歴、Domain write |
 | request coordinator | state machine、単一active request、adoption guard、cancel / timeout / retry | UI styling、provider SDK、自動retry |
 | context selector | V1 suffix選択、件数 / 文字数、message ID audit、server再validation | 要約、Domain Source添付、tokenizer依存選択 |
 | HTTP contract alignment | message ID、trigger ID、attempt、context policy metadata、runtime validation | provider raw型のclient公開 |
@@ -240,7 +246,7 @@ D-0020 / D-0021のAccepted後に、少なくとも次を独立Issueとして実�
 | Capture mutual exclusion | composer / action lock、clear条件、既存Capture回帰test | Capture schema、保存手順の変更 |
 | client error presentation | error正規化、本文外notice、retryAfter、cancel / retry操作 | error transcript化、自動retry |
 | observability / privacy | 本文なしtrace / audit、redaction、storage / backup非流入test | transcript analytics、Domain保存 |
-| lifecycle acceptance tests | double send、stale / out-of-order、cancel-late、reset、retry非重複 | live provider必須test |
+| lifecycle acceptance tests | double send、stale / out-of-order、cancel-late、自由会話reset時のCapture維持、retry非重複 | live provider必須test |
 | responsive / accessibility QA | 360 / 390 / 768 / desktop、keyboard、focus、読み上げ、background復帰 | 未実施項目を合格扱いすること |
 | persistent history Decision | retention、delete、search、backup、sync、migration | D-0021へ暗黙追加 |
 

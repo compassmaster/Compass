@@ -50,9 +50,9 @@ client requestは有限の自由会話windowだけとし、Calendar、DailyLog�
 
 ## 2026-08-06 自由会話Conversation session・一時文脈設計（Issue #131）
 
-[D-0021](architecture/D-0021-conversation-session-and-transient-context.md)をProposedとして追加した。一つのruntimeに一つのin-memory sessionを置き、USER / ASSISTANT messageとrequest / error / status / Candidateを分離する。単一active request、session generation・request ID・trigger message IDによるadoption guard、明示cancel、USER messageを複製しないmanual retryを定義した。
+[D-0021](architecture/D-0021-conversation-session-and-transient-context.md)をProposedとして追加した。一つのruntimeに一つのin-memory sessionを置き、USER / ASSISTANT messageとrequest / error / status / Candidateを分離する。単一active request、conversation generation・request ID・trigger message IDによるadoption guard、明示cancel、USER messageを複製しないmanual retryを定義した。
 
-自由会話contextは`CONVERSATION_CONTEXT_V1`のeligibleなcompleted messageの最新suffixだけとし、最大12 messages / 12,000 Unicode code pointsに制限する。Calendar、DailyLog、健康情報、Formal UserModel、Candidateを自動添付せず、本文を通常logへ残さない。active Capture、決定論的intent、`UNKNOWN` LLM fallbackの順に処理し、Capture中は自由会話をlockする。session / transcriptはreloadで失われ、browser storage、Repository、backupへ保存しない。本変更はdocs-onlyで、session型、state machine、endpoint、OpenAI adapter、UI、履歴永続化、Candidate / Domain更新を実装していない。
+自由会話contextは`CONVERSATION_CONTEXT_V1`のeligibleなcompleted messageの最新suffixだけとし、最大12 messages / 12,000 Unicode code pointsに制限する。Calendar、DailyLog、健康情報、Formal UserModel、Candidateを自動添付せず、本文を通常logへ残さない。active Capture、決定論的intent、`UNKNOWN` LLM fallbackの順に処理し、Capture中は自由会話をlockする。`conversation reset`は自由会話stateだけを破棄して既存Captureと却下抑制を維持し、Capture破棄はDomain別の明示操作・確認へ分離する。session / transcriptはreloadで失われ、browser storage、Repository、backupへ保存しない。本変更はdocs-onlyで、このreset分離を含むsession型、state machine、endpoint、OpenAI adapter、UI、履歴永続化、Candidate / Domain更新を実装していない。
 
 ## 過去の実装履歴
 

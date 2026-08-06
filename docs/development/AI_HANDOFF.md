@@ -40,9 +40,9 @@
 
 ## 2026-08-06 D-0021 Conversation session / transient context設計（Issue #131）
 
-- 初期sessionは一runtime一つのin-memory stateで、reload / tab close / reset後に復元しない。browser storage、Repository、backupへsession / transcript / request / context traceを追加しない。
+- 初期sessionは一runtime一つのin-memory stateで、reload / tab close後に自由会話とCaptureを復元しない。`conversation reset`は自由会話messages / request / notice / context traceだけをclearしてconversation generationを増加させ、既存DailyLog / Calendar Capture stateと却下抑制を維持する。Capture破棄はDomain別の明示操作・確認に限定する。browser storage、Repository、backupへsession / transcript / request / context traceを追加しない。
 - messageはcompletedなUSER / ASSISTANTだけとし、SYSTEMはserver-side、error / status / loading / Candidateはmessage外の一時stateに置く。
-- 一session一active LLM requestとし、`SENDING`中の二重submitを拒否する。session ID / generation、request ID、trigger message ID、phaseが一致するresponseだけを採用し、cancel / reset / retry後の遅着を捨てる。
+- 一session一active LLM requestとし、`SENDING`中の二重submitを拒否する。session ID / conversation generation、request ID、trigger message ID、phaseが一致するresponseだけを採用し、cancel / conversation reset / retry後の遅着を捨てる。
 - retryはretryableな`FAILED`に対する本人操作だけで、同じUSER message、新しいrequest ID、増加したattemptを使う。自動retryとUSER message再追加は禁止する。
 - `CONVERSATION_CONTEXT_V1`はLLM自由会話のeligibleなcompleted messageだけを最新12件・12,000 Unicode code points以内で送る。Calendar / DailyLog / 健康情報 / UserModel / Candidateを自動添付せず、本文を通常logへ残さない。
 - route priorityはactive Capture、既存の決定論的intent、Captureなしの`UNKNOWN` LLM fallbackの順。Capture中は自由会話composerをlockし、LLM responseへCandidate / Record mutation authorityを与えない。

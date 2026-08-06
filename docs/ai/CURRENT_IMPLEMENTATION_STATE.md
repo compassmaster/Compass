@@ -31,7 +31,7 @@ D-0020は初期OpenAI adapterをserver-side `LlmGateway`の後ろへ隔離し、
 
 ## 2026-08-06 D-0021 Conversation session / transient context設計（Issue #131）
 
-D-0021は一runtime一in-memory session、USER / ASSISTANT message、message外のrequest / notice、単一active LLM requestを定義する。session generation、request ID、trigger message ID、`SENDING`を照合してsuccess / errorを採用し、cancel / reset / retry後のstale responseを捨てる。manual retryは同じUSER messageと新request IDを使い、messageを複製しない。
+D-0021は一runtime一in-memory session、USER / ASSISTANT message、message外のrequest / notice、単一active LLM requestを定義する。conversation generation、request ID、trigger message ID、`SENDING`を照合してsuccess / errorを採用し、cancel / reset / retry後のstale responseを捨てる。manual retryは同じUSER messageと新request IDを使い、messageを複製しない。`conversation reset`は自由会話stateだけをclearしてDailyLog / Calendar Capture stateと却下抑制を維持し、Capture破棄を別の明示操作・確認へ分ける設計である。このreset分離はdocs-onlyで、既存実装は変更していない。
 
 `CONVERSATION_CONTEXT_V1`はeligibleなcompleted messageの最新12件かつ12,000 Unicode code points以内に限定し、system instructionはserver-side、error / status / Candidateは対象外とする。Calendar / DailyLog / 健康情報 / UserModelを自動送信せず、本文なしmessage ID auditだけを許可する。active Capture → 決定論的intent → `UNKNOWN` LLM fallbackのpriorityとCapture中のcomposer lockを定義した。実装コード、endpoint、OpenAI adapter、UI、会話永続化、Domain更新は未変更である。
 
