@@ -4,12 +4,12 @@ import { createCaptureCandidate } from '../src/features/conversation/session/cap
 import type { DateString, EntryId } from '../src/features/daily-log/types/log.ts';
 import { rejectCalendarCandidate } from '../src/features/conversation/calendar/calendarCapture.ts';
 
-const initial = createConversationSession();
+const initial = createConversationSession({ sessionId: 'session-test', createdAt: '2026-08-02T08:59:00.000Z' });
 assert.equal(initial.messages.length, 1);
-assert.equal(initial.messages[0].role, 'assistant');
+assert.equal(initial.messages[0].role, 'ASSISTANT');
 assert.equal(transitionConversationSession(initial, { type: 'SUBMIT_TEXT', text: '   ', occurredAt: '2026-08-02T09:00:00.000Z' }), initial);
 const transitioned = transitionConversationSession(initial, { type: 'SUBMIT_TEXT', text: '  今日は少し疲れました  ', occurredAt: '2026-08-02T09:00:00.000Z' });
-assert.deepEqual(transitioned.messages.map(({ role }) => role), ['assistant', 'user', 'assistant']);
+assert.deepEqual(transitioned.messages.map(({ role }) => role), ['ASSISTANT', 'USER', 'ASSISTANT']);
 assert.equal(transitioned.messages[1].text, '今日は少し疲れました');
 assert.match(transitioned.messages[2].text, /案内先を選べませんでした/);
 assert.equal(initial.messages.length, 1, 'transition must not mutate its input');
@@ -17,8 +17,10 @@ const repeated = transitionConversationSession(transitioned, { type: 'SUBMIT_TEX
 assert.equal(repeated.messages.length, 5);
 assert.equal(new Set(repeated.messages.map(({ id }) => id)).size, 5);
 const reset = transitionConversationSession(repeated, { type: 'RESET' });
-assert.deepEqual(reset, createConversationSession());
-assert.notEqual(reset, initial, 'reset creates a fresh in-memory session');
+assert.equal(reset.id, repeated.id, 'conversation reset keeps the runtime session');
+assert.equal(reset.conversationGeneration, repeated.conversationGeneration + 1);
+assert.deepEqual(reset.messages, repeated.messages, 'deterministic messages are not free-conversation state');
+assert.equal(reset.request.phase, 'IDLE');
 const extractedCalendar = transitionConversationSession(initial, { type: 'SUBMIT_TEXT', text: '明日の14時から15時まで歯医者の予定を入れたい', occurredAt: '2026-08-03T15:30:00.000Z' });
 const resolvedTomorrow = new Intl.DateTimeFormat('en-CA', { timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC', year:'numeric', month:'2-digit', day:'2-digit' }).format(new Date('2026-08-04T15:30:00.000Z'));
 assert.equal(extractedCalendar.calendarCapture.flow, null, 'known fields are not asked again');
@@ -69,7 +71,7 @@ const duplicateState = { ...rejectedSession, activeCaptureCandidate: different }
 assert.deepEqual(rejectActiveCaptureCandidate(duplicateState, '2026-08-02T09:02:00Z').session.rejectedDeduplicationKeys, ['same-key','different-key']);
 const rePresentedDifferent = presentCaptureCandidate(rejectedSession, different).session;
 assert.deepEqual(cancelActiveCaptureCandidate(rePresentedDifferent, '2026-08-02T09:03:00Z').session.rejectedDeduplicationKeys, ['same-key'], 'cancel does not suppress');
-assert.deepEqual(transitionConversationSession(rejectedSession,{type:'RESET'}).rejectedDeduplicationKeys, [], 'reset clears suppression');
+assert.deepEqual(transitionConversationSession(rejectedSession,{type:'RESET'}).rejectedDeduplicationKeys, ['same-key'], 'conversation reset preserves Capture suppression');
 
 const committed = { ...candidateResult.candidate, status:'COMMITTED' as const, commitResultReference:{destinationType:'DAILY_LOG' as const,recordId:'log-1',committedAt:'2026-08-02T09:01:00Z'} };
 for (const action of ['VIEW','EDIT','DELETE'] as const) assert.deepEqual(createDailyLogNavigationTarget(committed, action), {recordId:'log-1',action});

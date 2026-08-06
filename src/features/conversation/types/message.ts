@@ -6,11 +6,20 @@ export type MessageAction = {
   executed: boolean;
 };
 
-export type MessageRole = 'assistant' | 'user';
+export type MessageRole = 'USER' | 'ASSISTANT';
+export type MessageSource = 'DETERMINISTIC' | 'LLM';
 
-export type Message = {
+export type ConversationMessageV1 = {
   id: string;
+  sessionId: string;
+  sequence: number;
   role: MessageRole;
   text: string;
+  createdAt: string;
+  source: MessageSource;
+  contextEligible: boolean;
+  status: 'COMPLETED';
   action?: MessageAction;
 };
+
+export type Message = ConversationMessageV1;

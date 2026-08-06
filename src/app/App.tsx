@@ -32,6 +32,7 @@ import { firstUseGuideQueryService } from '../features/first-use-guide/services/
 import type { FirstUseGuideStepId } from '../features/first-use-guide/types/firstUseGuide.ts';
 import { ConversationTab } from '../features/conversation/components/ConversationTab.tsx';
 import { createConversationSession, dismissCommittedReceiptForRecordChange } from '../features/conversation/session/conversationSession.ts';
+import { FakeConversationGateway } from '../features/conversation/application/fakeConversationGateway.ts';
 import { DailyLogCaptureCommitAdapter } from '../features/conversation/application/dailyLogCaptureCommitAdapter.ts';
 import type { DailyLogNavigationTarget, DailyLogRecordChange } from '../features/daily-log/types/navigation.ts';
 import { CalendarTab } from '../features/calendar/components/CalendarTab.tsx';
@@ -44,6 +45,7 @@ import './App.css';
 
 const dailyLogCaptureCommitAdapter = new DailyLogCaptureCommitAdapter(dailyLogApplicationService);
 const calendarCaptureCommitAdapter = new CalendarCaptureCommitAdapter(calendarEventApplicationService);
+const conversationGateway = new FakeConversationGateway();
 
 type AppTab = 'conversation' | 'home' | 'log' | 'calendar' | 'weeklySummary' | 'relationships' | 'prediction' | 'compassMap' | 'backup';
 
@@ -306,6 +308,7 @@ export function App() {
           <ConversationTab
             session={conversationSession}
             onSessionChange={setConversationSession}
+            gateway={conversationGateway}
             scrollPosition={conversationScrollPosition}
             onScrollPositionChange={setConversationScrollPosition}
             onNavigateToLog={() => navigateFromConversation('log')}
